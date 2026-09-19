@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 5 of 10. The Westfield model end to end in PyMC 6.3.2 and ArviZ 1.3.0 as they are in September 2026: nutpie by default, an xarray.DataTree instead of InferenceData, plot_dist instead of plot_posterior, and an 89 percent equal-tailed interval where the old default was a 94 percent HDI. 127 redeemed of 900, flat prior, posterior mean 0.142.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="PyMC, the first model - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 5 of 10. One model block, one sample call, one summary table, as the tools actually are in 2026. If a notebook says pymc3, InferenceData or hdi_prob, it predates the tool.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p5-pymc-the-first-model.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PyMC, the first model - learn bayesian with phoebe">
+<meta name="twitter:description" content="PyMC 6.3.2, PyTensor 3.0 on numba, nutpie with 400 tuning steps, a DataTree result, ArviZ 1.3.0 in three libraries. Westfield at 0.142 with an 89 percent equal-tailed interval.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 5 · PyMC, the first model - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 5 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 5 of 10</div>
+    <h1>PyMC, the <span class="accent">first model</span></h1>
+    <p class="sub">Four sessions of arithmetic, a grid and a hand-rolled sampler, and tonight the tool takes over. Westfield redeemed 127 vouchers of 900. Under a flat Beta(1, 1) prior the posterior mean is 0.142, and session 1 got there with two additions. The point of tonight is not the number, it is that the same model, written in PyMC 6.3.2 the way the tool is on 18 September 2026, reproduces it: a model block, a sample call that hands the work to nutpie, a result that arrives as an xarray.DataTree, and a summary whose interval is 89 percent equal-tailed because that is what ArviZ 1.3.0 reports unless told otherwise. Every one of those four facts changed within the last sixteen months, and a notebook copied from 2023 gets all four wrong.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Working depth</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone moving a Bayesian notebook to PyMC 6</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-16 · The stack as it is in 2026</span>
+      <span class="a3" style="flex:5">16-40 · Build-along: Westfield end to end</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where tonight sits</h2>
+    </div>
+    <p class="lede">Session 1 wrote the posterior by hand: a + y and b + n - y. Session 3 turned the posterior into samples and read summaries off them as quantiles. Session 4 explained why a sampler is needed at all and what R-hat and effective sample size are checking. Tonight puts all of that behind one call to <span class="mono">pm.sample()</span> and asks you to trust it only as far as the diagnostics allow. Session 6 uses the same tool on twelve outlets at once. The running example is still <strong>Halloway Bakeries</strong>, and tonight's outlet is Westfield, the flagship, because 900 vouchers is the case where the prior matters least and the tooling matters most.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> One complete PyMC 6 script for the Westfield model, short enough to retype: imports, a model block, prior predictive, sample, diagnostics, summary, plot. The map from every name a 2023 notebook uses to the name the tool uses now: pymc3 to pymc, InferenceData to DataTree, plot_posterior to plot_dist, hdi_prob to prob. And the one default that silently changes every number: the summary interval is 89 percent equal-tailed, cut at the 5.5 and 94.5 percent quantiles, where it used to be a 94 percent HDI.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The tool as it is on 18 September 2026<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>PyMC is at <strong>6.3.2</strong>, released on 8 September 2026. The 6.0.0 release shipped on 13 May 2026 and it was a breaking one: PyMC 6 is built on PyTensor 3.0, the default compute backend switched to numba, and if nutpie is installed it is the default NUTS sampler, tuning for 400 steps where PyMC's own NUTS tunes for 1000. It requires Python 3.12 or later. The install that gets you the default sampler is <span class="mono">pip install pymc[nutpie]</span>.</p>
+        <p>ArviZ is at <strong>1.3.0</strong> and is no longer one library. It is three, arviz-base for data and converters, arviz-stats for diagnostics, arviz-plots for plotting, all reached through the same <span class="mono">import arviz as az</span>. The result container changed with it: <span class="mono">arviz.InferenceData</span> no longer exists and what <span class="mono">pm.sample()</span> returns is an <span class="mono">xarray.DataTree</span>. Existing netCDF and zarr files still load, because <span class="mono">az.from_netcdf</span> now wraps <span class="mono">open_datatree</span>, and a group is reached as <span class="mono">dt["posterior"].dataset</span>.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst inherited a voucher notebook that began <span class="mono">import pymc3 as pm</span>. On the current tool that line fails at import, which is the kind version of the problem. The unkind version is the notebook that imports cleanly, runs, and reports intervals cut under a default that changed underneath it while the prose still describes the old one. Tonight's session exists so that the second thing does not happen to you.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>PyTensor 3.0.</strong> The tensor library PyMC 6 compiles your model with. Its default backend is numba; <span class="mono">pytensor.config.linker = "cvm"</span> reverts to the old one.</li>
+          <li><strong>nutpie.</strong> The NUTS sampler PyMC 6 hands the work to when it is installed. 400 tuning steps by default against 1000 for PyMC's own NUTS.</li>
+          <li><strong>xarray.DataTree.</strong> The container a sample call returns. Groups such as the posterior are reached as <span class="mono">dt["posterior"].dataset</span>. It replaced InferenceData.</li>
+          <li><strong>arviz-base, arviz-stats, arviz-plots.</strong> The three libraries that make up ArviZ 1.3.0. You do not import them separately for ordinary work; <span class="mono">import arviz as az</span> reaches all three.</li>
+          <li><strong>PlotCollection.</strong> What every ArviZ 1.x plot returns. Not axes.</li>
+          <li><strong>prob.</strong> The renamed <span class="mono">hdi_prob</span>. The interval level argument on summaries and plots.</li>
+          <li><strong>stats.ci_prob and stats.ci_kind.</strong> The two rcParams that set the default interval: 0.89 and "eti". They were 0.94 and HDI.</li>
+          <li><strong>Equal-tailed interval.</strong> The 5.5 and 94.5 percent quantiles of the posterior draws. Every interval in these sessions is one, and every page says so.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the stack from model block to plot</span>
+      <h2>Eight boxes between your model and your picture</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">You write the model block and you read the summary table. Everything in between is other people's software, and in 2026 almost every box in that chain has a new name or a new default. The figure is the chain as it is now. Learn it once and the renames in Part 2 stop being trivia and become a map of where the work moved.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The PyMC 6 stack in eight boxes across two rows. Top row, left to right: your model block with pm.Beta(1, 1) and pm.Binomial observed 127 of 900; PyMC 6.3.2, released 8 September 2026, 6.0.0 shipped 13 May 2026, Python 3.12 or later; PyTensor 3.0 with numba as the default backend, reverted by pytensor.config.linker equals cvm; the sampler, nutpie when installed with 400 tuning steps by default against 1000 for PyMC's own NUTS. Bottom row: the xarray.DataTree result, read as dt posterior dataset, which replaced InferenceData; arviz-base for data and converters, with az.from_netcdf wrapping open_datatree; arviz-stats for az.rhat and az.ess, with rcParams ci_prob 0.89 and ci_kind eti; arviz-plots with plot_dist, plot_ppc_dist, plot_trace_rank, plot_forest and plot_ridge, every plot returning a PlotCollection. A band below reads: all of it is reached through import pymc as pm and import arviz as az.">
+        <defs>
+          <marker id="p5a-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#831843"></path></marker>
+        </defs>
+        <style>
+          .p5aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p5aT { font: 800 12px Inter, sans-serif; fill: #FFFFFF; }
+          .p5aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p5aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p5aC { font: 400 11px ui-monospace, Menlo, monospace; fill: #831843; }
+          .p5aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p5aH" x="14" y="22">The PyMC 6 stack, September 2026. Top row runs the model; bottom row reads the result.</text>
+
+        <!-- row 1 -->
+        <rect x="14" y="44" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="14" y="44" width="198" height="24" rx="9" fill="#831843"></rect>
+        <text class="p5aT" x="26" y="61">1 · Your model block</text>
+        <text class="p5aC" x="26" y="86">with pm.Model():</text>
+        <text class="p5aC" x="26" y="102">pm.Beta(1, 1)</text>
+        <text class="p5aC" x="26" y="118">pm.Binomial(...)</text>
+        <text class="p5aM" x="26" y="134">observed 127 of n = 900</text>
+
+        <line x1="214" y1="92" x2="228" y2="92" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></line>
+
+        <rect x="232" y="44" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="232" y="44" width="198" height="24" rx="9" fill="#9D174D"></rect>
+        <text class="p5aT" x="244" y="61">2 · PyMC 6.3.2</text>
+        <text class="p5aB" x="244" y="88">released 8 September 2026</text>
+        <text class="p5aM" x="244" y="106">6.0.0 shipped 13 May 2026</text>
+        <text class="p5aM" x="244" y="126">Python 3.12 or later</text>
+
+        <line x1="432" y1="92" x2="446" y2="92" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></line>
+
+        <rect x="450" y="44" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="450" y="44" width="198" height="24" rx="9" fill="#9D174D"></rect>
+        <text class="p5aT" x="462" y="61">3 · PyTensor 3.0</text>
+        <text class="p5aB" x="462" y="88">default backend: numba</text>
+        <text class="p5aC" x="462" y="106">pytensor.config.linker</text>
+        <text class="p5aM" x="462" y="126">= "cvm" reverts to the old one</text>
+
+        <line x1="650" y1="92" x2="664" y2="92" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></line>
+
+        <rect x="668" y="44" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="668" y="44" width="198" height="24" rx="9" fill="#9D174D"></rect>
+        <text class="p5aT" x="680" y="61">4 · The sampler</text>
+        <text class="p5aB" x="680" y="88">nutpie when installed</text>
+        <text class="p5aM" x="680" y="106">400 tuning steps by default</text>
+        <text class="p5aM" x="680" y="126">PyMC's own NUTS: 1000</text>
+
+        <!-- row 1 to row 2 -->
+        <polyline points="767,142 767,166 113,166 113,186" fill="none" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></polyline>
+        <text class="p5aM" x="440" y="161" text-anchor="middle">pm.sample() returns</text>
+
+        <!-- row 2 -->
+        <rect x="14" y="190" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="14" y="190" width="198" height="24" rx="9" fill="#831843"></rect>
+        <text class="p5aT" x="26" y="207">5 · xarray.DataTree</text>
+        <text class="p5aB" x="26" y="234">the result container</text>
+        <text class="p5aC" x="26" y="252">dt["posterior"].dataset</text>
+        <text class="p5aM" x="26" y="272">InferenceData is gone</text>
+
+        <line x1="214" y1="238" x2="228" y2="238" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></line>
+
+        <rect x="232" y="190" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="232" y="190" width="198" height="24" rx="9" fill="#9D174D"></rect>
+        <text class="p5aT" x="244" y="207">6 · arviz-base</text>
+        <text class="p5aB" x="244" y="234">data and converters</text>
+        <text class="p5aC" x="244" y="252">az.from_netcdf wraps</text>
+        <text class="p5aC" x="244" y="270">open_datatree</text>
+
+        <line x1="432" y1="238" x2="446" y2="238" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></line>
+
+        <rect x="450" y="190" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="450" y="190" width="198" height="24" rx="9" fill="#9D174D"></rect>
+        <text class="p5aT" x="462" y="207">7 · arviz-stats</text>
+        <text class="p5aC" x="462" y="234">az.rhat(dt), az.ess(...)</text>
+        <text class="p5aC" x="462" y="252">dt.azstats.ess()</text>
+        <text class="p5aM" x="462" y="272">ci_prob 0.89, ci_kind "eti"</text>
+
+        <line x1="650" y1="238" x2="664" y2="238" stroke="#831843" stroke-width="1.5" marker-end="url(#p5a-arr)"></line>
+
+        <rect x="668" y="190" width="198" height="96" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="668" y="190" width="198" height="24" rx="9" fill="#9D174D"></rect>
+        <text class="p5aT" x="680" y="207">8 · arviz-plots</text>
+        <text class="p5aC" x="680" y="228">plot_dist, plot_ppc_dist</text>
+        <text class="p5aC" x="680" y="244">plot_trace_rank</text>
+        <text class="p5aC" x="680" y="260">plot_forest, plot_ridge</text>
+        <text class="p5aM" x="680" y="278">every plot: a PlotCollection</text>
+
+        <rect x="14" y="300" width="852" height="30" rx="9" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p5aG" x="28" y="320">All of it is reached through import pymc as pm and import arviz as az. ArviZ 1.3.0 is three libraries under one name.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - boxes 1 and 5 are the two you touch. Boxes 2, 3 and 4 changed in May 2026; boxes 6, 7 and 8 changed when ArviZ went to 1.x.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What PyMC 6.0 broke, and which defaults now decide your run<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three of the changes in the 6.0.0 release notes touch every model. The compute backend is numba, through PyTensor 3.0; you can revert to the previous one with <span class="mono">pytensor.config.linker = "cvm"</span>, and you will want to know that line exists the first time a compile surprises you. The sampler is nutpie whenever it is installed, which is why the install line is <span class="mono">pip install pymc[nutpie]</span> rather than plain pymc. And nutpie tunes for 400 steps by default where PyMC's own NUTS tunes for 1000, so a run on the new default is doing less warm-up than the same run a year ago, which is precisely why session 4's diagnostics are read every time rather than trusted once.</p>
+        <p>Two smaller changes bite specific lines. <span class="mono">sample_prior_predictive</span> lost its deprecated <span class="mono">samples</span> argument, so a notebook that asks for a particular number of prior draws by that name stops at that line. <span class="mono">sample_posterior_predictive</span> gained <span class="mono">sample_vars</span> and <span class="mono">freeze_vars</span>, which session 8 uses. Several functions were also removed from the root namespace. None of this is exotic; it is the ordinary churn of a tool at a major version, and the fix is to write the model for the tool you have rather than the one the notebook remembers.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The result is a DataTree, and you read it by group<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>What <span class="mono">pm.sample()</span> hands back is an <span class="mono">xarray.DataTree</span>. It holds groups, and the one you want most nights is the posterior, reached as <span class="mono">dt["posterior"].dataset</span>: an xarray dataset with a chain dimension and a draw dimension, which is exactly the shape session 4 said a set of chains has. The diagnostics are written for that shape. <span class="mono">az.rhat(dt)</span> and <span class="mono">az.ess(dt, sample_dims=["chain", "draw"])</span> take the tree directly, and after <span class="mono">import arviz_stats</span> the same effective sample size is one accessor away as <span class="mono">dt.azstats.ess()</span>.</p>
+        <p>The old container, <span class="mono">arviz.InferenceData</span>, is gone from the tool, but the files it wrote are not stranded. <span class="mono">az.from_netcdf</span> now wraps <span class="mono">open_datatree</span>, so a result saved last year opens as a DataTree this year. The thing that does not survive the move is code that reaches into the old container by its old attributes. The honest rule for a migration is to load the file, look at the tree, and rewrite the reads.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The interval default changed, and it matters for every number<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The rename everyone notices is <span class="mono">hdi_prob</span> to <span class="mono">prob</span>. The change that matters is in the defaults behind it. Two rcParams now govern every summary interval: <span class="mono">stats.ci_prob</span> is 0.89, where it was 0.94, and <span class="mono">stats.ci_kind</span> is "eti", an equal-tailed interval, where it was HDI. The migration guide's reason for the level: "Using 0.89 produces intervals with lower variability, leading to more stable summaries." So a summary table produced today, with no arguments, reports an 89 percent interval cut at the 5.5 and 94.5 percent quantiles of the draws. The same call in 2023 reported a 94 percent highest-density interval.</p>
+        <p>That is not a cosmetic difference. A third party, the CoursIA repo in its issue #15592, documented two notebooks whose intervals silently became equal-tailed on upgrade while the prose beside them still said HDI. The code ran, the numbers changed, the words did not. Every interval in these sessions is therefore stated as what it is, an 89 percent equal-tailed interval, and the sentence you write for anyone else should carry both the level and the kind. If you need a different interval, pass <span class="mono">prob</span> and say so in the text; if you take the default, say that too. What you may not do is leave the reader to assume.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the renames and how to read the summary</span>
+      <h2>Every old name, its new name, and the one that changes your numbers</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Most of the renames are one-for-one and a search will fix them. Two are not. The plot that used to be one call is now two, and the interval that used to be 94 percent HDI is now 89 percent equal-tailed. The left column is what a notebook copied in 2023 says. The right column is the tool.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two columns of nine rows mapping old names to current ones. Left, a notebook copied in 2023: import pymc3 as pm; arviz.InferenceData; az.plot_trace; az.plot_posterior and az.plot_density; az.plot_ppc; hdi_prob equals 0.94; a 94 percent HDI by default; sample_prior_predictive with a samples argument; plots that return axes. Right, PyMC 6.3.2 and ArviZ 1.3.0: import pymc as pm; xarray.DataTree; az.plot_trace_dist and az.plot_trace_rank; az.plot_dist; az.plot_ppc_dist; prob, with rcParam stats.ci_prob 0.89; an 89 percent equal-tailed interval by default, stats.ci_kind eti; no samples argument; plots that return a PlotCollection. A band below reads: the first row fails at import, which is the kind failure; row seven runs and changes every interval, which is the unkind one.">
+        <defs>
+          <marker id="p5b-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#831843"></path></marker>
+        </defs>
+        <style>
+          .p5bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p5bT { font: 800 12px Inter, sans-serif; fill: #FFFFFF; }
+          .p5bO { font: 400 11px ui-monospace, Menlo, monospace; fill: #991B1B; }
+          .p5bN { font: 400 11px ui-monospace, Menlo, monospace; fill: #15803D; }
+          .p5bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p5bB { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+        </style>
+        <text class="p5bH" x="14" y="22">Old name to new name. Eight rows are a search and replace. Row seven changes your numbers.</text>
+
+        <rect x="14" y="38" width="386" height="262" rx="9" fill="#FEF2F2" stroke="#E4CBD6"></rect>
+        <rect x="14" y="38" width="386" height="26" rx="9" fill="#991B1B"></rect>
+        <text class="p5bT" x="28" y="56">A notebook copied in 2023</text>
+
+        <rect x="480" y="38" width="386" height="262" rx="9" fill="#F0FDF4" stroke="#E4CBD6"></rect>
+        <rect x="480" y="38" width="386" height="26" rx="9" fill="#15803D"></rect>
+        <text class="p5bT" x="494" y="56">PyMC 6.3.2 and ArviZ 1.3.0, September 2026</text>
+
+        <text class="p5bO" x="28" y="88">import pymc3 as pm</text>
+        <line x1="410" y1="84" x2="464" y2="84" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="88">import pymc as pm</text>
+
+        <text class="p5bO" x="28" y="112">arviz.InferenceData</text>
+        <line x1="410" y1="108" x2="464" y2="108" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="112">xarray.DataTree, read as dt["posterior"].dataset</text>
+
+        <text class="p5bO" x="28" y="136">az.plot_trace(...)</text>
+        <line x1="410" y1="132" x2="464" y2="132" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="136">az.plot_trace_dist(...), az.plot_trace_rank(...)</text>
+
+        <text class="p5bO" x="28" y="160">az.plot_posterior(...), az.plot_density(...)</text>
+        <line x1="410" y1="156" x2="464" y2="156" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="160">az.plot_dist(...)</text>
+
+        <text class="p5bO" x="28" y="184">az.plot_ppc(...)</text>
+        <line x1="410" y1="180" x2="464" y2="180" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="184">az.plot_ppc_dist(...)</text>
+
+        <text class="p5bO" x="28" y="208">hdi_prob=0.94</text>
+        <line x1="410" y1="204" x2="464" y2="204" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="208">prob, default from rcParam stats.ci_prob = 0.89</text>
+
+        <text class="p5bO" x="28" y="232">94 percent HDI by default</text>
+        <line x1="410" y1="228" x2="464" y2="228" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="232">89 percent equal-tailed; stats.ci_kind = "eti"</text>
+
+        <text class="p5bO" x="28" y="256">sample_prior_predictive(samples=...)</text>
+        <line x1="410" y1="252" x2="464" y2="252" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="256">sample_prior_predictive(), no samples argument</text>
+
+        <text class="p5bO" x="28" y="280">plots return matplotlib axes</text>
+        <line x1="410" y1="276" x2="464" y2="276" stroke="#831843" stroke-width="1.5" marker-end="url(#p5b-arr)"></line>
+        <text class="p5bN" x="494" y="280">every plot returns a PlotCollection</text>
+
+        <rect x="14" y="310" width="852" height="26" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p5bB" x="28" y="328">Row one fails at import, the kind failure. Row seven runs and quietly changes every interval, the unkind one.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the red column is not wrong code, it is code for a tool that no longer exists. The two rows about the interval are the ones that change what you report.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The walk: model, prior predictive, sample, diagnose, summarise, plot<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Six moves, always in this order. <strong>Model:</strong> inside <span class="mono">with pm.Model()</span>, a <span class="mono">pm.Beta</span> for the rate with the flat Beta(1, 1) of session 2, two pseudo-observations, and a <span class="mono">pm.Binomial</span> with <span class="mono">n=900</span> and <span class="mono">observed=127</span>. <strong>Prior predictive:</strong> <span class="mono">pm.sample_prior_predictive()</span> before touching the data, to see what counts out of 900 the prior alone considers plausible; under a flat prior that is every count from 0 to 900 equally, which is what "flat" means and why session 2 counts it as worth only two pseudo-observations. <strong>Sample:</strong> <span class="mono">pm.sample()</span>, which goes to nutpie if it is installed. <strong>Diagnose:</strong> <span class="mono">az.rhat(dt)</span> and <span class="mono">az.ess(dt, sample_dims=["chain", "draw"])</span>, read the way session 4 taught, before anything is reported. <strong>Summarise:</strong> <span class="mono">az.summary(dt)</span>, one row for the rate. <strong>Plot:</strong> <span class="mono">az.plot_dist</span>, the picture of the posterior.</p>
+        <p>The number you are checking against is 0.142, the flat-prior posterior mean at Westfield that session 1 got with a + 127 and b + 773. If the summary row says something else, the model is wrong, not the arithmetic. That is the whole reason to run the tool on a case whose answer you already hold: the first model is a test of the tooling, and only after it passes does the tool get to tell you anything you did not already know.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Reading the summary row without importing another vocabulary<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The row <span class="mono">az.summary(dt)</span> prints for the rate has three kinds of column, and all of them are statements about the posterior draws. <strong>Location and spread:</strong> the posterior mean, which at Westfield under the flat prior is 0.142, and the spread of the draws around it. <strong>The interval:</strong> two columns giving the ends of the default interval, which in ArviZ 1.3.0 is 89 percent equal-tailed, the 5.5 and 94.5 percent quantiles of the draws. Read them as session 3 taught: an 89 percent probability, given this prior and these 900 vouchers, that the rate sits between them. <strong>The diagnostics:</strong> effective sample size and R-hat, the session 4 checks, telling you how much to trust the columns to their left.</p>
+        <p>What the row does not contain is anything from the other tradition. There is no confidence interval on it and no p-value, and the interval columns must not be read as either; <strong>learn-statistics-with-phoebe</strong> owns those words and the procedures behind them. The credible interval is the sentence everybody thinks a confidence interval is, and the summary row is where that sentence's two numbers come from. Say the level and say the kind: "0.142, with an 89 percent equal-tailed interval." Both halves are defaults, and defaults change.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The notebook copied in 2023<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three words tell you a notebook predates the tool: <span class="mono">pymc3</span>, <span class="mono">InferenceData</span>, <span class="mono">hdi_prob</span>. Any one of them is enough. The first is a dead import and will not run. The second names a container that no longer exists. The third names an argument that was renamed, and its presence means every interval in the notebook was cut under the old default, a 94 percent HDI, so none of its reported intervals matches what the current tool prints for the same model. McElreath's own 2024 course page still lists "Python with PyMC3"; do not copy that either.</p>
+        <p>The fix is not to patch the three lines. It is to rerun the model on the current tool, read the new summary, and rewrite every sentence that quoted an interval, because the level and the kind both changed. A notebook whose code was patched and whose prose was not is exactly the case the CoursIA issue documented: correct-looking output under a description that is no longer true of it. If you are handed such a notebook, the two-line reply is "this predates PyMC 6 and ArviZ 1; the intervals need recutting and restating before anyone quotes them."</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Westfield, end to end, in one script</h2>
+      <span class="tag build">24 min build-along</span>
+    </div>
+    <p class="lede">Laptop out. Python 3.12 or later, then <span class="mono">pip install pymc[nutpie]</span>, which brings ArviZ with it. The script below is the whole session in a form you can retype. Every number in it is in a comment, because the point is that the tool reproduces them, not that you type them in.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Check the versions before you write a line.</strong> PyMC should report 6.3.2 or later and ArviZ 1.3.0 or later. If PyMC reports 5-something, the defaults in this session do not apply and the summary interval will not be what the script's comments say.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the model block.</strong> A Beta(1, 1) prior on the rate, two pseudo-observations, and a Binomial with n = 900 and 127 observed. Nothing else. The first model is a test of the plumbing and the plumbing should have nowhere to hide.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Sample the prior predictive first.</strong> With no data in play, what does the model think 900 vouchers could produce? Under the flat prior, any count at all. That is what you asked for, and seeing it is the check that the prior you wrote is the prior you meant.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Sample, then read R-hat and effective sample size before anything else.</strong> nutpie has tuned for 400 steps, not 1000. Session 4's checks are the reason you are allowed to trust the next two lines.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Read the summary row.</strong> The posterior mean should be 0.142 to three decimals. The interval columns are the 5.5 and 94.5 percent quantiles: 89 percent, equal-tailed, the default. Say both when you quote them.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Plot the posterior with plot_dist.</strong> It returns a PlotCollection, not axes, so code that reaches for an axes object afterwards needs changing. Look at the picture; it should be a narrow hill around 0.142, which is what 900 vouchers buy.</p></div>
+      </div>
+    </div>
+
+    <div class="prompt-box good"><span class="label">★ Run it now (Python) - the Westfield model in PyMC 6</span># Westfield: 127 redeemed of 900, flat Beta(1, 1) prior
+# PyMC 6.3.2 on Python 3.12 or later. Install: pip install pymc[nutpie]
+import pymc as pm
+import arviz as az
+
+print(pm.__version__, az.__version__)          # 6.3.2 and 1.3.0 as of 18 September 2026
+
+with pm.Model() as westfield:
+    rate = pm.Beta("rate", 1.0, 1.0)            # flat prior, worth 2 pseudo-observations
+    pm.Binomial("redeemed", n=900, p=rate, observed=127)
+
+    pm.sample_prior_predictive()                # PyMC 6: the samples argument is gone
+    dt = pm.sample()                            # nutpie when installed, 400 tuning steps
+
+# session 4's checks come first; the result is an xarray.DataTree
+print(az.rhat(dt))
+print(az.ess(dt, sample_dims=["chain", "draw"]))
+
+# one row for the rate: mean 0.142, interval 89 percent equal-tailed by default
+# (rcParams stats.ci_prob = 0.89, stats.ci_kind = "eti"; the 5.5 and 94.5 percent quantiles)
+print(az.summary(dt))
+
+posterior = dt["posterior"].dataset             # the group, as a dataset
+pc = az.plot_dist(dt)                           # replaces plot_posterior; returns a PlotCollection</div>
+
+    <div class="callout tip">
+      <p><strong>If the summary does not say 0.142, stop.</strong> The flat-prior posterior mean at Westfield is known from session 1, so a different number is a wrong model, a wrong observed count, or a tool that is not the one this session describes. Run <span class="mono">print(pm.__version__)</span> before you debug anything else; a notebook that imports cleanly on PyMC 5 will produce a different interval and call it by the wrong name.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">A colleague sends a voucher notebook whose first line is <span class="mono">import pymc3 as pm</span> and whose summaries pass <span class="mono">hdi_prob=0.94</span>. What do those two facts tell you?</p>
+      <button class="qopt" type="button">A · Nothing important; rename the import and the argument and the reported intervals still stand</button>
+      <button class="qopt" type="button">B · The notebook predates PyMC 6 and ArviZ 1; the import is dead, hdi_prob is now prob, and every interval in it was cut as a 94 percent HDI where the current default is 89 percent equal-tailed, so the intervals need recutting and restating</button>
+      <button class="qopt" type="button">C · The notebook is fine as long as it runs; the default interval has not changed</button>
+      <p class="qwhy">pymc3 is a dead import, InferenceData no longer exists, and hdi_prob was renamed prob. The rcParams stats.ci_prob and stats.ci_kind moved the default from a 94 percent HDI to an 89 percent equal-tailed interval, so a patched notebook that keeps its old prose is exactly the silent failure the CoursIA issue documented.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">You install with <span class="mono">pip install pymc[nutpie]</span> and call <span class="mono">pm.sample()</span> with no arguments. Which sampler runs, and how long does it tune?</p>
+      <button class="qopt" type="button">A · PyMC's own NUTS, tuning for 1000 steps, because that is always the default</button>
+      <button class="qopt" type="button">B · nutpie, tuning for 1000 steps, the same as before</button>
+      <button class="qopt" type="button">C · nutpie, because it is the default NUTS sampler when installed, tuning for 400 steps where PyMC's own NUTS tunes for 1000</button>
+      <p class="qwhy">PyMC 6 made nutpie the default when it is present, with 400 tuning steps by default against 1000 for PyMC's NUTS. Less warm-up by default is one more reason R-hat and effective sample size are read on every run.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext"><span class="mono">az.summary(dt)</span> prints two interval columns for Westfield's rate. With no arguments passed, what are they?</p>
+      <button class="qopt" type="button">A · The 5.5 and 94.5 percent quantiles of the posterior draws: an 89 percent equal-tailed interval, from the rcParams stats.ci_prob = 0.89 and stats.ci_kind = "eti"</button>
+      <button class="qopt" type="button">B · A 94 percent highest-density interval, as ArviZ has always reported</button>
+      <button class="qopt" type="button">C · A 95 percent confidence interval for the rate</button>
+      <p class="qwhy">The default level is 0.89 and the default kind is equal-tailed, both set by rcParams that changed in ArviZ 1.x. The columns are quantiles of the draws and describe the posterior; they are not a confidence interval, and the summary row does not contain one.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 6</h2>
+      <span class="tag time">40 min</span>
+    </div>
+    <div class="callout">
+      <p>Run tonight's script unchanged and confirm 0.142. Then replace 127 and 900 with a count and a total from your own work, a rate you have quoted from a single group, and run it again. Write the one sentence you would send about it, with the level and the kind of interval stated: "an 89 percent equal-tailed interval." Bring the sentence, and bring the twelve-group version of your data if you have one, because session 6 fits all twelve at once and lets the eleven inform the twelfth.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">PyMC 6.3.2 as released, from the 6.0.0 release notes and PyPI</span>
+        <span class="note">6.0.0 on 13 May 2026, 6.3.2 on 8 September 2026, Python 3.12 or later. PyTensor 3.0 with numba as default backend; nutpie as the default NUTS sampler when installed, 400 tuning steps against 1000; the sample_prior_predictive and sample_posterior_predictive signature changes; pymc3 as a dead import.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">ArviZ 1.3.0, from the 1.x migration guide</span>
+        <span class="note">arviz-base, arviz-stats, arviz-plots under one import; xarray.DataTree in place of InferenceData; plot_dist, plot_ppc_dist, plot_trace_dist and plot_trace_rank; hdi_prob renamed prob; stats.ci_prob 0.89 and stats.ci_kind "eti"; every plot a PlotCollection.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The Westfield model end to end</span>
+        <span class="note">127 of 900 under Beta(1, 1), posterior mean 0.142, matching session 1's hand arithmetic. Prior predictive, sample, R-hat and ESS, summary, plot_dist.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Twelve outlets in one model</span>
+        <span class="note">Session 6. The same tool with a chain-level centre and pooling strength, learned from the data, and the honest half: six outlets helped, six hurt.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Posterior predictive checks and sample_vars, freeze_vars</span>
+        <span class="note">Session 8, which uses sample_posterior_predictive and plot_ppc_dist to ask whether the model could have produced the data it was fitted to.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and hypothesis tests</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference; the summary row tonight is read as quantiles of the posterior and nothing else.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">PyMC-Marketing and marketing mix models</span>
+        <span class="note">Not covered by design. <strong>learn-marketing-attribution-with-phoebe</strong> names the tool; here PyMC is the general library and nothing more.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="section cheat" id="cheatsheet">
+    <h3>Session 5 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>PyMC 6.3.2, ArviZ 1.3.0</b><span>8 September 2026. 6.0.0 shipped 13 May 2026. Python 3.12 or later. pip install pymc[nutpie].</span></div>
+      <div class="cheat-item"><b>nutpie by default</b><span>When installed. 400 tuning steps, against 1000 for PyMC's own NUTS. Read the diagnostics every run.</span></div>
+      <div class="cheat-item"><b>PyTensor 3.0 on numba</b><span>pytensor.config.linker = "cvm" reverts the backend if a compile surprises you.</span></div>
+      <div class="cheat-item"><b>The result is a DataTree</b><span>dt["posterior"].dataset. InferenceData is gone; az.from_netcdf wraps open_datatree so old files load.</span></div>
+      <div class="cheat-item"><b>Renames</b><span>plot_posterior and plot_density to plot_dist; plot_ppc to plot_ppc_dist; plot_trace to plot_trace_dist and plot_trace_rank. hdi_prob to prob.</span></div>
+      <div class="cheat-item"><b>89 percent, equal-tailed</b><span>stats.ci_prob 0.89, stats.ci_kind "eti". Was 0.94 HDI. The 5.5 and 94.5 percent quantiles. Say both halves.</span></div>
+      <div class="cheat-item"><b>Westfield: 0.142</b><span>127 of 900 under Beta(1, 1). If the summary disagrees, the model is wrong, not session 1.</span></div>
+      <div class="cheat-item"><b>Three words that date a notebook</b><span>pymc3, InferenceData, hdi_prob. Any one means the intervals were cut under the old default. Rerun and restate.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 5 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p4-mcmc-and-its-diagnostics.html">← Practitioner session 4 · MCMC and its diagnostics</a>
+      <a href="p6-hierarchical-models.html">Practitioner session 6 · Hierarchical models →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

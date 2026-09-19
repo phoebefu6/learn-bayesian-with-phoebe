@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Sixteen sessions on Bayesian thinking with small data: what a prior costs, the posterior as a distribution, MCMC and PyMC 6, hierarchical models and partial pooling, Bayesian A/B decisions by expected loss, and three benches scored against a truth written into the data. Free, in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Learn Bayesian with Phoebe">
+<meta property="og:description" content="A prior is a number of pseudo-observations. Twelve small outlets know more together than any one alone. A probability is not a decision until it meets a stake.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Learn Bayesian with Phoebe">
+<meta name="twitter:description" content="Sixteen sessions on small data, with benches that know the answer.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Learn Bayesian with Phoebe</title>
+<link rel="stylesheet" href="assets/style.css?v=2">
+<style>
+
+  .stats-row { display: flex; gap: 2.4rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .stat b { display: block; font-size: 2.1rem; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: .72rem; opacity: .85; text-transform: uppercase; letter-spacing: .09em; font-weight: 600; }
+
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .course-card {
+    border: 1px solid var(--hairline);
+    border-top: 4px solid var(--diff, var(--indigo));
+    border-radius: var(--radius);
+    padding: 1.2rem 1.3rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    text-decoration: none;
+    color: var(--ink);
+    background: #fff;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+    position: relative;
+  }
+  .course-card:hover { border-color: var(--indigo-soft); border-top-color: var(--diff, var(--indigo)); box-shadow: 0 8px 28px rgba(157,23,77,.16); transform: translateY(-3px); }
+  .course-card .cicon { font-size: 1.7rem; line-height: 1; }
+  .course-card .cnum { font-size: .72rem; font-weight: 700; color: var(--indigo); text-transform: uppercase; letter-spacing: .1em; }
+  .course-card h3 { font-size: 1.05rem; font-weight: 800; line-height: 1.3; }
+  .course-card p { font-size: .85rem; color: var(--muted); flex: 1; }
+  .course-card .meta { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+  .diff-legend { display: flex; gap: 1rem; margin-top: 1.6rem; font-size: .74rem; color: var(--muted); font-weight: 600; flex-wrap: wrap; }
+  .diff-legend i { display: inline-block; width: .85rem; height: .35rem; border-radius: 999px; margin-right: .35rem; vertical-align: middle; }
+
+  .paths { margin-top: 2.6rem; }
+  .paths h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .3rem; }
+  .paths .plede { color: var(--muted); font-size: .92rem; margin-bottom: .8rem; }
+  .path { display: flex; gap: .55rem; align-items: center; padding: .75rem 0; border-bottom: .5px solid var(--hairline); flex-wrap: wrap; }
+  .path:last-child { border-bottom: none; }
+  .path b { min-width: 15.5rem; font-size: .9rem; }
+  .path .pstep { background: var(--indigo-50); color: var(--indigo); border-radius: 999px; padding: .16rem .68rem; font-weight: 700; font-size: .8rem; text-decoration: none; transition: all .12s ease; }
+  .path .pstep:hover { background: var(--indigo); color: #fff; }
+  .path .parr { color: var(--faint); font-weight: 700; }
+
+  .mm-section { margin-top: 1.6rem; }
+  .mm-section h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .2rem; }
+  .mm-section .mm-lede { color: var(--muted); font-size: .92rem; margin-bottom: .4rem; }
+  .mm-wrap { border: 1px solid var(--hairline); border-radius: var(--radius); background: linear-gradient(180deg,#fff,#FDF2F8); padding: .6rem; overflow-x: auto; }
+  .mm-svg { width: 100%; height: auto; display: block; max-width: 60rem; margin: 0 auto; min-width: 34rem; }
+  .mm-link { cursor: pointer; text-decoration: none; }
+  .mm-node rect { transition: opacity .15s ease, filter .15s ease; }
+  .mm-node text { pointer-events: none; }
+  .mm-link:hover .mm-node rect { filter: brightness(1.06); }
+  .mm-edge { transition: opacity .15s ease; }
+
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn with Phoebe · Data Science</div>
+    <h1>Learn <span class="accent">Bayesian</span> with Phoebe</h1>
+    <p class="sub">Halloway Bakeries' smallest outlet redeemed one voucher in eighteen. Its true redemption rate is 0.192, the highest in the chain. Head office's sensible prior, worth a hundred pseudo-observations, pulled the estimate to 0.110 with an interval that did not contain the truth; a prior learned from the other eleven outlets got it to 0.124 and saved the site from closure. Everything that follows comes from the gap between those numbers: what a prior is worth and what it costs, why small data give you a distribution rather than a point, how eleven outlets can lend the twelfth their evidence, and when a probability becomes a decision. Six leader sessions with no code, ten practitioner sessions on PyMC 6 as it is in 2026, and three benches on a world whose truth is written down so every method can be scored.</p>
+    <div class="stats-row">
+      <div class="stat"><b data-count="16">16</b><span>sessions, two tracks</span></div>
+      <div class="stat"><b data-count="12">12</b><span>outlets with known true rates</span></div>
+      <div class="stat"><b data-count="4">4</b><span>priors on the bench</span></div>
+      <div class="stat"><b data-count="89">89</b><span>percent, equal-tailed, the 2026 default</span></div>
+      <div class="stat"><b data-count="45">45</b><span>min per session</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>Leader track 🎲 <span style="font-size:.85rem;font-weight:600;color:var(--muted)">· six sessions, no code</span></h2>
+      <p class="plede">For whoever signs off a number from small data. What a prior costs, why eighteen observations give you a distribution and not a point, how to borrow strength across units, how to read a posterior in a meeting, the argument about priors the field has not settled, and what to require in writing.</p>
+    </div>
+    <div class="course-grid">
+      <a class="course-card" href="courses/a1-what-a-prior-costs.html" style="--diff:#FBBF24">
+        <span class="cicon">🎲</span>
+        <span class="cnum">Leader session 1 · start here</span>
+        <h3>What a prior costs</h3>
+        <p>A prior is a number of pseudo-observations. At Northgate the sensible one was confidently wrong; at Westfield a wrong one still moved the answer by 0.026 at n = 900.</p>
+        <span class="meta"><span class="pill amber">▶ Start here</span></span>
+      </a>
+      <a class="course-card" href="courses/a2-small-data-honest-uncertainty.html" style="--diff:#FBBF24">
+        <span class="cicon">🔍</span>
+        <span class="cnum">Leader session 2</span>
+        <h3>Small data, honest uncertainty</h3>
+        <p>Eighteen observations cannot give you a point. What they can give you is a distribution, and the sentence that goes on the slide.</p>
+      </a>
+      <a class="course-card" href="courses/a3-borrowing-strength.html" style="--diff:#FB923C">
+        <span class="cicon">🏪</span>
+        <span class="cnum">Leader session 3</span>
+        <h3>Borrowing strength</h3>
+        <p>Twelve small outlets know more together than any one alone. The pooling ladder, 0.054 to 0.031 to 0.025, and the six outlets it made worse.</p>
+      </a>
+      <a class="course-card" href="courses/a4-reading-a-posterior.html" style="--diff:#FB923C">
+        <span class="cicon">📊</span>
+        <span class="cnum">Leader session 4</span>
+        <h3>Reading a posterior</h3>
+        <p>P(B beats A), expected loss, and why 0.915 was not enough to stop. Credible against confidence, in one sentence.</p>
+      </a>
+      <a class="course-card" href="courses/a5-the-prior-argument.html" style="--diff:#F87171">
+        <span class="cicon">⚖️</span>
+        <span class="cnum">Leader session 5</span>
+        <h3>The prior argument</h3>
+        <p>Subjective, reference, weakly informative. The field has not settled it, and this session does not pretend to.</p>
+      </a>
+      <a class="course-card" href="courses/a6-commissioning-a-bayesian-answer.html" style="--diff:#F87171">
+        <span class="cicon">✍️</span>
+        <span class="cnum">Leader session 6</span>
+        <h3>Commissioning a Bayesian answer</h3>
+        <p>What to require in writing: the prior as a pseudo-count, the interval kind and level, the decision rule, the check that was run.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>Practitioner track 🧪 <span style="font-size:.85rem;font-weight:600;color:var(--muted)">· ten sessions, hands on</span></h2>
+      <p class="plede">For the people who build the models. Conjugate updates by hand, the posterior as a distribution, MCMC and its diagnostics, PyMC 6 with nutpie and DataTree, hierarchical models, Bayesian A/B by expected loss, predictive checks, the executive sentence, and a capstone bench scored against the truth.</p>
+    </div>
+    <div class="course-grid">
+      <a class="course-card" href="courses/p1-beta-binomial-by-hand.html" style="--diff:#FBBF24">
+        <span class="cicon">✏️</span>
+        <span class="cnum">Practitioner session 1 · start here</span>
+        <h3>Beta-Binomial by hand</h3>
+        <p>Conjugacy: a plus y, b plus n minus y. The posterior mean as a weighted average, and why that makes the prior legible.</p>
+        <span class="meta"><span class="pill amber">▶ Start here</span></span>
+      </a>
+      <a class="course-card" href="courses/p2-four-priors.html" style="--diff:#FBBF24">
+        <span class="cicon">🎚️</span>
+        <span class="cnum">Practitioner session 2</span>
+        <h3>Four priors</h3>
+        <p>Flat, weak, informed, wrong on the same eighteen customers. Pseudo-observations, and the interval that misses.</p>
+      </a>
+      <a class="course-card" href="courses/p3-the-posterior-is-a-distribution.html" style="--diff:#FB923C">
+        <span class="cicon">📈</span>
+        <span class="cnum">Practitioner session 3</span>
+        <h3>The posterior is a distribution</h3>
+        <p>Grid, then sampling. Summaries as quantiles, and why 89 percent equal-tailed is the default now.</p>
+      </a>
+      <a class="course-card" href="courses/p4-mcmc-and-its-diagnostics.html" style="--diff:#FB923C">
+        <span class="cicon">🔗</span>
+        <span class="cnum">Practitioner session 4</span>
+        <h3>MCMC and its diagnostics</h3>
+        <p>Why sample at all. Chains, R-hat, effective sample size, divergences, and the rank plot that replaced the trace.</p>
+      </a>
+      <a class="course-card" href="courses/p5-pymc-the-first-model.html" style="--diff:#FB923C">
+        <span class="cicon">🐍</span>
+        <span class="cnum">Practitioner session 5</span>
+        <h3>PyMC, the first model</h3>
+        <p>PyMC 6.3, nutpie by default, a DataTree instead of InferenceData. Westfield end to end, as the tools are in 2026.</p>
+      </a>
+      <a class="course-card" href="courses/p6-hierarchical-models.html" style="--diff:#F87171">
+        <span class="cicon">🧩</span>
+        <span class="cnum">Practitioner session 6</span>
+        <h3>Hierarchical models</h3>
+        <p>Partial pooling with a known truth. kappa as learned pooling strength, and where shrinkage costs you.</p>
+      </a>
+      <a class="course-card" href="courses/p7-bayesian-ab-decisions.html" style="--diff:#F87171">
+        <span class="cicon">⚡</span>
+        <span class="cnum">Practitioner session 7</span>
+        <h3>Bayesian A/B decisions</h3>
+        <p>P(B beats A), expected loss, ROPE. The rule stops at n = 100 and is wrong 2 times in 200, counted.</p>
+      </a>
+      <a class="course-card" href="courses/p8-checking-the-model.html" style="--diff:#F87171">
+        <span class="cicon">🔬</span>
+        <span class="cnum">Practitioner session 8</span>
+        <h3>Checking the model</h3>
+        <p>Prior and posterior predictive checks. What a check can catch, what it cannot, and where LOO fits.</p>
+      </a>
+      <a class="course-card" href="courses/p9-saying-it-to-executives.html" style="--diff:#F87171">
+        <span class="cicon">🗣️</span>
+        <span class="cnum">Practitioner session 9</span>
+        <h3>Saying it to executives</h3>
+        <p>The sentence, the interval with its kind and level, the probability of a difference, and the stake.</p>
+      </a>
+      <a class="course-card" href="courses/p10-the-pooling-bench.html" style="--diff:#EF4444">
+        <span class="cicon">🧪</span>
+        <span class="cnum">Practitioner session 10</span>
+        <h3>The pooling bench</h3>
+        <p>Three live benches on a world whose truth is written down. Priors, pooling, and the A/B rule, all scored.</p>
+      </a>
+    </div>
+    <div class="diff-legend">
+      <span><i style="background:#FBBF24"></i>Foundations</span>
+      <span><i style="background:#FB923C"></i>Working depth</span>
+      <span><i style="background:#F87171"></i>Advanced</span>
+      <span><i style="background:#EF4444"></i>Hardest</span>
+    </div>
+  </section>
+
+  <section class="section mm-section">
+    <h2>The whole thing on one page</h2>
+    <p class="mm-lede">Every idea in the course and the session that owns it. Click any node to jump there.</p>
+    <div class="mm-wrap"><svg class="mm-svg" id="mindmap"></svg></div>
+  </section>
+
+  <section class="section">
+    <div class="paths">
+      <h2>Three ways through</h2>
+      <p class="plede">Everyone starts at session 1 of their track. These are the shortest useful routes if you cannot take all sixteen.</p>
+      <div class="path"><b>I sign off small-data numbers</b>
+        <a class="pstep" href="courses/a1-what-a-prior-costs.html">What a prior costs</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a3-borrowing-strength.html">Borrowing strength</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a4-reading-a-posterior.html">Reading a posterior</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a6-commissioning-a-bayesian-answer.html">Commissioning</a>
+      </div>
+      <div class="path"><b>I build the models</b>
+        <a class="pstep" href="courses/p1-beta-binomial-by-hand.html">By hand</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p4-mcmc-and-its-diagnostics.html">MCMC</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p5-pymc-the-first-model.html">PyMC 6</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p6-hierarchical-models.html">Hierarchical</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p10-the-pooling-bench.html">The bench</a>
+      </div>
+      <div class="path"><b>I run A/B tests</b>
+        <a class="pstep" href="courses/p2-four-priors.html">Four priors</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p7-bayesian-ab-decisions.html">A/B decisions</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p9-saying-it-to-executives.html">Saying it</a><span class="parr">→</span>
+        <a class="pstep" href="courses/p10-the-pooling-bench.html">The bench</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="paths">
+      <h2>What is real here</h2>
+      <p class="plede">Nothing on the benches is a stored result.</p>
+      <table class="pp-strip" style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:.5rem 0;font-weight:700">The world</td><td style="padding:.5rem 0;color:var(--muted)">Twelve outlets from a model written out in <span class="mono">assets/bayes-live.js</span>, fixed seed, every true rate visible</td></tr>
+        <tr><td style="padding:.5rem 0;font-weight:700">Every posterior</td><td style="padding:.5rem 0;color:var(--muted)">An exact conjugate update, summarised by 20,000 draws at the ArviZ 1.x default of 89 percent equal-tailed</td></tr>
+        <tr><td style="padding:.5rem 0;font-weight:700">Partial pooling</td><td style="padding:.5rem 0;color:var(--muted)">An empirical-Bayes fit that maximises the marginal likelihood across outlets, so the pooling strength is learned, not set</td></tr>
+        <tr><td style="padding:.5rem 0;font-weight:700">The decision rule</td><td style="padding:.5rem 0;color:var(--muted)">Expected loss over 20,000 paired draws, and a wrong-stop rate counted over 200 replays rather than promised</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span class="meta">by Phoebe Fu · frequentist inference lives in <a href="https://phoebefu6.github.io/learn-statistics-with-phoebe/">learn statistics ↗</a>, experiment mechanics in <a href="https://phoebefu6.github.io/learn-experimentation-with-phoebe/">learn experimentation ↗</a>, and calibration audits in <a href="https://phoebefu6.github.io/learn-decision-intelligence-with-phoebe/">learn decision intelligence ↗</a> · source map: <span class="mono">materials/official-course-map.md</span></span>
+  </footer>
+
+</main>
+
+<script>
+window.MINDMAP_DATA = {
+  "title": "Bayesian\nThinking",
+  "centerColor": "#831843",
+  "sessions": [
+    {
+      "label": "The prior",
+      "href": "courses/a1-what-a-prior-costs.html",
+      "concepts": [
+        {
+          "label": "Pseudo-observations",
+          "href": "courses/a1-what-a-prior-costs.html"
+        },
+        {
+          "label": "Four priors",
+          "href": "courses/p2-four-priors.html"
+        },
+        {
+          "label": "The argument",
+          "href": "courses/a5-the-prior-argument.html"
+        }
+      ]
+    },
+    {
+      "label": "The posterior",
+      "href": "courses/a2-small-data-honest-uncertainty.html",
+      "concepts": [
+        {
+          "label": "Beta-Binomial",
+          "href": "courses/p1-beta-binomial-by-hand.html"
+        },
+        {
+          "label": "A distribution",
+          "href": "courses/p3-the-posterior-is-a-distribution.html"
+        },
+        {
+          "label": "89% equal-tailed",
+          "href": "courses/p3-the-posterior-is-a-distribution.html"
+        }
+      ]
+    },
+    {
+      "label": "Sampling",
+      "href": "courses/p4-mcmc-and-its-diagnostics.html",
+      "concepts": [
+        {
+          "label": "MCMC",
+          "href": "courses/p4-mcmc-and-its-diagnostics.html"
+        },
+        {
+          "label": "R-hat, ESS",
+          "href": "courses/p4-mcmc-and-its-diagnostics.html"
+        },
+        {
+          "label": "PyMC 6",
+          "href": "courses/p5-pymc-the-first-model.html"
+        }
+      ]
+    },
+    {
+      "label": "Pooling",
+      "href": "courses/a3-borrowing-strength.html",
+      "concepts": [
+        {
+          "label": "Hierarchical",
+          "href": "courses/p6-hierarchical-models.html"
+        },
+        {
+          "label": "Shrinkage",
+          "href": "courses/p6-hierarchical-models.html"
+        },
+        {
+          "label": "The ladder",
+          "href": "courses/p10-the-pooling-bench.html"
+        }
+      ]
+    },
+    {
+      "label": "Deciding",
+      "href": "courses/a4-reading-a-posterior.html",
+      "concepts": [
+        {
+          "label": "P(B > A)",
+          "href": "courses/p7-bayesian-ab-decisions.html"
+        },
+        {
+          "label": "Expected loss",
+          "href": "courses/p7-bayesian-ab-decisions.html"
+        },
+        {
+          "label": "ROPE",
+          "href": "courses/p7-bayesian-ab-decisions.html"
+        }
+      ]
+    },
+    {
+      "label": "Checking and saying",
+      "href": "courses/p8-checking-the-model.html",
+      "concepts": [
+        {
+          "label": "Predictive checks",
+          "href": "courses/p8-checking-the-model.html"
+        },
+        {
+          "label": "The sentence",
+          "href": "courses/p9-saying-it-to-executives.html"
+        },
+        {
+          "label": "The brief",
+          "href": "courses/a6-commissioning-a-bayesian-answer.html"
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script src="assets/mindmap.js?v=2"></script>
+<script src="assets/app.js?v=2"></script>
+</body>
+</html>

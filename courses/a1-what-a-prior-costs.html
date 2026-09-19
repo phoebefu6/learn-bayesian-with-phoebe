@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Leader session 1 of 6. A prior is a number of pseudo-observations, and it costs something. At Northgate an informed prior worth 100 observations was confidently wrong against 18 real ones; at Westfield a wrong prior still moved the answer by 0.026 at n = 900.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="What a prior costs - learn bayesian with phoebe">
+<meta property="og:description" content="Leader session 1 of 6. Data do not wash out a prior. They outvote it, and a hundred votes take a long time to outvote.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/a1-what-a-prior-costs.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What a prior costs - learn bayesian with phoebe">
+<meta name="twitter:description" content="Four priors, two outlets, one truth written into the data. The informed prior was confidently wrong.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Leader session 1 · What a prior costs - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Leader session 1 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Leader session 1 of 6</div>
+    <h1>What a prior <span class="accent">costs</span></h1>
+    <p class="sub">Halloway Bakeries runs twelve outlets and one voucher. Northgate, the smallest, redeemed one voucher in eighteen last month, an observed rate of 0.056. Head office believes the chain-wide rate is about 0.12, and it has years of data to say so. Blend the belief with the evidence and you get 0.110, with an 89 percent interval from 0.068 to 0.159. Northgate's true redemption rate is 0.192. It is outside the interval. Nothing went wrong with the arithmetic. The belief was worth a hundred observations, the evidence was worth eighteen, and Northgate turned out to be the one outlet the belief did not allow for. That is what a prior costs, and tonight is about being able to say the price out loud before you pay it.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Whoever signs off a number from small data</span>
+      <span class="chip audience">Product, finance and analytics leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-20 · The prior as a vote</span>
+      <span class="a3" style="flex:4">20-40 · Build-along: price your own</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>How the leader track works</h2>
+    </div>
+    <p class="lede">Six sessions, 45 minutes each, no code. Tonight: what a prior is and what it costs, measured on data whose truth is known. Session 2 is why eighteen observations cannot give you a point and what they can give you instead. Session 3 is borrowing strength, the reason twelve small outlets know more together than any one of them alone. Session 4 is reading a posterior in a meeting: the probability B beats A, and why 0.915 was not enough. Session 5 is the argument about priors that the field has not settled, taught as the argument it is. Session 6 is commissioning a Bayesian answer: what to require in writing so the prior is a decision rather than a default. The example throughout is <strong>Halloway Bakeries</strong> and its voucher.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> One conversion that makes every prior legible: a prior is a number of pseudo-observations, and you can ask for that number in a meeting. The measured result that a prior worth 100 observations still moved an answer by 0.026 at n = 900, which is the end of "the data will wash it out". And the counterweight you need before session 3 makes the case for priors: at Northgate the sensible prior was confidently wrong, and a flat one, for all its vagueness, contained the truth.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>A prior is a vote, and it comes with a vote count<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Every Bayesian estimate blends two things: what you believed before you looked, and what you saw. The blend is not mystical. For a rate, a belief can be written as a Beta distribution with two numbers, a and b, and those two numbers have a plain meaning: the belief behaves exactly as if you had already watched a + b customers, of whom a redeemed. A Beta(12, 88) prior is a hundred imaginary customers, twelve of whom redeemed. That is a hundred votes for a rate near 0.12, cast before a single real customer walked in.</p>
+        <p>The real data then vote too, one vote per customer, and the posterior mean is the weighted average. Eighteen real votes against a hundred imaginary ones gives the data a weight of 18 / (18 + 100), which is 0.15. The belief carries the other 0.85. Nothing about that is wrong. It is what you asked for when you chose a hundred pseudo-observations, and the only failure is not knowing that you asked for it.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst set the prior at Beta(12, 88) because the chain-wide rate had been near 0.12 for years and a hundred pseudo-observations "felt about right". Nobody in the approval meeting asked how many observations the belief was worth. Northgate's eighteen real customers were outvoted eighty-five to fifteen, and its posterior landed at 0.110 against a truth of 0.192.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Prior.</strong> What you believed about the rate before this month's data. Written as a distribution, not a number, because you were not certain.</li>
+          <li><strong>Pseudo-observations.</strong> For a Beta(a, b) prior, a + b. The number of imaginary customers your belief is worth. The single most useful thing to ask about any prior.</li>
+          <li><strong>Likelihood.</strong> What the data say on their own. At Northgate: one redemption in eighteen.</li>
+          <li><strong>Posterior.</strong> The blend. Also a distribution, which is why it can be summarised by an interval rather than a point.</li>
+          <li><strong>Posterior mean.</strong> The weighted average of prior mean and observed rate, weights in proportion to pseudo-observations and real ones.</li>
+          <li><strong>89 percent interval.</strong> The range that holds 89 percent of the posterior, cut equally from both tails. It is 89 rather than 95 because that is the default the tooling ships with, for stability, and the number is not sacred.</li>
+          <li><strong>Flat prior.</strong> Beta(1, 1): two pseudo-observations, one of each. As close to "no belief" as a prior gets, and not nothing.</li>
+          <li><strong>Credible interval.</strong> The Bayesian interval. It is the sentence most people think a confidence interval is: there is an 89 percent probability the rate is in here. The frequentist version is a different sentence, and <strong>learn-statistics-with-phoebe</strong> owns it.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers four priors on one outlet</span>
+      <h2>Four beliefs, eighteen customers, one truth</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">The same eighteen Northgate customers, four different beliefs going in. Because Northgate's true rate is written into the data, each posterior can be scored against it rather than argued about. The result is not the one that makes priors look good, and it is on the page because a course that only showed the flattering case would be selling something.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four posterior 89 percent intervals for Northgate's redemption rate, one per prior, drawn against a vertical line at the true rate of 0.192. The flat prior, worth 2 pseudo-observations, gives 0.020 to 0.222 and contains the truth. The weak prior, worth 16, gives 0.026 to 0.175 and misses. The informed prior, worth 100, gives 0.068 to 0.159 and misses. The wrong prior, worth 100 and centred on 0.400, gives 0.279 to 0.419 and misses on the other side. A scale from 0 to 0.45 runs along the bottom.">
+        <style>
+          .a1aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a1aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a1aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a1aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a1aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .a1aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .a1aW { font: 700 11px Inter, sans-serif; fill: #fff; }
+        </style>
+        <text class="a1aH" x="14" y="22">Northgate, n = 18. Where each 89 percent interval lands against the truth.</text>
+
+        <!-- axis: rate 0 to 0.45 maps to x 250..850 -->
+        <line x1="250" y1="330" x2="850" y2="330" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="a1aM" x="250" y="348" text-anchor="middle">0.00</text>
+        <text class="a1aM" x="383" y="348" text-anchor="middle">0.10</text>
+        <text class="a1aM" x="517" y="348" text-anchor="middle">0.20</text>
+        <text class="a1aM" x="650" y="348" text-anchor="middle">0.30</text>
+        <text class="a1aM" x="783" y="348" text-anchor="middle">0.40</text>
+        <text class="a1aM" x="550" y="368" text-anchor="middle">redemption rate</text>
+
+        <!-- truth 0.192 -> x = 250 + 0.192/0.45*600 = 506 -->
+        <line x1="506" y1="50" x2="506" y2="330" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="a1aG" x="512" y="62">truth 0.192</text>
+
+        <!-- row 1: flat  [0.020,0.222] -> x 277..546 ; mean 0.100 -> 383 -->
+        <text class="a1aL" x="14" y="104">Flat · Beta(1, 1)</text>
+        <text class="a1aM" x="14" y="120">2 pseudo-observations</text>
+        <rect x="277" y="94" width="269" height="14" rx="7" fill="#FBCFE8"></rect>
+        <circle cx="383" cy="101" r="5" fill="#9D174D"></circle>
+        <text class="a1aG" x="560" y="106">contains the truth, and it is wide</text>
+
+        <!-- row 2: weak [0.026,0.175] -> x 285..486 ; mean 0.088 -> 369 -->
+        <text class="a1aL" x="14" y="166">Weak · Beta(2, 14)</text>
+        <text class="a1aM" x="14" y="182">16 pseudo-observations</text>
+        <rect x="285" y="156" width="201" height="14" rx="7" fill="#FBCFE8"></rect>
+        <circle cx="369" cy="163" r="5" fill="#9D174D"></circle>
+        <text class="a1aR" x="560" y="168">misses, by 0.015</text>
+
+        <!-- row 3: informed [0.067,0.159] -> x 339..462 ; mean 0.110 -> 397 -->
+        <text class="a1aL" x="14" y="228">Informed · Beta(12, 88)</text>
+        <text class="a1aM" x="14" y="244">100 pseudo-observations</text>
+        <rect x="339" y="218" width="123" height="14" rx="7" fill="#F9A8D4"></rect>
+        <circle cx="397" cy="225" r="5" fill="#831843"></circle>
+        <text class="a1aR" x="560" y="230">misses, by 0.033, and looks precise</text>
+
+        <!-- row 4: wrong [0.279,0.419] -> x 621..810 ; mean 0.347 -> 714 -->
+        <text class="a1aL" x="14" y="290">Wrong · Beta(40, 60)</text>
+        <text class="a1aM" x="14" y="306">100 pseudo-observations</text>
+        <rect x="621" y="280" width="189" height="14" rx="7" fill="#F9A8D4"></rect>
+        <circle cx="714" cy="287" r="5" fill="#831843"></circle>
+        <text class="a1aR" x="14" y="326">misses the other way: the belief was centred on 0.400</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the two priors worth a hundred observations both miss. One of them was the sensible one.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why the sensible prior missed, and why that is the point<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Beta(12, 88) was not a bad prior. The chain-wide rate really is near 0.12, and most Halloway outlets really do sit close to it. The prior encoded a true fact about the population and then applied it to the one outlet that does not fit the population. Northgate's true rate is 0.192, the highest in the chain, and a prior that puts almost no weight above 0.18 will pull any estimate of Northgate down toward the crowd no matter what eighteen customers do.</p>
+        <p>The lesson is not "use flat priors". The flat prior's interval runs from 0.020 to 0.222, a range so wide it would not support any decision, and session 3 will show that a prior learned from the other eleven outlets does far better than either. The lesson is narrower and more useful: <strong>an informative prior is a bet that this case resembles the cases the prior was built from</strong>, and the price of losing that bet is a precise-looking interval that does not contain the answer. You cannot avoid the bet. You can know you are making it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The interval that misses is the dangerous one<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Look at the widths. The flat prior's interval is 0.202 wide and honest about it. The informed prior's is 0.092 wide, less than half, and it reads like knowledge. In a slide deck the narrow interval wins every time, and it is the one that excludes the truth.</p>
+        <p>This is the general shape of the risk with strong priors: they do not make you wrong so much as make you confidently wrong, and confidence is what gets a number acted on. The defence is procedural rather than mathematical. Before believing a narrow interval, ask how many pseudo-observations the prior was worth and where they came from. If the answer is "about a hundred, from the chain-wide history", ask whether there is any reason this outlet might not be chain-wide. At Northgate there was: it is the newest site, in a different kind of neighbourhood, and nobody had asked.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers what happens when the data are large</span>
+      <h2>Data do not wash out a prior. They outvote it.</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">The reassurance people reach for is that with enough data the prior stops mattering. That is true in the limit and misleading before it. Westfield is Halloway's flagship with 900 vouchers a month, fifty times Northgate's volume, and the same four priors applied to Westfield's 127 redemptions do not agree.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Westfield, n = 900, observed rate 0.141, true rate 0.150. Four bars show how far each prior moves the posterior mean away from the observed rate: flat plus 0.0008, weak minus 0.0003, informed minus 0.0021, and wrong plus 0.0259. The wrong prior's bar is more than ten times longer than any other. A note explains that a prior worth 100 pseudo-observations still carries weight 100 over 1000, one tenth, at n equals 900.">
+        <style>
+          .a1bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a1bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a1bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a1bN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a1bW { font: 700 11px Inter, sans-serif; fill: #fff; }
+        </style>
+        <text class="a1bH" x="14" y="22">Westfield, n = 900. How far each prior still moves the answer from what was observed.</text>
+
+        <!-- baseline at x=300, scale: 0.030 -> 500px  => 1 unit = 16667px -->
+        <line x1="300" y1="44" x2="300" y2="236" stroke="#6B5460" stroke-width="1.5"></line>
+        <text class="a1bM" x="300" y="252" text-anchor="middle">observed 0.141</text>
+
+        <text class="a1bL" x="14" y="72">Flat · 2 pseudo-obs</text>
+        <rect x="300" y="62" width="13" height="16" rx="3" fill="#FBCFE8"></rect>
+        <text class="a1bN" x="322" y="75">+0.0008</text>
+
+        <text class="a1bL" x="14" y="116">Weak · 16 pseudo-obs</text>
+        <rect x="295" y="106" width="5" height="16" rx="3" fill="#FBCFE8"></rect>
+        <text class="a1bN" x="322" y="119">-0.0003</text>
+
+        <text class="a1bL" x="14" y="160">Informed · 100 pseudo-obs</text>
+        <rect x="265" y="150" width="35" height="16" rx="3" fill="#F9A8D4"></rect>
+        <text class="a1bN" x="322" y="163">-0.0021</text>
+
+        <text class="a1bL" x="14" y="204">Wrong · 100 pseudo-obs</text>
+        <rect x="300" y="194" width="432" height="16" rx="3" fill="#9D174D"></rect>
+        <text class="a1bW" x="312" y="207">+0.0259  still there at n = 900</text>
+
+        <rect x="14" y="264" width="852" height="26" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a1bN" x="28" y="282">At n = 900 a prior worth 100 pseudo-observations still holds one vote in ten. The wrong one spends its tenth on being wrong.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - fifty times the data, and the wrong prior still moves the estimate by 0.026.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The arithmetic of outvoting<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>At Westfield the data weight is 900 / (900 + 100) = 0.90 for either hundred-observation prior. The informed prior's mean of 0.120 sits close to the observed 0.141, so its tenth of a vote moves the answer by 0.002. The wrong prior's mean of 0.400 sits far away, so the same tenth of a vote moves the answer by 0.026. Same weight, different distance, very different damage.</p>
+        <p>That is the whole rule. A prior's cost is its weight times its distance from the truth. Weight falls as data arrive, but only as n / (n + pseudo-observations), so a hundred-observation prior is still worth a tenth at nine hundred and a twentieth at nineteen hundred. Distance does not fall at all. If the belief was wrong, more data shrink the damage slowly and never to zero on any dataset you will actually have.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's finance team argued that the flagship's volume made the prior irrelevant, and used the Westfield number to set the chain-wide budget. Under the sensible prior that was nearly true. Had anyone used the 0.400 prior a rival chain's data had suggested, the flagship estimate would have carried a 0.026 error into a budget built on 900 customers a month, and nobody would have seen it, because 900 sounds like enough.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The question to ask about any prior<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Two questions, in order. How many pseudo-observations is this prior worth, and where did they come from. The first turns a vague word into a number that can be compared to the sample size in front of you. The second turns the number into a bet you can evaluate: if the pseudo-observations come from the chain-wide history and the outlet is unlike the chain, the bet is bad regardless of how carefully it was made.</p>
+        <p>A prior nobody can express as a pseudo-count has not been chosen; it has been defaulted. Session 5 takes up the argument about how to choose well. Session 3 shows the case where the prior is learned from the other outlets instead of asserted, which is where the discipline earns its reputation. Tonight's job was narrower: to make sure that when session 3 shows a prior working, you already know what it costs when it does not.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Price a prior you are already using</h2>
+      <span class="tag build">20 min build-along</span>
+    </div>
+    <p class="lede">No laptop. Pick one small-data number your area acts on, a conversion rate on a new product, a defect rate on a short run, a response rate in a small region, and find the belief that is already sitting behind it. There always is one. The build-along is about making it visible and putting a vote count on it.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Name the rate and the sample.</strong> "Redemption at Northgate, eighteen vouchers, one redeemed." If you cannot state the sample size, that is the first finding: somebody is acting on a rate whose evidence nobody has counted.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Find the belief.</strong> What did people expect before the number came in, and why. "About 0.12, because that is what the chain does." Write it as a rate and a reason, not as a feeling.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Put a vote count on it.</strong> How many customers' worth of evidence is that belief? Ten? A hundred? A thousand? Most people, asked directly, land somewhere between fifty and two hundred. Write the number down before anyone can revise it.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Compute the weight.</strong> Real sample over real sample plus pseudo-count. Eighteen over one hundred and eighteen is 0.15. Say the result out loud: "the evidence carries fifteen percent of this estimate".</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask where the pseudo-observations came from.</strong> The chain? Last year? A rival? A slide? Then ask whether this case is like that source. If there is a specific reason it might not be, you have found the Northgate risk.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the sentence.</strong> "This estimate is [weight] evidence and [1 minus weight] belief, and the belief comes from [source], which may not apply because [reason]." If the sentence is uncomfortable, the estimate was already uncomfortable; you have only made it visible.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The question that changes the meeting.</strong> "How many observations is that belief worth?" It has no technical words in it, it can be asked of anyone, and it has never once been answered with a number smaller than the sample in the room without somebody's face changing.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">An analyst describes their prior as Beta(12, 88). A colleague says that sounds reasonable and moves on. What has the colleague not asked?</p>
+      <button class="qopt" type="button">A · Whether a Beta distribution is the right family for a rate</button>
+      <button class="qopt" type="button">B · How many pseudo-observations the prior is worth, which is 100, and how that compares to the real sample</button>
+      <button class="qopt" type="button">C · Whether the analyst has run the analysis with a 95 percent interval instead of 89</button>
+      <p class="qwhy">Beta(12, 88) behaves as if a hundred customers had already been observed. Against eighteen real ones the belief carries 85 percent of the estimate. That ratio, not the family or the interval level, is what decides whether the prior is doing the talking.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">Westfield has 900 vouchers a month. A team argues that at this volume the choice of prior cannot matter. On the measured data, what is true?</p>
+      <button class="qopt" type="button">A · Correct: at n = 900 every prior gives the same answer to three decimals</button>
+      <button class="qopt" type="button">B · Incorrect: the prior matters exactly as much as it did at n = 18</button>
+      <button class="qopt" type="button">C · Partly: a hundred-observation prior still holds one vote in ten, so a well-centred one moves the answer by 0.002 and a badly-centred one by 0.026</button>
+      <p class="qwhy">The prior's weight at n = 900 is 100 / 1000. What that tenth of a vote costs depends on how far the prior sits from the truth: 0.0021 for the informed prior, 0.0259 for the wrong one. Volume shrinks the weight; it does nothing to the distance.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">At Northgate the informed prior produced an interval of 0.068 to 0.159 and the truth was 0.192. What is the right lesson?</p>
+      <button class="qopt" type="button">A · An informative prior is a bet that this case resembles the cases it was built from, and Northgate did not; the cost of losing that bet is a precise interval that misses</button>
+      <button class="qopt" type="button">B · Informative priors should not be used on small samples</button>
+      <button class="qopt" type="button">C · The 89 percent interval should have been widened to 95 percent, which would have contained the truth</button>
+      <p class="qwhy">The prior encoded a true fact about the chain and applied it to the one outlet unlike the chain. Session 3 shows that a prior learned from the other eleven outlets does much better than either the informed or the flat one; the fix is a better bet, not no bet. Widening to 95 percent would not have reached 0.192 either.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 2</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Take the number you priced tonight and find out two things about the sample behind it. How many observations there actually were, and whether anyone has ever stated an interval for it rather than a point. Bring both. Session 2 is about why eighteen observations cannot give you a point at all, and what the honest alternative looks like when it has to go on a slide.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The prior as pseudo-observations</span>
+        <span class="note">A Beta(a, b) prior behaves as a + b already-observed customers; the posterior mean is the weighted average with weights n and a + b. The whole of Statistical Rethinking's "garden of forking data" reading, compressed to the one conversion a leader needs.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Four priors on Northgate, scored against a known truth</span>
+        <span class="note">Flat 0.020 to 0.222 contains the truth; weak, informed and wrong all miss. The informed prior, worth 100 pseudo-observations, was confidently wrong against 18 real ones.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Why large data outvote rather than erase a prior</span>
+        <span class="note">Weight falls as n over n plus pseudo-observations; distance does not fall at all. At Westfield, n = 900, the wrong prior still moves the answer by 0.0259.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Learning the prior from the other outlets</span>
+        <span class="note">Session 3. Tonight shows what an asserted prior costs; the prior estimated from the other eleven outlets is where the method earns its reputation.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">How priors should be chosen</span>
+        <span class="note">Session 5, taught as the unsettled argument it is: subjective, reference and weakly-informative positions, and Gelman, Simpson and Betancourt's resolution.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals, p-values and the frequentist sentence</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference; here the credible interval is contrasted with it in one sentence and never re-derived.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether a stated 89 percent is honest over many forecasts</span>
+        <span class="note">Not covered by design. Measuring calibration is <strong>learn-decision-intelligence-with-phoebe</strong>'s territory; this track produces the Bayesian sentence and hands the audit of it there.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 1 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>A prior is a vote count</b><span>Beta(a, b) is worth a + b pseudo-observations. Ask for the number.</span></div>
+      <div class="cheat-item"><b>Weight is n over n plus pseudo-obs</b><span>Eighteen against a hundred is 0.15. The belief carries the rest.</span></div>
+      <div class="cheat-item"><b>Cost is weight times distance</b><span>Volume shrinks the weight. Nothing shrinks the distance if the belief was wrong.</span></div>
+      <div class="cheat-item"><b>0.0259 at n = 900</b><span>A wrong hundred-observation prior still moves Westfield's answer by that much. "Enough data" is later than it sounds.</span></div>
+      <div class="cheat-item"><b>Northgate: 0.068 to 0.159 vs 0.192</b><span>The sensible prior missed, precisely. The flat one contained the truth, uselessly.</span></div>
+      <div class="cheat-item"><b>An informative prior is a bet</b><span>That this case resembles the cases it came from. Know when you are making it.</span></div>
+      <div class="cheat-item"><b>Narrow is not the same as right</b><span>The interval that misses is the one that reads like knowledge.</span></div>
+      <div class="cheat-item"><b>The meeting question</b><span>"How many observations is that belief worth?" No technical words, and it always lands.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Leader session 1 of 6 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="../index.html">← All sessions</a>
+      <a href="a2-small-data-honest-uncertainty.html">Leader session 2 · Small data, honest uncertainty →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

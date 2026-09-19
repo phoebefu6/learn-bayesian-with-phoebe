@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Leader session 4 of 6. Reading a posterior in a meeting: the probability that B beats A, the expected loss of choosing it, and why 0.915 was not enough to stop. At Westfield the rule waited for n = 100, and across 200 replays it stopped on the wrong arm twice.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Reading a posterior - learn bayesian with phoebe">
+<meta property="og:description" content="Leader session 4 of 6. A probability alone is a mood. A probability times what you stand to lose is a decision.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/a4-reading-a-posterior.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Reading a posterior - learn bayesian with phoebe">
+<meta name="twitter:description" content="P(B beats A) was 0.915 and the rule said keep going. Expected loss, the three reads of any posterior, and the 2 in 200.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Leader session 4 · Reading a posterior - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Leader session 4 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Leader session 4 of 6</div>
+    <h1>Reading a <span class="accent">posterior</span></h1>
+    <p class="sub">Halloway is testing a new voucher design, B, against the current one, A, at Westfield. After fifty customers per arm, A has redeemed at 0.100 and B at 0.200, and the analyst reports a 0.915 probability that B is the better voucher. The room wants to stop and ship B. The analyst says keep going, and not because a significance threshold has not been crossed. The reason is a second number: if you choose B now and B turns out to be the worse arm, you forfeit on average 0.0029 of redemption rate, and the rule Halloway agreed in advance says do not act until that forfeit falls below 0.001. Fifty customers later it is 0.0005, and the rule says stop. Tonight is about reading those two numbers in a meeting, knowing which one is the decision, and knowing what the rule cost when it was replayed two hundred times.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Working depth</span>
+      <span class="chip audience">Whoever signs off a number from small data</span>
+      <span class="chip audience">Product, finance and analytics leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-20 · Probability, loss, decision</span>
+      <span class="a3" style="flex:4">20-40 · Build-along: read one cold</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where session 4 sits</h2>
+    </div>
+    <p class="lede">Six sessions, 45 minutes each, no code. Sessions 1 to 3 built the estimate: what a prior costs, why eighteen observations give a distribution rather than a point, and how twelve outlets lend each other strength. Tonight the estimate has to carry a decision. Two posteriors, one for each voucher, sit on the table, and somebody has to say ship, wait, or stop. Session 5 is the argument about priors the field has not settled. Session 6 is what to require in writing so that everything you see tonight arrives in a form you can check. The example is still <strong>Halloway Bakeries</strong>, now at its flagship, Westfield, where 900 vouchers a month make an A/B test possible.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> Three reads that work on any posterior anyone puts in front of you: where is the mass, how wide is it, and what does the width cost me if I act now. The measured case where a 0.915 probability was not enough, and the number that explained why: an expected loss of 0.0029 against a threshold of 0.001. And the honest price of the rule, computed rather than promised: across 200 replays, 23 would have stopped at n = 100 and 2 of those 200 would have stopped on the wrong arm.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>A posterior is a pile of plausible answers, and you can ask it questions<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 2 left you with the idea that an estimate from small data is a distribution: a spread of plausible values for the rate, heavier where the evidence points and thinner at the edges. Tonight the useful picture is more concrete. Think of the posterior as twenty thousand plausible values written on twenty thousand slips of paper. Each slip is one way the world could be, given what you believed and what you saw. Every question you could ask about the rate becomes a question about the slips.</p>
+        <p>With two vouchers there are two piles. Draw one slip from A's pile and one from B's and compare them. Do it twenty thousand times. The share of draws in which B's slip is higher is <strong>P(B > A)</strong>, the probability that B is the better voucher. At Westfield after fifty customers per arm it was 0.915. The same draws answer a second question: in the draws where B is actually worse, how much worse is it, on average, counted across all the draws? That is the <strong>expected loss</strong> of choosing B, and at n = 50 it was 0.0029. The first number tells you how likely you are to be wrong. The second tells you what being wrong costs. Only one of them is a decision.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's product lead heard 0.915 and reached for the launch email. The analyst put the second number on the screen: choose B now, and on average you forfeit 0.0029 of redemption rate to the chance that B is the worse voucher. Halloway had agreed before the test that it would not act until that forfeit fell below 0.001. The email waited a week.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Posterior.</strong> The distribution of plausible values for a rate after the data. Tonight, twenty thousand draws from it, one pile per voucher.</li>
+          <li><strong>P(B > A).</strong> The share of paired draws in which B's rate beats A's. A probability, not a decision.</li>
+          <li><strong>Expected loss.</strong> How much redemption rate you forfeit on average if you pick this arm and it turns out to be the worse one. A probability times a stake, so it is a decision.</li>
+          <li><strong>Threshold.</strong> The expected loss below which Halloway agreed to act: 0.001. Chosen before the test, written down, and not moved during it.</li>
+          <li><strong>Stopping rule.</strong> Stop when the expected loss of the arm you would choose is below the threshold. It controls the cost of a wrong decision, not how often one happens.</li>
+          <li><strong>89 percent interval.</strong> The range holding 89 percent of the posterior, cut equally from both tails, the 5.5 and 94.5 percent points. Every interval tonight is this kind and says so.</li>
+          <li><strong>Credible interval.</strong> The Bayesian interval. It is the sentence most people think a confidence interval is: there is an 89 percent probability the rate is in here. The frequentist sentence is different, and <strong>learn-statistics-with-phoebe</strong> owns it.</li>
+          <li><strong>ROPE.</strong> A region of practical equivalence: the band of differences too small to care about. Named by Kruschke (2013), and the device that lets a posterior say "no meaningful difference" out loud.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the Westfield decision at n = 50 and n = 100</span>
+      <h2>0.915 was not enough</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">One cumulative experiment at Westfield, voucher B against voucher A, flat priors, twenty thousand posterior draws. The true rates are written into the data: A 0.150, B 0.175, a lift of 2.5 points. The first fifty customers per arm came in at 0.100 and 0.200, a gap four times the true lift, and the room saw 0.915 and wanted to stop. The same two piles of slips, read for expected loss, said something else.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels of overlapping posterior curves for voucher A and voucher B at Westfield. Left panel, n = 50 per arm, observed A 0.100 and B 0.200: the curves are wide and overlap heavily; P(B > A) is 0.915, the expected loss of choosing B is 0.0029 and of choosing A is 0.0984, and the rule says keep going because 0.0029 is above the 0.001 threshold. Right panel, n = 100 per arm, same observed rates: the curves are narrower and overlap less; P(B > A) is 0.975, the expected loss of choosing B is 0.0005 and of choosing A is 0.0989, and the rule says stop and choose B. Dashed lines mark the true rates, A 0.150 and B 0.175, in both panels.">
+        <style>
+          .a4aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a4aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a4aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a4aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a4aN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a4aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .a4aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .a4aW { font: 700 11px Inter, sans-serif; fill: #fff; }
+          .a4aA { font: 700 11px Inter, sans-serif; fill: #9D174D; }
+          .a4aK { font: 700 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="a4aH" x="14" y="22">Westfield, B against A. The same two posteriors, read for probability and for expected loss.</text>
+
+        <!-- left panel: n = 50 -->
+        <text class="a4aL" x="40" y="48">n = 50 per arm · observed A 0.100, B 0.200</text>
+        <line x1="40" y1="290" x2="420" y2="290" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="a4aM" x="40" y="308" text-anchor="middle">0.00</text>
+        <text class="a4aM" x="135" y="308" text-anchor="middle">0.10</text>
+        <text class="a4aM" x="230" y="308" text-anchor="middle">0.20</text>
+        <text class="a4aM" x="325" y="308" text-anchor="middle">0.30</text>
+        <text class="a4aM" x="420" y="308" text-anchor="middle">0.40</text>
+        <path d="M59.0,290.0 L59.0,287.9 L68.5,280.0 L78.0,263.6 L87.5,239.6 L97.0,212.2 L106.5,186.0 L116.0,165.4 L125.5,152.7 L135.0,148.5 L144.5,152.2 L154.0,162.0 L163.5,175.8 L173.0,191.6 L182.5,208.0 L192.0,223.5 L201.5,237.5 L211.0,249.5 L220.5,259.4 L230.0,267.4 L239.5,273.6 L249.0,278.4 L258.5,281.9 L268.0,284.4 L277.5,286.2 L287.0,287.5 L296.5,288.4 L306.0,288.9 L315.5,289.3 L325.0,289.6 L334.5,289.7 L344.0,289.8 L353.5,289.9 L363.0,289.9 L372.5,290.0 Z" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></path>
+        <path d="M97.0,290.0 L97.0,289.6 L106.5,288.8 L116.0,287.0 L125.5,283.7 L135.0,278.4 L144.5,270.7 L154.0,260.7 L163.5,248.7 L173.0,235.5 L182.5,221.9 L192.0,209.1 L201.5,198.2 L211.0,189.9 L220.5,184.7 L230.0,183.0 L239.5,184.7 L249.0,189.2 L258.5,196.2 L268.0,204.9 L277.5,214.6 L287.0,224.8 L296.5,234.8 L306.0,244.3 L315.5,252.9 L325.0,260.5 L334.5,266.9 L344.0,272.3 L353.5,276.7 L363.0,280.2 L372.5,282.9 L382.0,284.9 L391.5,286.4 L401.0,287.6 L410.5,288.3 L420.0,288.9 L420.0,290.0 Z" fill="#F0FDF4" fill-opacity="0.8" stroke="#15803D" stroke-width="1.5"></path>
+        <line x1="182" y1="120" x2="182" y2="290" stroke="#9D174D" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <line x1="206" y1="140" x2="206" y2="290" stroke="#15803D" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <text class="a4aM" x="120" y="116">true A 0.150</text>
+        <text class="a4aM" x="212" y="136">true B 0.175</text>
+        <text class="a4aA" x="110" y="140">A</text>
+        <text class="a4aK" x="236" y="176">B</text>
+        <rect x="240" y="60" width="180" height="70" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a4aN" x="252" y="80">P(B > A) = 0.915</text>
+        <text class="a4aB" x="252" y="98">E[loss] choose B 0.0029</text>
+        <text class="a4aB" x="252" y="114">E[loss] choose A 0.0984</text>
+        <rect x="40" y="326" width="380" height="24" rx="12" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="a4aR" x="230" y="343" text-anchor="middle">rule: keep going · 0.0029 is above the 0.001 threshold</text>
+
+        <!-- right panel: n = 100 -->
+        <text class="a4aL" x="470" y="48">n = 100 per arm · observed A 0.100, B 0.200</text>
+        <line x1="470" y1="290" x2="850" y2="290" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="a4aM" x="470" y="308" text-anchor="middle">0.00</text>
+        <text class="a4aM" x="565" y="308" text-anchor="middle">0.10</text>
+        <text class="a4aM" x="660" y="308" text-anchor="middle">0.20</text>
+        <text class="a4aM" x="755" y="308" text-anchor="middle">0.30</text>
+        <text class="a4aM" x="850" y="308" text-anchor="middle">0.40</text>
+        <path d="M498.5,290.0 L498.5,289.0 L508.0,283.0 L517.5,264.7 L527.0,229.5 L536.5,182.1 L546.0,134.9 L555.5,101.7 L565.0,90.2 L574.5,100.4 L584.0,126.3 L593.5,159.7 L603.0,193.4 L612.5,222.8 L622.0,245.8 L631.5,262.4 L641.0,273.6 L650.5,280.7 L660.0,284.9 L669.5,287.3 L679.0,288.6 L688.5,289.3 L698.0,289.7 L707.5,289.9 L717.0,289.9 L726.5,290.0 Z" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></path>
+        <path d="M555.5,290.0 L555.5,289.5 L565.0,288.2 L574.5,285.1 L584.0,278.7 L593.5,267.6 L603.0,250.9 L612.5,229.1 L622.0,204.0 L631.5,179.1 L641.0,158.1 L650.5,144.3 L660.0,139.6 L669.5,144.1 L679.0,156.5 L688.5,174.3 L698.0,194.7 L707.5,215.3 L717.0,234.1 L726.5,249.9 L736.0,262.5 L745.5,271.9 L755.0,278.5 L764.5,283.0 L774.0,285.9 L783.5,287.7 L793.0,288.7 L802.5,289.3 L812.0,289.7 L821.5,289.8 L831.0,289.9 L840.5,290.0 Z" fill="#F0FDF4" fill-opacity="0.8" stroke="#15803D" stroke-width="1.5"></path>
+        <line x1="612" y1="120" x2="612" y2="290" stroke="#9D174D" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <line x1="636" y1="140" x2="636" y2="290" stroke="#15803D" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <text class="a4aM" x="550" y="116" text-anchor="end">true A 0.150</text>
+        <text class="a4aM" x="642" y="136">true B 0.175</text>
+        <text class="a4aA" x="540" y="86">A</text>
+        <text class="a4aK" x="666" y="116">B</text>
+        <rect x="670" y="60" width="180" height="70" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a4aN" x="682" y="80">P(B > A) = 0.975</text>
+        <text class="a4aB" x="682" y="98">E[loss] choose B 0.0005</text>
+        <text class="a4aB" x="682" y="114">E[loss] choose A 0.0989</text>
+        <rect x="470" y="326" width="380" height="24" rx="12" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a4aG" x="660" y="343" text-anchor="middle">rule: stop, choose B · 0.0005 is below 0.001</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the probability moved from 0.915 to 0.975. The expected loss moved from three times the threshold to half of it. Only the second movement was a decision.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why the rule said keep going at 0.915<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>At n = 50 the two piles of slips overlap a great deal. In 91.5 percent of paired draws B's slip is higher, which sounds decisive, but look at the other 8.5 percent. In those draws A is the better voucher, and in some of them it is better by a lot, because fifty customers cannot pin either rate down. Average the shortfall across every draw, counting zero for the draws where B wins, and you get 0.0029: on average, choosing B now forfeits 0.0029 of redemption rate to the possibility that B is the worse arm. Halloway's threshold was 0.001. The rule said keep going, and the reason was not that 0.915 fell short of some magic cut-off. The reason was that being wrong was still expensive.</p>
+        <p>Fifty customers later, with the observed rates unchanged at 0.100 and 0.200, the piles have narrowed. P(B > A) rose to 0.975, a modest move. The expected loss of choosing B fell to 0.0005, a move by a factor of six, because the draws where A wins are now both rarer and closer. That is the general shape: <strong>the probability tells you how often you would be wrong, the expected loss tells you how much it would cost, and a threshold on the cost is what makes it a rule you can defend afterwards</strong>. The other side of the ledger is worth reading too. The expected loss of choosing A was 0.0984 at n = 50 and 0.0989 at n = 100. Nobody in the room was proposing A, but the number says why: staying with the current voucher was the expensive option all along.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Expected loss, in words a finance director will accept<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The sentence is: "If we choose B and B is actually the worse voucher, we forfeit on average this much redemption rate." It is a probability multiplied by a stake, summed over every way the world could be, and that is exactly the shape of every other expected-cost number a finance team already uses. Nothing about it is novel except that the probabilities come from a posterior rather than a spreadsheet assumption.</p>
+        <p>Two properties make it the right number to put a threshold on. It falls as data arrive, because the losing draws get rarer and smaller together, so a threshold on it will eventually be met if a real difference exists. And it is in the units of the thing you care about, redemption rate, so the threshold can be set by asking what forfeit Halloway is willing to carry, rather than by asking what probability feels comfortable. Halloway said 0.001, a tenth of a point of redemption rate. A different business would say a different number, and that is the point: the threshold is a business decision made in advance, and the posterior only reports whether it has been reached.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Credible against confidence, in one card<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Every interval tonight is an 89 percent equal-tailed credible interval: the 5.5 and 94.5 percent points of the posterior. It supports the sentence "there is an 89 percent probability the rate is in this range", which is the sentence almost everybody hears when a confidence interval is read out in a meeting. The frequentist confidence interval supports a different sentence, about the procedure rather than the rate, and <strong>learn-statistics-with-phoebe</strong> session b7 owns that sentence. It is not re-derived here. What matters for reading a posterior is only this: when a Bayesian analyst says 89 percent, they mean it about the rate in front of you, and you are allowed to use it that way.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers what the rule costs and what a posterior can also say</span>
+      <h2>The rule is not free. It is cheap.</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">A stopping rule that is applied as the data arrive will sometimes stop on the wrong arm. That is true of this one too, and the honest thing is to count how often rather than to claim it does not happen. The Westfield experiment was replayed two hundred times from different seeds, and the rule was applied at n = 100 in each. The count is below, alongside the path the real experiment took.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The stopping path of the Westfield experiment at three sample sizes, with the expected loss of choosing B drawn as a bar against a dashed threshold line at 0.001. At n = 50 per arm, P(B > A) is 0.915 and the expected loss of choosing B is 0.0029, above the threshold, so the rule says keep going. At n = 100, P(B > A) is 0.975 and the expected loss is 0.0005, below the threshold, so the rule says stop and choose B. At n = 200, P(B > A) is 0.980 and the expected loss is 0.0003, still below, so the verdict is unchanged. A note at the bottom reports that across 200 seeded replays stopping at n = 100 by the same rule, 23 would have stopped and 2 of the 200 would have stopped on the wrong arm.">
+        <style>
+          .a4bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a4bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a4bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a4bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a4bN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a4bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .a4bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .a4bW { font: 700 11px Inter, sans-serif; fill: #fff; }
+          .a4bT { font: 700 11px Inter, sans-serif; fill: #831843; }
+        </style>
+        <text class="a4bH" x="14" y="22">The stopping path at Westfield. Expected loss of choosing B, against the threshold Halloway set in advance.</text>
+
+        <!-- column headers -->
+        <text class="a4bM" x="14" y="56">n per arm</text>
+        <text class="a4bM" x="130" y="56">P(B > A)</text>
+        <text class="a4bM" x="240" y="56">E[loss] if choose B  (bar scale: 0 to 0.003)</text>
+        <text class="a4bM" x="700" y="56">rule says</text>
+
+        <!-- threshold line at 0.001 -> x = 240 + 0.001 * 110000 = 350 -->
+        <line x1="350" y1="66" x2="350" y2="236" stroke="#831843" stroke-width="1.5" stroke-dasharray="5 4"></line>
+        <text class="a4bT" x="356" y="76">threshold 0.001</text>
+
+        <!-- row n = 50: 0.0029 -> 319px -->
+        <text class="a4bL" x="14" y="104">50</text>
+        <text class="a4bM" x="14" y="120">A 0.100 · B 0.200</text>
+        <text class="a4bN" x="130" y="104">0.915</text>
+        <rect x="240" y="92" width="319" height="16" rx="3" fill="#9D174D"></rect>
+        <text class="a4bW" x="250" y="105">0.0029</text>
+        <text class="a4bM" x="240" y="122">choose A instead: 0.0984</text>
+        <rect x="690" y="88" width="176" height="24" rx="12" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="a4bR" x="778" y="105" text-anchor="middle">keep going</text>
+
+        <!-- row n = 100: 0.0005 -> 55px -->
+        <text class="a4bL" x="14" y="160">100</text>
+        <text class="a4bM" x="14" y="176">A 0.100 · B 0.200</text>
+        <text class="a4bN" x="130" y="160">0.975</text>
+        <rect x="240" y="148" width="55" height="16" rx="3" fill="#15803D"></rect>
+        <text class="a4bN" x="303" y="161">0.0005</text>
+        <text class="a4bM" x="240" y="178">choose A instead: 0.0989</text>
+        <rect x="690" y="144" width="176" height="24" rx="12" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a4bG" x="778" y="161" text-anchor="middle">stop, choose B</text>
+
+        <!-- row n = 200: 0.0003 -> 33px -->
+        <text class="a4bL" x="14" y="216">200</text>
+        <text class="a4bM" x="14" y="232">A 0.115 · B 0.190</text>
+        <text class="a4bN" x="130" y="216">0.980</text>
+        <rect x="240" y="204" width="33" height="16" rx="3" fill="#15803D"></rect>
+        <text class="a4bN" x="281" y="217">0.0003</text>
+        <text class="a4bM" x="240" y="234">choose A instead: 0.0743</text>
+        <rect x="690" y="200" width="176" height="24" rx="12" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a4bG" x="778" y="217" text-anchor="middle">stop, choose B</text>
+
+        <!-- honest error rate -->
+        <rect x="14" y="258" width="852" height="66" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="a4bN" x="28" y="280">The honest price, replayed 200 times from different seeds and stopped at n = 100 by the same rule:</text>
+        <text class="a4bB" x="28" y="298">23 of 200 replays would have stopped. 2 of the 200 would have stopped on the wrong arm.</text>
+        <text class="a4bB" x="28" y="316">The rule controls the cost of a wrong decision, not how often one happens. Those 2 are how often.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the bar has to fall left of the dashed line before the rule will let anybody act. At n = 50 it was three times too long.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Two in two hundred, and the claim not to make<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Replay the Westfield experiment two hundred times with the same true rates and different customers, apply the rule at n = 100 each time, and 23 of the 200 would have stopped there. Of those 200 replays, 2 would have stopped on the wrong arm. State it as a count, because that is what it is. The rule kept the cost of each wrong stop small, and it did not make wrong stops impossible. Nothing does.</p>
+        <p>Which is why there is a sentence you should never hear from an analyst and never repeat: that Bayesian A/B testing "has no peeking problem" or "lets you stop whenever you like". The expected-loss rule controls the <strong>cost</strong> of a wrong decision. It does not control the <strong>frequency</strong> of one, and the 2 in 200 above is the frequency. Whether a stopping procedure applied as data arrive inflates that frequency, and by how much, is a real argument, and <strong>learn-experimentation-with-phoebe</strong> session b6 owns it. Tonight's job is only to report the measured rate and to make sure nobody in the room mistakes a cheap rule for a free one.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's board pack said "the new voucher wins, probability 0.975". The analyst added one line: "under this rule, replayed two hundred times, we would expect to ship the wrong voucher about twice, and the forfeit each time would be under a tenth of a point." The line was the difference between a number and a decision the board could own.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Kruschke and the region of practical equivalence<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>P(B > A) can only ever say which arm is ahead. It cannot say "these two are the same for any purpose that matters", because with enough data one arm is always ahead by a hair. Kruschke (2013), "Bayesian estimation supersedes the t test", <em>Journal of Experimental Psychology: General</em>, 142(2), 573-603, supplies the missing move. Decide in advance the band of differences too small to care about, the <strong>region of practical equivalence</strong>, and compare the posterior interval for the difference to it. If the interval falls entirely inside the band, you can accept "no meaningful difference" as a positive finding, something a test cannot do. If it falls entirely outside, the difference is real and large enough to act on. If it straddles, you do not know yet.</p>
+        <p>For a leader the useful part is the first case. A precise estimate that lands inside the ROPE is a licence to stop spending on a question, and it is the one outcome that a probability-of-difference alone can never deliver. Ask for the band before the data arrive, in the units of the decision: at Halloway, "a difference under half a point of redemption rate does not change what we do" would have been enough.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The three reads of any posterior<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Whatever is on the screen, three questions read it. <strong>Where is the mass?</strong> The bulk of the plausible values, the region the posterior mean and the middle of the interval both point at. <strong>How wide is it?</strong> The 89 percent equal-tailed interval, and whether its two ends would lead you to different actions. <strong>What does the width cost me if I act now?</strong> The expected loss of the action you are about to take, which is the width translated into the stake. The first two are about the estimate. The third is the decision, and it is the one the meeting is actually there to make.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Read a posterior cold</h2>
+      <span class="tag build">20 min build-along</span>
+    </div>
+    <p class="lede">No laptop. Take a comparison your area is going to make on a probability: a new design against the current one, a supplier against the incumbent, a message against the control. Whether or not anyone has computed a posterior yet, the build-along walks the six questions you will ask when they do, in the order that turns a probability into a decision you can defend afterwards.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Name the two arms and the stake.</strong> "Voucher B against voucher A, and the stake is redemption rate." If the stake is not in units anyone budgets in, translate it until it is. Expected loss is only useful in units you would notice losing.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Set the threshold before you see anything.</strong> How much of the stake are you willing to forfeit, on average, to a wrong choice? Halloway said 0.001 of redemption rate. Write yours down and date it. A threshold set after the numbers arrive is not a rule, it is a rationalisation.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask where the mass is.</strong> For each arm, the posterior mean and the 89 percent equal-tailed interval. Say the two sentences: "A is probably near 0.100, B near 0.200." Then the harder one: "and the two intervals overlap, which means the ordering is not settled."</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask for P(B > A) and refuse to stop there.</strong> Hear the number, 0.915 or whatever it is, and say out loud: "that is how often I would be wrong, not what it costs." The room will want to act on it. The whole build-along exists for this moment.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask for the expected loss of the arm you would choose.</strong> "If I choose B and B is worse, what do I forfeit on average?" Compare it to the threshold from step 2. Above: keep going. Below: act. At Westfield it was 0.0029 against 0.001 at n = 50, and 0.0005 at n = 100.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the sentence that goes in the pack.</strong> "We choose [arm]. The probability it is the better one is [P]. If it is not, we forfeit on average [expected loss] of [stake], against a threshold of [threshold] set on [date]. Replayed under this rule, we would expect to choose wrongly about [count] times in [replays]." Every bracket is a number you can be held to.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The question that changes the meeting.</strong> "If we are wrong, what does it cost us on average?" It moves the conversation from a probability, which people argue about by feel, to a forfeit in the units of the business, which people argue about with a budget. And it exposes at once whether anyone set a threshold before the data came in.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">At n = 50 per arm the posterior gave P(B > A) = 0.915 and the rule said keep going. Why?</p>
+      <button class="qopt" type="button">A · Because 0.915 is below the conventional 0.95 cut-off for declaring a result</button>
+      <button class="qopt" type="button">B · Because flat priors are unreliable at n = 50 and the analysis should have used an informed prior</button>
+      <button class="qopt" type="button">C · Because the expected loss of choosing B was 0.0029, about three times the 0.001 threshold Halloway had set in advance</button>
+      <p class="qwhy">The rule is on the expected loss, not on the probability. In the 8.5 percent of draws where A was better, it was often better by a lot at n = 50, so the average forfeit from choosing B was still 0.0029. There is no probability cut-off in the rule at all; fifty customers later the loss was 0.0005 and the same rule said stop.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">Across 200 seeded replays of the Westfield experiment, stopping at n = 100 by the same rule, 23 would have stopped and 2 would have stopped on the wrong arm. What does that number tell you about the rule?</p>
+      <button class="qopt" type="button">A · That the rule has no peeking problem, since 2 in 200 is small enough to ignore</button>
+      <button class="qopt" type="button">B · That the rule controls the cost of a wrong decision, not its frequency, and 2 in 200 is the measured frequency at that sample size</button>
+      <button class="qopt" type="button">C · That the threshold of 0.001 was too loose and should be tightened until the count reaches zero</button>
+      <p class="qwhy">The expected-loss rule keeps each wrong stop cheap. It does not make them impossible, and the honest thing is to report the count. Whether a rule applied as data arrive inflates that count is the peeking argument, and learn-experimentation-with-phoebe b6 owns it. No threshold drives the count to zero on finite data.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">An analyst reports an 89 percent credible interval for an outlet's redemption rate, from 0.124 to 0.161. What are you allowed to say in the meeting?</p>
+      <button class="qopt" type="button">A · "There is an 89 percent probability the rate is between 0.124 and 0.161", because that is exactly what a credible interval claims</button>
+      <button class="qopt" type="button">B · "If we repeated this many times, 89 percent of such intervals would contain the rate", because all intervals mean that</button>
+      <button class="qopt" type="button">C · Nothing until it has been converted to a 95 percent confidence interval</button>
+      <p class="qwhy">The credible interval is the sentence everybody thinks a confidence interval is, and for a credible interval it is true. The sentence in B belongs to the frequentist confidence interval, which learn-statistics-with-phoebe b7 owns and this session does not re-derive. Every interval here is 89 percent equal-tailed because that is the tooling's default; nothing needs converting.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 5</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Find one decision your area made in the last year on a probability alone: "80 percent likely to work", "very likely to convert", "probably the better supplier". Write down what the stake was, in units somebody budgets, and what a wrong choice would have forfeited on average. Then write down what threshold you would have set, in those units, before seeing anything. Bring the three numbers. Session 5 turns to the other end of the analysis, the prior, and the argument about how to choose one that the field has not settled. It helps to arrive knowing what your own decisions are actually worth.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">P(B > A) and expected loss</span>
+        <span class="note">The probability that B is the better arm, and the average forfeit if you choose B and it is not. At Westfield, n = 50: 0.915 and 0.0029. Only the second is a decision.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The stopping rule, applied to one cumulative experiment</span>
+        <span class="note">Stop when the expected loss of the chosen arm is below 0.001. Keep going at n = 50; stop and choose B at n = 100, where the loss was 0.0005 and P(B > A) was 0.975.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The honest error rate, as a count</span>
+        <span class="note">200 seeded replays, stopped at n = 100 by the same rule: 23 would have stopped, 2 of the 200 on the wrong arm. The rule controls cost, not frequency.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Kruschke (2013) and the region of practical equivalence</span>
+        <span class="note">"Bayesian estimation supersedes the t test", Journal of Experimental Psychology: General, 142(2), 573-603. The ROPE lets a precise posterior accept "no meaningful difference", which a test cannot.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Credible against confidence</span>
+        <span class="note">Stated in one card: the credible interval is the sentence everybody thinks a confidence interval is. The frequentist sentence itself is <strong>learn-statistics-with-phoebe</strong> b7's and is not re-derived.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">The peeking argument, power, randomisation</span>
+        <span class="note">Not covered by design. <strong>learn-experimentation-with-phoebe</strong> b2, b3 and b6 own the mechanics of running a test and the argument about stopping early; this session reports the measured 2 in 200 and hands the argument over.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether a stated probability is honest over many forecasts</span>
+        <span class="note">Not covered by design. Measuring calibration is <strong>learn-decision-intelligence-with-phoebe</strong>'s territory; this track produces P(B > A) and hands the audit of it there.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 4 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>A probability alone is a mood</b><span>A probability times what you stand to lose is a decision. Ask for the second number.</span></div>
+      <div class="cheat-item"><b>Expected loss, in words</b><span>"If I pick this arm and it is the worse one, how much do I forfeit on average?" In the units of the stake.</span></div>
+      <div class="cheat-item"><b>0.915 was not enough</b><span>At n = 50 the expected loss of choosing B was 0.0029 against a threshold of 0.001. Not a significance cut-off; a cost.</span></div>
+      <div class="cheat-item"><b>Stop at n = 100</b><span>P(B > A) 0.975, expected loss 0.0005. The probability moved a little; the loss moved by a factor of six.</span></div>
+      <div class="cheat-item"><b>2 in 200</b><span>Replayed and stopped at n = 100, 23 would have stopped and 2 on the wrong arm. Say it as a count. The rule is cheap, not free.</span></div>
+      <div class="cheat-item"><b>The claim not to make</b><span>Never "no peeking problem" or "stop whenever you like". The rule controls cost, not frequency. learn-experimentation b6 owns the argument.</span></div>
+      <div class="cheat-item"><b>Credible against confidence</b><span>"89 percent probability the rate is in here" is the credible sentence, and it is true. The frequentist sentence is different and lives in learn-statistics b7.</span></div>
+      <div class="cheat-item"><b>The three reads</b><span>Where is the mass, how wide is it, and what does the width cost me if I act now. The third one is the meeting.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Leader session 4 of 6 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="a3-borrowing-strength.html">← Leader session 3 · Borrowing strength</a>
+      <a href="a5-the-prior-argument.html">Leader session 5 · The prior argument →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

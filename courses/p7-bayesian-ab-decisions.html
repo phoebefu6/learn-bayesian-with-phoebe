@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 7 of 10. The decision layer of a Bayesian A/B test: P(B beats A), expected loss as a Monte Carlo over two posteriors, Kruschke's region of practical equivalence, and a stopping rule whose error rate is counted. At Westfield P(B beats A) was 0.915 at n = 50 and the rule said keep going; it stopped at n = 100, and across 200 replays it stopped on the wrong arm twice.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Bayesian A/B decisions - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 7 of 10. Expected loss is E[max(theta_A minus theta_B, 0)], twenty lines of numpy, and the sentence that turns a probability into a decision.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p7-bayesian-ab-decisions.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bayesian A/B decisions - learn bayesian with phoebe">
+<meta name="twitter:description" content="P(B beats A) 0.915, expected loss 0.0029, threshold 0.001: keep going. Fifty customers later, 0.0005: stop. Replayed 200 times, wrong twice.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 7 · Bayesian A/B decisions - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 7 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 7 of 10</div>
+    <h1>Bayesian A/B <span class="accent">decisions</span></h1>
+    <p class="sub">Sessions 1 to 6 built posteriors. Tonight two of them have to produce a decision. Halloway is running a new voucher design, B, against the current one, A, at Westfield, as one cumulative experiment: the first fifty customers per arm are the first fifty of the same three thousand. The true rates are written into the generator, A 0.150 and B 0.175, a lift of 2.5 points. After fifty customers per arm the observed rates were 0.100 and 0.200 and P(B &gt; A) was 0.915, and the rule Halloway wrote down in advance said keep going. The rule is not on the probability. It is on the expected loss of the arm you would choose, E[max(theta_A - theta_B, 0)] for choosing B, a Monte Carlo over the two posteriors, and at n = 50 that was 0.0029 against a threshold of 0.001. At n = 100 it was 0.0005 and the rule stopped. The build-along computes both numbers in numpy, adds Kruschke's region of practical equivalence as a second rule, and then does the thing most write-ups skip: replays the experiment to count how often the rule stops on the wrong arm.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who has to call an A/B test</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-16 · Probability, loss, ROPE</span>
+      <span class="a3" style="flex:5">16-40 · Build-along: the rule and its error rate</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where session 7 sits</h2>
+    </div>
+    <p class="lede">Session 5 fitted one rate and session 6 fitted twelve at once. Tonight there are two, one per voucher, and the question is no longer what the rate is but which arm to ship. That is a decision, and a decision needs a stake as well as a probability. The whole session is the arithmetic that joins the two: the share of paired posterior draws in which B is ahead, and the average shortfall in the draws where it is not. Sessions 8 and 9 take the fitted model back to the data it came from, and then into the room where the number is read aloud.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A function that takes two Beta posteriors and returns P(B &gt; A) and both expected losses, reproducing the Westfield canon: 0.915 and 0.0029 at n = 50, 0.975 and 0.0005 at n = 100. A second decision rule, Kruschke's ROPE, that can say "no meaningful difference" out loud, which a probability of superiority never can. And the honest price of the stopping rule, counted rather than promised: across 200 seeded replays stopping at n = 100, 23 would have stopped and 2 of the 200 would have stopped on the wrong arm.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Two posteriors, one subtraction, twenty thousand times<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>With flat Beta(1, 1) priors, each arm's posterior after the first fifty customers is exact and conjugate, session 1's arithmetic: five redemptions of fifty for A gives Beta(6, 46), ten of fifty for B gives Beta(11, 41). Draw 20,000 values from each. Pair them up. Every pair is one way the world could be, given what was seen, and every question about the decision is a question about the pairs.</p>
+        <p><strong>P(B &gt; A)</strong> is the share of pairs in which B's draw is higher: 0.915 at n = 50. <strong>Expected loss of choosing B</strong> is the mean over all pairs of max(theta_A - theta_B, 0): in the pairs where A is ahead, how far ahead, and zero everywhere else. At n = 50 that mean was 0.0029. The mirror, E[max(theta_B - theta_A, 0)], is the expected loss of choosing A, and it was 0.0984. Three numbers from the same two arrays, and only the losses are in the units of the business. Halloway's rule, written before the test, was to stop when the expected loss of the chosen arm fell below 0.001. At 0.0029, three times the threshold, it said keep going.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The product lead at Halloway read 0.915 as "91.5 percent sure" and wanted to ship. The analyst did not argue about the probability. She showed the 8.5 percent of pairs where A won, and how far A won by in those pairs at fifty customers, and the average of that shortfall was the 0.0029. "That is what we forfeit on average if B is the wrong call. The rule says under a tenth of a point." Fifty customers later the same arithmetic gave 0.0005 and she shipped it herself.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>P(B &gt; A).</strong> The share of paired posterior draws in which B is ahead. A probability of superiority. Not a decision.</li>
+          <li><strong>Expected loss of choosing B.</strong> E[max(theta_A - theta_B, 0)], estimated as the mean of that quantity over the paired draws. In the units of the rate. The mirror is the expected loss of choosing A.</li>
+          <li><strong>Threshold.</strong> The expected loss below which Halloway agreed to act: 0.001. Set before the data, dated, and not moved.</li>
+          <li><strong>Stopping rule.</strong> Stop when the expected loss of the arm you would choose is below the threshold. Controls the cost of a wrong stop, not how often one happens.</li>
+          <li><strong>ROPE.</strong> Region of practical equivalence, Kruschke (2013). A band of differences too small to act on, compared against the posterior interval for the difference. The rule that can accept "no difference".</li>
+          <li><strong>89 percent equal-tailed interval.</strong> The 5.5 and 94.5 percent quantiles of the draws. The ArviZ 1.x default, and the interval every ROPE comparison tonight uses.</li>
+          <li><strong>Wrong-stop rate.</strong> Across replays of the experiment from fresh seeds, the share that stopped on the arm that is truly worse. At Westfield, 2 of 200 at n = 100. A count, never a promise.</li>
+          <li><strong>Cumulative experiment.</strong> The n = 100 customers include the n = 50 customers. One test read at six points, not six tests.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers expected loss as a Monte Carlo and the ROPE as a second rule</span>
+      <h2>The posterior of the difference</h2>
+      <span class="tag concept">8 min live</span>
+    </div>
+    <p class="lede">Every decision number tonight lives on one distribution: theta_B - theta_A, the posterior of the difference, built by subtracting the paired draws. P(B &gt; A) is the mass to the right of zero. The expected loss of choosing B is the mass to the left of zero, weighted by how far left it sits. The ROPE is a band around zero that the interval either clears, sits inside, or straddles. The figure draws that one distribution at n = 50 and at n = 100, with the loss region shaded.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 370" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels showing the posterior of the difference theta B minus theta A at Westfield under flat priors. Left panel, n = 50 per arm, observed A 0.100 and B 0.200: a wide hill centred right of zero, with the part left of zero shaded as the loss region; P(B > A) is 0.915, the expected loss of choosing B is 0.0029, of choosing A 0.0984, and the verdict pill reads keep going because 0.0029 is above the 0.001 threshold. Right panel, n = 100 per arm, same observed rates: a narrower hill with a much smaller shaded tail left of zero; P(B > A) is 0.975, the expected loss of choosing B is 0.0005, of choosing A 0.0989, and the verdict pill reads stop, choose B. In both panels a thin grey band around zero marks an example ROPE of half a point either side, labelled as an example choice.">
+        <style>
+          .p7aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p7aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p7aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p7aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p7aN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .p7aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p7aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .p7aT { font: 700 11px Inter, sans-serif; fill: #831843; }
+        </style>
+        <text class="p7aH" x="14" y="22">Westfield, the posterior of theta_B minus theta_A. The shaded tail is where choosing B is the wrong call.</text>
+
+        <!-- left panel: n = 50 -->
+        <text class="p7aL" x="40" y="48">n = 50 per arm · observed A 0.100, B 0.200</text>
+        <line x1="40" y1="270" x2="420" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="p7aM" x="82" y="288" text-anchor="middle">-0.10</text>
+        <text class="p7aM" x="167" y="288" text-anchor="middle">0</text>
+        <text class="p7aM" x="251" y="288" text-anchor="middle">0.10</text>
+        <text class="p7aM" x="336" y="288" text-anchor="middle">0.20</text>
+        <text class="p7aM" x="420" y="288" text-anchor="middle">0.30</text>
+        <path d="M43.2,270.0 L43.2,269.3 L49.5,269.1 L55.8,269.0 L62.2,268.6 L68.5,267.8 L74.8,267.2 L81.2,266.2 L87.5,264.5 L93.8,263.6 L100.2,261.6 L106.5,259.2 L112.8,256.6 L119.2,253.4 L125.5,249.4 L131.8,244.3 L138.2,237.7 L144.5,231.7 L150.8,224.6 L157.2,216.0 L163.5,205.2 L169.8,197.3 L176.2,184.7 L182.5,175.9 L188.8,160.2 L195.2,149.9 L201.5,137.9 L207.8,130.6 L214.2,118.0 L220.5,111.2 L226.8,105.1 L233.2,98.9 L239.5,95.5 L245.8,90.0 L252.2,93.7 L258.5,95.3 L264.8,102.7 L271.2,109.2 L277.5,115.5 L283.8,125.4 L290.2,138.6 L296.5,147.4 L302.8,159.1 L309.2,166.7 L315.5,180.5 L321.8,191.7 L328.2,200.4 L334.5,211.0 L340.8,219.3 L347.2,227.1 L353.5,232.1 L359.8,239.0 L366.2,244.3 L372.5,249.6 L378.8,253.3 L385.2,256.3 L391.5,259.1 L397.8,262.1 L404.2,263.4 L410.5,264.7 L416.8,265.9 L416.8,270.0 Z" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></path>
+        <path d="M43.2,270.0 L43.2,269.3 L49.5,269.1 L55.8,269.0 L62.2,268.6 L68.5,267.8 L74.8,267.2 L81.2,266.2 L87.5,264.5 L93.8,263.6 L100.2,261.6 L106.5,259.2 L112.8,256.6 L119.2,253.4 L125.5,249.4 L131.8,244.3 L138.2,237.7 L144.5,231.7 L150.8,224.6 L157.2,216.0 L163.5,205.2 L163.5,270.0 Z" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"></path>
+        <rect x="162.5" y="140" width="8.4" height="130" fill="#E4CBD6" fill-opacity="0.7"></rect>
+        <line x1="166.7" y1="80" x2="166.7" y2="270" stroke="#1F1420" stroke-width="1.2" stroke-dasharray="4 4"></line>
+        <text class="p7aR" x="100" y="200" text-anchor="middle">A ahead</text>
+        <text class="p7aR" x="100" y="216" text-anchor="middle">the loss region</text>
+        <rect x="44" y="56" width="152" height="70" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p7aN" x="56" y="76">P(B &gt; A) = 0.915</text>
+        <text class="p7aB" x="56" y="94">E[loss] choose B 0.0029</text>
+        <text class="p7aB" x="56" y="110">E[loss] choose A 0.0984</text>
+        <rect x="40" y="304" width="380" height="24" rx="12" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="p7aR" x="230" y="321" text-anchor="middle">rule: keep going · 0.0029 is three times the 0.001 threshold</text>
+
+        <!-- right panel: n = 100 -->
+        <text class="p7aL" x="470" y="48">n = 100 per arm · observed A 0.100, B 0.200</text>
+        <line x1="470" y1="270" x2="850" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="p7aM" x="512" y="288" text-anchor="middle">-0.10</text>
+        <text class="p7aM" x="597" y="288" text-anchor="middle">0</text>
+        <text class="p7aM" x="681" y="288" text-anchor="middle">0.10</text>
+        <text class="p7aM" x="766" y="288" text-anchor="middle">0.20</text>
+        <text class="p7aM" x="850" y="288" text-anchor="middle">0.30</text>
+        <path d="M498.5,270.0 L498.5,270.0 L504.8,269.9 L511.2,269.9 L517.5,269.8 L523.8,269.8 L530.2,269.6 L536.5,269.3 L542.8,268.9 L549.2,268.4 L555.5,267.3 L561.8,266.2 L568.2,264.3 L574.5,261.7 L580.8,258.8 L587.2,253.1 L593.5,247.4 L599.8,239.7 L606.2,230.1 L612.5,218.9 L618.8,206.1 L625.2,192.1 L631.5,175.5 L637.8,158.3 L644.2,142.4 L650.5,126.0 L656.8,111.5 L663.2,102.2 L669.5,92.2 L675.8,90.0 L682.2,90.2 L688.5,94.0 L694.8,104.9 L701.2,113.7 L707.5,127.1 L713.8,143.3 L720.2,157.9 L726.5,174.7 L732.8,191.5 L739.2,205.4 L745.5,217.3 L751.8,229.2 L758.2,238.1 L764.5,245.1 L770.8,251.9 L777.2,256.5 L783.5,261.2 L789.8,263.7 L796.2,265.2 L802.5,266.9 L808.8,268.1 L815.2,268.8 L821.5,269.1 L827.8,269.4 L834.2,269.6 L840.5,269.8 L840.5,270.0 Z" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></path>
+        <path d="M530.2,270.0 L530.2,269.6 L536.5,269.3 L542.8,268.9 L549.2,268.4 L555.5,267.3 L561.8,266.2 L568.2,264.3 L574.5,261.7 L580.8,258.8 L587.2,253.1 L593.5,247.4 L593.5,270.0 Z" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"></path>
+        <rect x="592.5" y="140" width="8.4" height="130" fill="#E4CBD6" fill-opacity="0.7"></rect>
+        <line x1="596.7" y1="80" x2="596.7" y2="270" stroke="#1F1420" stroke-width="1.2" stroke-dasharray="4 4"></line>
+        <text class="p7aR" x="540" y="228" text-anchor="middle">a thinner tail,</text>
+        <text class="p7aR" x="540" y="244" text-anchor="middle">a smaller loss</text>
+        <rect x="474" y="56" width="152" height="70" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p7aN" x="486" y="76">P(B &gt; A) = 0.975</text>
+        <text class="p7aB" x="486" y="94">E[loss] choose B 0.0005</text>
+        <text class="p7aB" x="486" y="110">E[loss] choose A 0.0989</text>
+        <rect x="470" y="304" width="380" height="24" rx="12" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p7aG" x="660" y="321" text-anchor="middle">rule: stop, choose B · 0.0005 is below 0.001</text>
+
+        <text class="p7aT" x="40" y="352">Grey band at zero: an example ROPE of half a point either side, an illustration and not a Halloway rule. The dashed line is zero difference.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the probability is the area right of zero. The expected loss is the area left of zero, weighted by distance. Between n = 50 and n = 100 the first moved by six points and the second fell by a factor of six.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why the loss falls faster than the probability rises<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Between n = 50 and n = 100 the observed rates did not move: 0.100 and 0.200 at both sizes. P(B &gt; A) went from 0.915 to 0.975, a gain of six points. The expected loss of choosing B went from 0.0029 to 0.0005, a fall by a factor of six. Both come from the same left tail of the difference distribution, and the figure shows why they move at different speeds. The probability counts the tail's mass. The loss weights that mass by its distance from zero. When the posterior narrows, the tail loses mass and every remaining piece of it moves closer to zero, so the loss is hit twice.</p>
+        <p>That is the property that makes expected loss the right quantity to threshold. It is monotone in the evidence when a real difference exists, it is in the units of the stake, and it punishes a wide posterior harder than a probability does. The threshold itself, 0.001, is a business number: the average forfeit in redemption rate Halloway was willing to carry for a wrong call. A different business would write a different number, and the rule would still work the same way.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Kruschke's ROPE, the rule that can accept the null<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>P(B &gt; A) has a blind spot. Given enough data one arm is always ahead by a hair, so a probability of superiority can never say "these two are the same for any purpose that matters". Kruschke (2013), "Bayesian estimation supersedes the t test", <em>Journal of Experimental Psychology: General</em>, 142(2), 573-603, doi 10.1037/a0029146, supplies the missing rule. Decide, before the data, the band of differences too small to act on: the <strong>region of practical equivalence</strong>. Then compare the 89 percent equal-tailed interval for theta_B - theta_A to that band. Entirely outside the band: a difference worth acting on. Entirely inside: accept "no meaningful difference" as a positive finding. Straddling: not settled yet.</p>
+        <p>The second case is the one a t test cannot reach, and Kruschke's title is about exactly that. Estimation with a ROPE can conclude the null when the estimate is precise; a test can only fail to reject it. For Halloway the ROPE is a second rule beside expected loss, not a replacement. Expected loss says when acting is cheap enough. The ROPE says when the question is closed. The build-along runs the check with an example half-width of half a point, and the code prints its verdict rather than the page asserting one, because the width of the band is a business choice and not a course number.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What the Monte Carlo is and is not<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Twenty thousand paired draws is an estimate of an integral, not the integral. P(B &gt; A) to three decimals and expected loss to four will wobble in the last place between seeds. The canon values were computed once from fixed seeds and frozen, so your run should land on them to the precision printed and may differ by one in the last digit. What will not change is the verdict: 0.0029 is far enough above 0.001, and 0.0005 far enough below, that no seed flips the rule at either size.</p>
+        <p>The other thing the draws are not is a statement about the frequency of wrong decisions. They are a statement about one experiment's posterior. How often the rule, applied to many experiments, would stop on the wrong arm is a different quantity that needs many experiments, and Part 2 counts it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the stopping rule across the whole experiment and its measured error rate</span>
+      <h2>The ladder, and the price of the rule</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">The experiment ran on to three thousand customers per arm, read at six points. The rule stopped at the second. Everything after n = 100 is what Halloway would have learned had it kept going: the observed gap narrowing toward the true 2.5 points, the probability climbing to 1.000, the expected loss of choosing B sitting at 0.0000 to four decimals. And then the replay: the same rule applied to two hundred fresh runs of the same experiment, to count how often it stops on the wrong arm.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 384" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Westfield stopping ladder across six sample sizes per arm: 50, 100, 200, 400, 900 and 3000. Top track, P(B > A) on a scale from 0.90 to 1.00: 0.915, 0.975, 0.980, 0.996, 0.999, 1.000. Bottom track, the expected loss of choosing B as bars on a scale from 0 to 0.003 with a dashed threshold line at 0.001: 0.0029 above the line at n = 50, then 0.0005, 0.0003, 0.0000, 0.0000, 0.0000 all below it. Under each column, the expected loss of choosing A: 0.0984, 0.0989, 0.0743, 0.0695, 0.0557, 0.0339, and the observed rates, A 0.100 and B 0.200 at 50 and 100, 0.115 and 0.190 at 200, 0.135 and 0.205 at 400, 0.131 and 0.187 at 900, 0.152 and 0.186 at 3000. The verdict row reads keep going at n = 50 and stop, choose B at every later size.">
+        <style>
+          .p7bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p7bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p7bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p7bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p7bN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .p7bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p7bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .p7bT { font: 700 11px Inter, sans-serif; fill: #831843; }
+        </style>
+        <text class="p7bH" x="14" y="22">One cumulative experiment, read at six points. The rule fired at the second and never changed its mind.</text>
+
+        <!-- column headers: n per arm -->
+        <text class="p7bM" x="14" y="50">n per arm</text>
+        <text class="p7bL" x="100" y="50" text-anchor="middle">50</text>
+        <text class="p7bL" x="240" y="50" text-anchor="middle">100</text>
+        <text class="p7bL" x="380" y="50" text-anchor="middle">200</text>
+        <text class="p7bL" x="520" y="50" text-anchor="middle">400</text>
+        <text class="p7bL" x="660" y="50" text-anchor="middle">900</text>
+        <text class="p7bL" x="800" y="50" text-anchor="middle">3000</text>
+
+        <text class="p7bM" x="100" y="68" text-anchor="middle">A 0.100 · B 0.200</text>
+        <text class="p7bM" x="240" y="68" text-anchor="middle">A 0.100 · B 0.200</text>
+        <text class="p7bM" x="380" y="68" text-anchor="middle">A 0.115 · B 0.190</text>
+        <text class="p7bM" x="520" y="68" text-anchor="middle">A 0.135 · B 0.205</text>
+        <text class="p7bM" x="660" y="68" text-anchor="middle">A 0.131 · B 0.187</text>
+        <text class="p7bM" x="800" y="68" text-anchor="middle">A 0.152 · B 0.186</text>
+
+        <!-- P(B > A) track: 0.90 at y = 160, 1.00 at y = 100 -->
+        <text class="p7bM" x="14" y="90">P(B &gt; A), 0.90 to 1.00</text>
+        <line x1="40" y1="100" x2="866" y2="100" stroke="#E4CBD6" stroke-width="1"></line>
+        <line x1="40" y1="160" x2="866" y2="160" stroke="#E4CBD6" stroke-width="1"></line>
+        <text class="p7bM" x="866" y="96" text-anchor="end">1.00</text>
+        <text class="p7bM" x="866" y="172" text-anchor="end">0.90</text>
+        <polyline points="100,151 240,115 380,112 520,102.4 660,100.6 800,100" fill="none" stroke="#9D174D" stroke-width="2"></polyline>
+        <circle cx="100" cy="151" r="5" fill="#9D174D"></circle>
+        <circle cx="240" cy="115" r="5" fill="#15803D"></circle>
+        <circle cx="380" cy="112" r="5" fill="#15803D"></circle>
+        <circle cx="520" cy="102.4" r="5" fill="#15803D"></circle>
+        <circle cx="660" cy="100.6" r="5" fill="#15803D"></circle>
+        <circle cx="800" cy="100" r="5" fill="#15803D"></circle>
+        <text class="p7bN" x="100" y="186" text-anchor="middle">0.915</text>
+        <text class="p7bN" x="240" y="186" text-anchor="middle">0.975</text>
+        <text class="p7bN" x="380" y="186" text-anchor="middle">0.980</text>
+        <text class="p7bN" x="520" y="186" text-anchor="middle">0.996</text>
+        <text class="p7bN" x="660" y="186" text-anchor="middle">0.999</text>
+        <text class="p7bN" x="800" y="186" text-anchor="middle">1.000</text>
+
+        <!-- E[loss] choose B bars: 0 at y = 300, 0.003 at y = 200; threshold 0.001 at y = 266.7 -->
+        <text class="p7bM" x="14" y="210">E[loss] if choose B, 0 to 0.003</text>
+        <line x1="40" y1="300" x2="866" y2="300" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <line x1="40" y1="266.7" x2="866" y2="266.7" stroke="#831843" stroke-width="1.5" stroke-dasharray="5 4"></line>
+        <text class="p7bT" x="866" y="262" text-anchor="end">threshold 0.001</text>
+        <rect x="70" y="203.3" width="60" height="96.7" rx="3" fill="#9D174D"></rect>
+        <rect x="210" y="283.3" width="60" height="16.7" rx="3" fill="#15803D"></rect>
+        <rect x="350" y="290" width="60" height="10" rx="3" fill="#15803D"></rect>
+        <rect x="490" y="298" width="60" height="2" fill="#15803D"></rect>
+        <rect x="630" y="298" width="60" height="2" fill="#15803D"></rect>
+        <rect x="770" y="298" width="60" height="2" fill="#15803D"></rect>
+        <text class="p7bR" x="100" y="318" text-anchor="middle">0.0029</text>
+        <text class="p7bG" x="240" y="318" text-anchor="middle">0.0005</text>
+        <text class="p7bG" x="380" y="318" text-anchor="middle">0.0003</text>
+        <text class="p7bG" x="520" y="318" text-anchor="middle">0.0000</text>
+        <text class="p7bG" x="660" y="318" text-anchor="middle">0.0000</text>
+        <text class="p7bG" x="800" y="318" text-anchor="middle">0.0000</text>
+
+        <!-- E[loss] choose A -->
+        <text class="p7bM" x="100" y="338" text-anchor="middle">choose A: 0.0984</text>
+        <text class="p7bM" x="240" y="338" text-anchor="middle">choose A: 0.0989</text>
+        <text class="p7bM" x="380" y="338" text-anchor="middle">choose A: 0.0743</text>
+        <text class="p7bM" x="520" y="338" text-anchor="middle">choose A: 0.0695</text>
+        <text class="p7bM" x="660" y="338" text-anchor="middle">choose A: 0.0557</text>
+        <text class="p7bM" x="800" y="338" text-anchor="middle">choose A: 0.0339</text>
+
+        <!-- verdict row -->
+        <text class="p7bR" x="100" y="362" text-anchor="middle">keep going</text>
+        <text class="p7bG" x="240" y="362" text-anchor="middle">stop, choose B</text>
+        <text class="p7bG" x="380" y="362" text-anchor="middle">stop, choose B</text>
+        <text class="p7bG" x="520" y="362" text-anchor="middle">stop, choose B</text>
+        <text class="p7bG" x="660" y="362" text-anchor="middle">stop, choose B</text>
+        <text class="p7bG" x="800" y="362" text-anchor="middle">stop, choose B</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the probability track climbs slowly. The loss bars collapse. Only the second track has a line on it that anyone agreed to in advance.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Two in two hundred, and the sentence never to write<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Take the Westfield experiment, keep the true rates at 0.150 and 0.175, draw fresh customers from a fresh seed, and apply the same rule at n = 100. Do that two hundred times. In 23 of the 200 replays the rule would have stopped at n = 100. In 2 of the 200 it would have stopped on the wrong arm. That is a 1 percent wrong-stop rate at that sample size, and it is the number that belongs beside every stopped test: the rule is not free, it is cheap.</p>
+        <p>Which is why there is a claim you must not make. Never write that Bayesian A/B testing "has no peeking problem" or "lets you stop whenever you like". The expected-loss rule controls the <strong>cost</strong> of a wrong decision: each of those two wrong stops forfeited, on average, less than the threshold. It does not control the <strong>frequency</strong> of a wrong decision, and the 2 in 200 is the frequency. Whether reading the data as they arrive inflates that frequency, and by how much, is a real argument, and <strong>learn-experimentation-with-phoebe</strong> b6 owns it, along with Thompson sampling and bandits, the traffic-allocation cousins of tonight's rule that shift customers toward the winning arm while the test runs. Power and sample size are that course's b2, randomisation its b3. Tonight reports the measured rate and hands the argument over.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's board pack said "the new voucher wins, probability 0.975". The analyst added one line: "under this rule, replayed two hundred times, we would expect to ship the wrong voucher about twice, and the average forfeit each time would be under a tenth of a point." Nobody on the board asked what a peeking problem was. They asked whether two in two hundred was acceptable, which is the right question and theirs to answer.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Reading the rungs after the rule fired<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Halloway stopped at n = 100 and the ladder above is what it would have seen had it not. The observed gap shrank from ten points to 3.4 at n = 3000, closing on the true 2.5, while P(B &gt; A) rose to 1.000 and the expected loss of choosing B stayed at 0.0000 to four decimals from n = 400 on. The decision was never in doubt after the second rung; what the later rungs bought was a better estimate of how much B wins by, not whether. The expected loss of choosing A tells the same story from the other side: 0.0984 at n = 50 down to 0.0339 at n = 3000, always the expensive option, falling as the posteriors narrowed onto a true difference smaller than the early data suggested.</p>
+        <p>A rule on expected loss stops when acting is cheap enough, and that is all it stops for. If the size of the lift matters for a budget, say so before the test and add a second condition, a ROPE or an interval width, so that the rule waits for the estimate as well as the decision.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 - BUILD-ALONG ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>The decision in numpy, then the replay</h2>
+      <span class="tag build">24 min build-along</span>
+    </div>
+    <p class="lede">Three blocks. The first reproduces the canon: 20,000 draws per arm from each Beta posterior at n = 50 and n = 100, P(B &gt; A) and both expected losses, with the frozen values in the comments so you know when you have it. The second adds the ROPE check with an example half-width. The third is the replay loop, written as a sketch: it prints a count, and the count is yours, from your seeds, not the course's.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Turn observed rates into posteriors.</strong> Five of fifty and ten of fifty, then ten of a hundred and twenty of a hundred. With flat priors the posteriors are Beta(1 + y, 1 + n - y), the conjugate update from session 1. Nothing is fitted; it is arithmetic.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Draw 20,000 from each and pair them.</strong> One <span class="mono">rvs</span> call per arm with a seeded generator. The pairing is positional: draw i of A against draw i of B. Every decision number is a mean over those pairs.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Compute three means.</strong> <span class="mono">np.mean(post_b &gt; post_a)</span> is P(B &gt; A). <span class="mono">np.mean(np.maximum(post_a - post_b, 0))</span> is the expected loss of choosing B, and the mirror is the expected loss of choosing A. Check the comments: 0.915, 0.0029, 0.0984 at n = 50.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Apply the rule.</strong> Choose the arm with the smaller expected loss; stop if that loss is below 0.001. Keep going at n = 50, stop and choose B at n = 100. If your verdict differs, the threshold or the counts are wrong, not the seed.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Add the ROPE.</strong> The 89 percent equal-tailed interval of the difference, quantiles 0.055 and 0.945, against a band of plus or minus half a point. Half a point is an example; the band is a business choice and the code labels it so. Read the verdict the code prints.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Replay the rule to price it.</strong> Two hundred fresh experiments from the true rates, stopped at n = 100 by the same rule. Count how many stop and how many stop on A, the arm that is truly worse. Your seeds are not the course's seeds; the canon count is 23 and 2, and yours is whatever prints.</p></div>
+      </div>
+    </div>
+
+    <div class="prompt-box good"><span class="label">★ Run it now (Python) - P(B &gt; A) and expected loss at Westfield</span># Westfield, voucher B against voucher A. Flat Beta(1, 1) priors, 20,000 posterior draws per arm.
+import numpy as np
+from scipy.stats import beta
+
+rng       = np.random.default_rng(7)
+DRAWS     = 20_000
+THRESHOLD = 0.001                                    # Halloway's rule, written down before the test
+
+def decide(n, redeemed_a, redeemed_b):
+    post_a = beta(1 + redeemed_a, 1 + n - redeemed_a).rvs(DRAWS, random_state=rng)
+    post_b = beta(1 + redeemed_b, 1 + n - redeemed_b).rvs(DRAWS, random_state=rng)
+    p_b_beats_a   = np.mean(post_b &gt; post_a)                    # share of pairs with B ahead
+    loss_choose_b = np.mean(np.maximum(post_a - post_b, 0.0))   # E[max(theta_A - theta_B, 0)]
+    loss_choose_a = np.mean(np.maximum(post_b - post_a, 0.0))   # the mirror
+    return p_b_beats_a, loss_choose_b, loss_choose_a, post_a, post_b
+
+for n, a, b in [(50, 5, 10), (100, 10, 20)]:          # observed A 0.100 and B 0.200 at both sizes
+    p, lb, la, _, _ = decide(n, a, b)
+    chosen  = "B" if lb &lt; la else "A"
+    verdict = f"stop, choose {chosen}" if min(lb, la) &lt; THRESHOLD else "keep going"
+    print(f"n={n:4d}  P(B&gt;A)={p:.3f}  loss B={lb:.4f}  loss A={la:.4f}  {verdict}")
+# n=  50  P(B&gt;A)=0.915  loss B=0.0029  loss A=0.0984  keep going
+# n= 100  P(B&gt;A)=0.975  loss B=0.0005  loss A=0.0989  stop, choose B
+# Monte Carlo: the last printed digit may differ by one between seeds. The verdicts do not.</div>
+
+    <div class="prompt-box good"><span class="label">★ Then the second rule - Kruschke's ROPE on the n = 100 posteriors</span># Region of practical equivalence, Kruschke (2013). A band of differences too small to act on,
+# chosen BEFORE the data. The half-width below is an EXAMPLE, not a Halloway number.
+ROPE = 0.005                                          # half a point of redemption rate, either side
+
+_, _, _, post_a, post_b = decide(100, 10, 20)
+diff   = post_b - post_a
+lo, hi = np.quantile(diff, [0.055, 0.945])            # 89 percent equal-tailed, the ArviZ 1.x default
+
+if hi &lt; -ROPE or lo &gt; ROPE:
+    print("interval clear of the ROPE: a difference worth acting on")
+elif lo &gt; -ROPE and hi &lt; ROPE:
+    print("interval inside the ROPE: accept no meaningful difference")   # the case a t test cannot reach
+else:
+    print("interval straddles the ROPE: not settled yet")
+# Read the printed verdict. The interval endpoints are yours, from your draws; they are not course numbers.</div>
+
+    <div class="prompt-box good"><span class="label">★ Then price the rule - a seeded replay sketch</span># The honest error rate. Fresh customers from the TRUE rates, A 0.150 and B 0.175, two hundred
+# times over, each stopped at n = 100 by the same expected-loss rule. Count stops, count wrong stops.
+TRUE_A, TRUE_B = 0.150, 0.175                         # written into the generator; B is truly better
+
+stopped = wrong = 0
+for seed in range(200):
+    r = np.random.default_rng(seed)
+    a = r.binomial(100, TRUE_A)                       # redemptions in the first 100 customers on A
+    b = r.binomial(100, TRUE_B)
+    _, lb, la, _, _ = decide(100, a, b)
+    if min(lb, la) &lt; THRESHOLD:
+        stopped += 1
+        if la &lt; lb:                                   # chose A, and A is truly the worse arm
+            wrong += 1
+print(f"stopped at n=100: {stopped} of 200   stopped on the wrong arm: {wrong} of 200")
+# The course's own 200 seeded replays gave 23 stopped and 2 wrong. Your seeds are not the course's,
+# so read your two counts rather than expecting those. The shape of the result is the lesson:
+# the rule keeps each wrong stop cheap; it does not make wrong stops impossible.</div>
+
+    <div class="callout tip">
+      <p><strong>If the loss and the probability disagree about when to stop, the loss is right.</strong> At n = 50 the probability looked ready and the loss did not, and the loss was carrying information the probability throws away: how far behind B is in the draws where it is behind. A rule on P(B &gt; A) alone would have shipped at fifty customers on a gap four times the true lift.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">You have 20,000 paired posterior draws, post_a and post_b. Which line is the expected loss of choosing B?</p>
+      <button class="qopt" type="button">A · np.mean(post_a &gt; post_b), the probability that A is the better arm</button>
+      <button class="qopt" type="button">B · np.mean(np.maximum(post_a - post_b, 0)), the average shortfall in the draws where A is ahead and zero elsewhere</button>
+      <button class="qopt" type="button">C · np.mean(post_a - post_b), the average difference between the arms</button>
+      <p class="qwhy">Expected loss is E[max(theta_A - theta_B, 0)]: a probability times a stake, summed over the draws. Option A is a probability with no stake. Option C nets the wins against the losses and would be negative here, since B is usually ahead. At n = 50 the right line gives 0.0029; at n = 100, 0.0005.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">After a long test the 89 percent interval for theta_B - theta_A sits entirely inside a pre-agreed ROPE of plus or minus half a point. What can you conclude that P(B &gt; A) alone could not?</p>
+      <button class="qopt" type="button">A · Nothing; an interval inside the ROPE only means the test needs more data</button>
+      <button class="qopt" type="button">B · That B is better, since the interval is precise</button>
+      <button class="qopt" type="button">C · That there is no meaningful difference between the arms, accepted as a positive finding, which is the case Kruschke's rule can reach and a probability of superiority never can</button>
+      <p class="qwhy">Kruschke (2013): when the posterior interval falls inside the region of practical equivalence, estimation can accept the null. P(B &gt; A) can only ever say which arm is ahead by however little, so it can never close a question. The ROPE's width is a business choice made before the data, which is why the build-along labels its half-point as an example.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">Across 200 seeded replays of the Westfield experiment, the rule stopped at n = 100 in 23 and on the wrong arm in 2. A colleague writes "Bayesian A/B testing has no peeking problem". What is wrong with the sentence?</p>
+      <button class="qopt" type="button">A · The expected-loss rule controls the cost of a wrong stop, not its frequency; the 2 in 200 is the frequency, and whether reading data as they arrive inflates it is an argument that belongs to learn-experimentation-with-phoebe b6</button>
+      <button class="qopt" type="button">B · Nothing; 2 in 200 is small enough that the sentence is fair</button>
+      <button class="qopt" type="button">C · The sentence is too weak; with a threshold of 0.001 the wrong-stop count should be zero</button>
+      <p class="qwhy">The rule keeps each wrong stop cheap, below the threshold on average. It does not make them rare by construction, and no finite threshold drives the count to zero. Report the measured rate beside the estimate and hand the peeking argument to the course that owns it.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 8</h2>
+      <span class="tag time">45 min</span>
+    </div>
+    <div class="callout">
+      <p>Take the replay sketch and make it a function of the threshold. Run it at 0.001, then at a threshold your own business would actually write down, and record two counts each time: how many of 200 stopped at n = 100, and how many stopped on the wrong arm. Then write the one sentence you would put in a board pack for each threshold, in the form "under this rule, replayed two hundred times, we would expect to ship the wrong arm about N times, forfeiting on average under X each time". Session 8 turns the fitted model back on the data it came from and asks whether it could have produced them, so arrive with the model from tonight still in a notebook.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">P(B &gt; A) and expected loss as Monte Carlo over two posteriors</span>
+        <span class="note">E[max(theta_A - theta_B, 0)] for choosing B and its mirror, estimated over 20,000 paired draws. Westfield, n = 50: 0.915, 0.0029, 0.0984. n = 100: 0.975, 0.0005, 0.0989.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The stopping rule on one cumulative experiment</span>
+        <span class="note">Stop when the expected loss of the chosen arm is below 0.001. Keep going at n = 50, stop and choose B at n = 100, unchanged at 200, 400, 900 and 3000.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Kruschke (2013), the region of practical equivalence</span>
+        <span class="note">"Bayesian estimation supersedes the t test", Journal of Experimental Psychology: General, 142(2), 573-603, doi 10.1037/a0029146. The posterior interval against a ROPE; can accept the null when the estimate is precise. Run in the build-along with an example half-width.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The honest error rate, as a count</span>
+        <span class="note">200 seeded replays stopped at n = 100 by the same rule: 23 stopped, 2 of the 200 on the wrong arm. A 1 percent wrong-stop rate at that size. The rule controls cost, not frequency.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Thompson sampling and bandits</span>
+        <span class="note">Named as the traffic-allocation cousin of the decision rule. <strong>learn-experimentation-with-phoebe</strong> b6 carries them; not taught here.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">The peeking argument, power, randomisation</span>
+        <span class="note">Not covered by design. <strong>learn-experimentation-with-phoebe</strong> b6, b2 and b3 own them; this session reports the measured 2 in 200 and hands the argument over.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Bayes factors and marginal-likelihood comparison</span>
+        <span class="note">Not covered by design. Kruschke's rule is estimation with a ROPE, explicitly not a Bayes factor; session 8 names the distinction once.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 7 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Expected loss of choosing B</b><span>E[max(theta_A - theta_B, 0)]. In numpy: np.mean(np.maximum(post_a - post_b, 0)). The mirror for A.</span></div>
+      <div class="cheat-item"><b>P(B &gt; A) is not a decision</b><span>np.mean(post_b &gt; post_a). A probability with no stake. 0.915 at n = 50 and the rule said keep going.</span></div>
+      <div class="cheat-item"><b>The rule</b><span>Stop when the expected loss of the chosen arm is below 0.001. Threshold written before the data, dated.</span></div>
+      <div class="cheat-item"><b>Why loss falls faster</b><span>It weights the tail by distance as well as mass. 0.0029 to 0.0005 while the probability moved 0.915 to 0.975.</span></div>
+      <div class="cheat-item"><b>ROPE, Kruschke (2013)</b><span>89 percent interval of the difference against a pre-agreed band. Inside: accept no meaningful difference. The case a t test cannot reach.</span></div>
+      <div class="cheat-item"><b>2 in 200</b><span>Replayed and stopped at n = 100: 23 stopped, 2 on the wrong arm. Report it beside the estimate.</span></div>
+      <div class="cheat-item"><b>Never "no peeking problem"</b><span>The rule controls cost, not frequency. learn-experimentation b6 owns the argument, Thompson sampling and bandits.</span></div>
+      <div class="cheat-item"><b>One experiment, six reads</b><span>n = 100 contains n = 50. The ladder is one test read as it grew, and the rule fired at the second rung.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 7 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p6-hierarchical-models.html">← Practitioner session 6 · Hierarchical models</a>
+      <a href="p8-checking-the-model.html">Practitioner session 8 · Checking the model →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Leader session 6 of 6. What to require in writing before a small-data number carries your name: the prior as a pseudo-count with a source, the interval kind and level, the decision rule stated before the data arrive, and the check that was run. At Northgate the sensible prior missed at 0.068 to 0.159, the flat one contained the truth uselessly at 0.020 to 0.222, and the learned one halved the error at 0.124.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Commissioning a Bayesian answer - learn bayesian with phoebe">
+<meta property="og:description" content="Leader session 6 of 6. A prior that is written down is a decision. A prior that is not is a default, and the brief is where the difference is made.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/a6-commissioning-a-bayesian-answer.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Commissioning a Bayesian answer - learn bayesian with phoebe">
+<meta name="twitter:description" content="Four lines a brief must pin down, and the five questions to ask before your name goes on a small-data number.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Leader session 6 · Commissioning a Bayesian answer - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Leader session 6 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Leader session 6 of 6</div>
+    <h1>Commissioning a Bayesian <span class="accent">answer</span></h1>
+    <p class="sub">Five sessions ago Northgate's number was 0.110 with an interval from 0.068 to 0.159, and the outlet was flagged for closure. Nothing in that report was false. The prior was a hundred pseudo-observations from the chain-wide history, the interval was 89 percent equal-tailed, and the truth, 0.192, was outside it. What the report did not say was any of that. It said "0.110, likely between 0.07 and 0.16", and the people who read it had no way to argue with a belief they could not see. Tonight is about the brief: the four lines you require in writing before the analysis starts, so that the prior is a decision somebody made rather than a default nobody noticed, and so that when the number comes back you can tell a careful answer from a stale one.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Whoever signs off a number from small data</span>
+      <span class="chip audience">Product, finance and analytics leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-22 · The four lines of a brief</span>
+      <span class="a3" style="flex:4">22-40 · Build-along: write yours</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>What a brief is for</h2>
+    </div>
+    <p class="lede">A Bayesian answer has moving parts a point estimate does not: a belief going in, a convention for cutting the interval, a rule for turning a probability into an action, and a check that the model could have produced data like the data. Each one is a choice. Left unwritten, each one gets made anyway, by a default in the tooling or a habit in the analyst, and the reader inherits a decision nobody took. The brief is where the choices are made on purpose, before the data arrive, in words a non-specialist can hold someone to.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A four-line brief you can put in front of any analyst before they open a notebook: the prior as a pseudo-count with a source, the interval kind and level, the decision rule, the check. The Northgate record that justifies every line, where the sensible prior missed at 0.068 to 0.159, the flat one contained the truth uselessly at 0.020 to 0.222, and the learned one halved the error at 0.124. One card of tooling facts so you can ask "which version, which default" and recognise a stale answer. And the five questions to ask before your name goes on a small-data number, which is where the leader track ends.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>A decision, or a default wearing one<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 1 made the point that a prior nobody can express as a pseudo-count has not been chosen, it has been defaulted. Tonight extends that to the whole answer. The interval level is a default: the tooling shipped 94 percent HDI until 2026 and ships 89 percent equal-tailed now, and an analyst who never thought about it will report whichever their installation happens to produce. The decision rule is a default: "the probability looked high" is what people fall back on when nobody wrote a threshold down, and session 4 showed that 0.915 looked high at n = 50 while the expected loss said keep going. The check is a default too, in the sense that the default is not to run one.</p>
+        <p>None of these defaults is malicious and most of them are survivable. The problem is that a default cannot be argued with, because there is nothing on the page to argue against. A brief converts each default into a sentence somebody signed. That is the whole job. It does not make the answer right; it makes the answer contestable, which for a leader is the property that matters.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's closure review for Northgate ran on 0.110 and "likely between 0.07 and 0.16". When the regional manager asked what the number assumed, the analyst could answer in full: Beta(12, 88), a hundred pseudo-observations from the chain-wide history, 89 percent equal-tailed. Every part of that was defensible, and none of it had been written down where the manager could have asked, three weeks earlier, whether Northgate resembled the chain. The brief is the document that makes that question arrive on time.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The four lines, named<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>The prior, as a pseudo-count and a source.</strong> "Beta(12, 88), a hundred pseudo-observations, from the chain-wide history." Or "learned across the twelve outlets, kappa 116." Two numbers and a provenance. Session 1 owns the pseudo-count; session 3 owns the learned version.</li>
+          <li><strong>The interval, kind and level.</strong> "89 percent equal-tailed." Both words matter. The level tells a reader how much of the posterior the range holds; the kind tells them how it was cut, equally from both tails rather than as the narrowest range. Session 2 owns the sentence the interval makes.</li>
+          <li><strong>The decision rule, if a decision hangs on it.</strong> "Stop when the expected loss of the chosen arm falls below 0.001." Or a region of practical equivalence, Kruschke's rule, that lets the answer be "no meaningful difference" rather than "not yet". Session 4 owns the rule and the reason 0.915 was not enough.</li>
+          <li><strong>The check that was run.</strong> A prior predictive simulation before the data, to see whether the belief could produce data like the data you expect; a posterior predictive one after, to see whether the fitted model could produce data like the data you got. Session 5 owns the prior predictive check as the shared ground the three prior positions agree on.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the four lines and when they must be written</span>
+      <h2>Four lines, and the clock they run against</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">Two of the four lines have a deadline, and it is the same deadline: before the data arrive. The other two can be filled in as the work proceeds, as long as they are filled in. The figure is the brief as a form, with the deadline marked, and with Halloway's own entries so that each line has a worked example rather than a blank.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The brief as a four-row form. Row 1, the prior: stated as a pseudo-count and a source, for example Beta(12, 88), a hundred pseudo-observations from the chain-wide history, or learned across the twelve outlets with kappa 116; deadline, before the data arrive. Row 2, the interval: kind and level, 89 percent equal-tailed, because the tooling default changed in 2026 from 94 percent HDI. Row 3, the decision rule: expected loss below 0.001, or a region of practical equivalence; deadline, before the data arrive. Row 4, the check: a prior predictive simulation before fitting and a posterior predictive one after. A footer band reads: a prior chosen after seeing the data is a conclusion wearing a costume; a stopping rule chosen after is peeking with extra steps.">
+        <style>
+          .a6aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a6aT { font: 800 11px Inter, sans-serif; fill: #FFFFFF; }
+          .a6aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a6aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a6aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a6aN { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .a6aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .a6aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+        <text class="a6aH" x="14" y="22">The brief. Four lines, each one a choice somebody signs, two of them before the data arrive.</text>
+
+        <!-- header row -->
+        <rect x="14" y="38" width="852" height="24" rx="6" fill="#831843"></rect>
+        <text class="a6aT" x="26" y="55">Line</text>
+        <text class="a6aT" x="180" y="55">What it must say</text>
+        <text class="a6aT" x="520" y="55">Halloway's entry</text>
+        <text class="a6aT" x="760" y="55">Deadline</text>
+
+        <!-- row 1: prior -->
+        <rect x="14" y="70" width="852" height="66" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="a6aL" x="26" y="92">1 · The prior</text>
+        <text class="a6aB" x="180" y="92">A pseudo-count and a source.</text>
+        <text class="a6aM" x="180" y="110">Not "informative". Not "the default".</text>
+        <text class="a6aM" x="180" y="126">A number and where it came from.</text>
+        <text class="a6aN" x="520" y="92">Beta(12, 88), 100 pseudo-obs,</text>
+        <text class="a6aB" x="520" y="110">from the chain-wide history</text>
+        <text class="a6aM" x="520" y="126">or: learned across 12 outlets, kappa 116</text>
+        <rect x="760" y="80" width="96" height="22" rx="11" fill="#991B1B"></rect>
+        <text class="a6aT" x="808" y="95" text-anchor="middle">before data</text>
+
+        <!-- row 2: interval -->
+        <rect x="14" y="144" width="852" height="66" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a6aL" x="26" y="166">2 · The interval</text>
+        <text class="a6aB" x="180" y="166">Kind and level, both words.</text>
+        <text class="a6aM" x="180" y="184">The default was 94 percent HDI until 2026.</text>
+        <text class="a6aM" x="180" y="200">It is 89 percent equal-tailed now.</text>
+        <text class="a6aN" x="520" y="166">89 percent equal-tailed</text>
+        <text class="a6aB" x="520" y="184">the 5.5 and 94.5 percent quantiles</text>
+        <text class="a6aM" x="520" y="200">a reader assuming 95 misreads every number</text>
+        <rect x="760" y="154" width="96" height="22" rx="11" fill="#E4CBD6"></rect>
+        <text class="a6aL" x="808" y="169" text-anchor="middle">with the result</text>
+
+        <!-- row 3: decision rule -->
+        <rect x="14" y="218" width="852" height="66" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="a6aL" x="26" y="240">3 · The decision rule</text>
+        <text class="a6aB" x="180" y="240">Only if a decision hangs on the number.</text>
+        <text class="a6aM" x="180" y="258">Expected loss below a threshold,</text>
+        <text class="a6aM" x="180" y="274">or a region of practical equivalence.</text>
+        <text class="a6aN" x="520" y="240">stop when E[loss] of the chosen arm</text>
+        <text class="a6aN" x="520" y="258">falls below 0.001</text>
+        <text class="a6aM" x="520" y="274">0.915 at n = 50 was not enough; 0.0029 &gt; 0.001</text>
+        <rect x="760" y="228" width="96" height="22" rx="11" fill="#991B1B"></rect>
+        <text class="a6aT" x="808" y="243" text-anchor="middle">before data</text>
+
+        <!-- row 4: check -->
+        <rect x="14" y="292" width="852" height="66" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a6aL" x="26" y="314">4 · The check</text>
+        <text class="a6aB" x="180" y="314">What was run before believing the model.</text>
+        <text class="a6aM" x="180" y="332">Prior predictive simulation before the fit,</text>
+        <text class="a6aM" x="180" y="348">posterior predictive after it.</text>
+        <text class="a6aN" x="520" y="314">prior predictive before the fit:</text>
+        <text class="a6aB" x="520" y="332">the counts Beta(12, 88) expects in 18</text>
+        <text class="a6aM" x="520" y="348">posterior predictive after, reported</text>
+        <rect x="760" y="302" width="96" height="22" rx="11" fill="#15803D"></rect>
+        <text class="a6aT" x="808" y="317" text-anchor="middle">before + after</text>
+
+        <!-- footer -->
+        <rect x="14" y="366" width="852" height="28" rx="8" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="a6aR" x="28" y="385">A prior chosen after seeing the data is a conclusion wearing a costume. A stopping rule chosen after is peeking with extra steps.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the brief as a form. Lines 1 and 3 have a deadline; lines 2 and 4 have to exist.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why "before the data arrive" is the load-bearing phrase<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A prior is a statement about what you believed before you looked. If it is written after the eighteen customers are in, it is no longer that. It is a conclusion about those eighteen customers, dressed as a belief, and the arithmetic will happily blend the data with a restatement of the data and hand back a narrow interval that has counted the evidence twice. Nobody does this on purpose. It happens when the analyst opens the notebook, sees 1 in 18, thinks "that seems low for Northgate", and reaches for a prior centred a little higher than they would have yesterday. The brief stops it by making the prior a line somebody signed on a date.</p>
+        <p>The stopping rule has the same problem with a different costume. A threshold written before the experiment, "stop when the expected loss falls below 0.001", is a rule. A threshold written at n = 50, when P(B &gt; A) has just reached 0.915 and the team is impatient, is a decision to stop with a number attached afterwards. Session 4 showed that the pre-written rule said keep going at 0.915 because the loss was still 0.0029, and stopped at n = 100 at 0.0005. It also showed that the rule, run two hundred times, stopped on the wrong arm twice. That is the measured cost of the rule, and it is only a fair cost if the rule was fixed before anyone saw a result. The argument about why looking early and often inflates that cost belongs to <strong>learn-experimentation-with-phoebe</strong>, and this brief simply insists that the rule be dated.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>One card of tooling facts, so you can hear a stale answer<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>You do not need to run any of this. You need to know it exists, so that when an analyst answers "which version and which default" you can tell September 2026 from a notebook copied in 2023. Four facts, as of 18 September 2026.</p>
+        <ul>
+          <li><strong>PyMC is at 6.3.2</strong>, released 8 September 2026. PyMC 6.0.0 shipped on 13 May 2026 and needs Python 3.12 or later. <strong>"pymc3" is a dead import.</strong> If a notebook says pymc3, it predates the current major version by years, and its intervals were cut under the old default.</li>
+          <li><strong>ArviZ is at 1.3.0</strong>, and is three libraries under one name: arviz-base, arviz-stats, arviz-plots. The old results container, InferenceData, no longer exists; the current one is an xarray DataTree. An answer that talks about InferenceData as current is describing the previous generation of the tool.</li>
+          <li><strong>The interval default changed with ArviZ 1.</strong> The level moved from 94 percent to 89 percent, and the kind moved from HDI, the narrowest range, to equal-tailed, the 5.5 and 94.5 percent quantiles. The maintainers' stated reason is that 0.89 produces intervals with lower variability and therefore more stable summaries. A third-party repository documented two notebooks whose intervals silently became equal-tailed on upgrade while the prose still said HDI. That is the whole reason line 2 of the brief exists.</li>
+          <li><strong>The sampler default changed too.</strong> Under PyMC 6, nutpie is the default sampler when installed, with 400 tuning steps against 1000 under PyMC's own sampler. You will never need this number. You need to know that "the defaults" is not a fixed thing, so that "we used the defaults" is not an answer to "what did you use".</li>
+        </ul>
+        <p>The question these facts let you ask is short: "Which PyMC and ArviZ versions, and is that interval 89 percent equal-tailed?" An analyst working in the current tooling answers in one breath. One who hesitates has given you the information you needed.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers why the brief has to name the prior</span>
+      <h2>Three priors, one outlet, and the brief that names which</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">The brief's first line is not bureaucracy. Northgate, across five sessions, was estimated three ways, and the three estimates disagree about whether the outlet should exist. A report that says "0.110" and a report that says "0.124, partial pooling across the twelve outlets, kappa 116" contain the same kind of number, and only one of them can be argued with.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three estimates of Northgate's redemption rate on one axis from 0 to 0.30, against a dashed vertical line at the truth of 0.192. Row 1, the sensible prior Beta(12, 88): 89 percent equal-tailed interval 0.068 to 0.159, mean 0.110, misses the truth. Row 2, the flat prior Beta(1, 1): interval 0.020 to 0.222, mean 0.100, contains the truth but is too wide to support a decision. Row 3, the learned prior from partial pooling across the twelve outlets, kappa 116: estimate 0.124, error halved from 0.136 to 0.068, still under the truth. A footer reads: a brief that names which of the three was used, and why, is a brief that can be argued with.">
+        <style>
+          .a6bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a6bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a6bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a6bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a6bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .a6bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .a6bN { font: 800 11px Inter, sans-serif; fill: #831843; }
+        </style>
+        <text class="a6bH" x="14" y="22">Northgate, n = 18, truth 0.192. Three estimates, three briefs.</text>
+
+        <!-- axis: rate 0 to 0.30 maps to x 250..850 ; 1 unit = 2000px -->
+        <line x1="250" y1="270" x2="850" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="a6bM" x="250" y="288" text-anchor="middle">0.00</text>
+        <text class="a6bM" x="350" y="288" text-anchor="middle">0.05</text>
+        <text class="a6bM" x="450" y="288" text-anchor="middle">0.10</text>
+        <text class="a6bM" x="550" y="288" text-anchor="middle">0.15</text>
+        <text class="a6bM" x="650" y="288" text-anchor="middle">0.20</text>
+        <text class="a6bM" x="750" y="288" text-anchor="middle">0.25</text>
+        <text class="a6bM" x="850" y="288" text-anchor="middle">0.30</text>
+
+        <!-- truth 0.192 -> x = 250 + 0.192*2000 = 634 -->
+        <line x1="634" y1="46" x2="634" y2="270" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="a6bG" x="640" y="58">truth 0.192</text>
+
+        <!-- row 1: sensible [0.067,0.159] -> x 384..568 ; mean 0.110 -> 470 -->
+        <text class="a6bL" x="14" y="96">Sensible · Beta(12, 88)</text>
+        <text class="a6bM" x="14" y="112">100 pseudo-obs, chain-wide history</text>
+        <rect x="384" y="86" width="184" height="14" rx="7" fill="#F9A8D4"></rect>
+        <circle cx="470" cy="93" r="5" fill="#831843"></circle>
+        <text class="a6bR" x="384" y="124">0.068 to 0.159, misses. Precise and wrong.</text>
+
+        <!-- row 2: flat [0.020,0.222] -> x 290..694 ; mean 0.100 -> 450 -->
+        <text class="a6bL" x="14" y="166">Flat · Beta(1, 1)</text>
+        <text class="a6bM" x="14" y="182">2 pseudo-obs, no source needed</text>
+        <rect x="290" y="156" width="404" height="14" rx="7" fill="#FBCFE8"></rect>
+        <circle cx="450" cy="163" r="5" fill="#9D174D"></circle>
+        <text class="a6bB" x="290" y="194">0.020 to 0.222, contains the truth. Too wide to decide anything.</text>
+
+        <!-- row 3: learned point 0.124 -> x 498 -->
+        <text class="a6bL" x="14" y="236">Learned · partial pooling</text>
+        <text class="a6bM" x="14" y="252">12 outlets, kappa 116, weight 0.13</text>
+        <line x1="498" y1="224" x2="498" y2="248" stroke="#15803D" stroke-width="3"></line>
+        <circle cx="498" cy="236" r="6" fill="#15803D"></circle>
+        <text class="a6bG" x="510" y="240">0.124, error 0.136 to 0.068. Still under.</text>
+
+        <rect x="14" y="304" width="852" height="28" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a6bN" x="28" y="323">A brief that names which of the three was used, and why, is a brief that can be argued with.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same eighteen customers, three defensible priors, three different fates for the outlet.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What each brief would have said<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Under the sensible prior the brief reads: "Beta(12, 88), a hundred pseudo-observations, from the chain-wide history, because Halloway outlets have sat near 0.12 for years." Written that way, the weak point is visible before a single customer is counted. A hundred against eighteen means the history carries 0.85 of the answer, and someone can ask whether Northgate, the newest site in a different kind of neighbourhood, is a chain-wide outlet. The interval, 0.068 to 0.159, is precise and misses the truth by 0.033. That is not a failure of the arithmetic. It is the bet the brief described, lost.</p>
+        <p>Under the flat prior the brief reads: "Beta(1, 1), two pseudo-observations, because we did not want to assume anything." The interval, 0.020 to 0.222, contains the truth and would support closing the outlet or doubling its budget with equal ease. Under the learned prior the brief reads: "partial pooling across the twelve outlets, learned kappa 116, which weights Northgate's own month at 0.13, because eleven other outlets are the best available evidence about what a twelfth is like." The estimate is 0.124, the error falls from 0.136 to 0.068, and the outlet is not closed. Three briefs, each honest, each arguable, and the argument is only possible because each one wrote its first line down.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The line the brief must not leave out: what the method did not fix<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 3 was careful to say both halves of the pooling result, and the brief has to be as careful. Northgate under partial pooling is 0.124 against a truth of 0.192. The method halved the error; it did not remove it. A report that says "the estimate improved" is true. A report that says "Northgate is now well understood" is not, and the second sentence is the one that gets written when the first is not required.</p>
+        <p>So a fifth line, informal but required: what the answer still cannot tell you. For Northgate it is that eighteen customers remain eighteen customers, that the estimate leans 0.87 on the other eleven outlets, and that a genuinely unusual outlet will be under-estimated by exactly the method that saves the ordinary ones. Whether the 89 percent intervals your team produces turn out to contain the truth 89 percent of the time, measured over many such numbers, is a different question and belongs to <strong>learn-decision-intelligence-with-phoebe</strong>. The brief's job is narrower: to make sure the sentence that gets acted on is the one the analysis supports.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Write the brief for a number you are about to commission</h2>
+      <span class="tag build">18 min build-along</span>
+    </div>
+    <p class="lede">No laptop. Take a small-data estimate your area is going to ask for in the next quarter, a conversion rate on a pilot, a defect rate on a short run, a redemption rate at a new site, and write the four lines before anyone has the data. Use Halloway's entries as the model and your own words for the reasons. The reasons are the part the analyst cannot supply.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Name the rate, the unit and the expected sample.</strong> "Voucher redemption at the new Northgate outlet, about eighteen vouchers in the first month." If the expected sample is small, say so in the brief. It is the reason the brief exists.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write line 1: the prior, as a pseudo-count and a source.</strong> Choose between asserting it, "Beta(12, 88), a hundred pseudo-observations, from the chain-wide history", and learning it, "partial pooling across the other outlets". Then write the reason, and the reason this case might not resemble the source. Date the line.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write line 2: the interval, kind and level.</strong> "89 percent equal-tailed, the 5.5 and 94.5 percent quantiles." If somebody wants 95, write 95 and say why; the brief does not care which level, only that it is stated and that the kind travels with it.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write line 3, if a decision hangs on the number.</strong> Either a threshold on expected loss, "stop when the expected loss of the chosen arm is below 0.001", or a region of practical equivalence, "a difference smaller than half a point is no difference". Date this line too. A rule written after the first result is not a rule.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write line 4: the check.</strong> "A prior predictive simulation before fitting, reported as the range of redemption counts the prior expects in eighteen vouchers; a posterior predictive check after." You will not read the plots. You will ask whether they were made.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Add the sentence about what the answer will not tell you.</strong> "Eighteen customers cannot distinguish 0.12 from 0.19; the estimate will lean on the source in line 1 and an unusual outlet will be pulled toward the ordinary ones." If that sentence makes the commission feel pointless, the commission was pointless before you wrote it.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The five questions to ask before your name goes on a small-data number.</strong> One, how many pseudo-observations is the prior worth and where did they come from? Two, is that interval 89 percent equal-tailed, and which versions of PyMC and ArviZ produced it? Three, what was the decision rule and what is its date? Four, what check was run before the model was believed? Five, what did the method not fix? Each question has an answer of one sentence, none of them contains a formula, and the leader track ends here because a leader who asks all five has done the job the track was for.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">An analyst's report says "the prior was informative and the interval is 0.068 to 0.159". Which line of the brief is missing, and why does it matter?</p>
+      <button class="qopt" type="button">A · Nothing is missing; "informative" and an interval are what a Bayesian report should contain</button>
+      <button class="qopt" type="button">B · The check is missing; without a posterior predictive plot the interval cannot be trusted</button>
+      <button class="qopt" type="button">C · The prior's pseudo-count and source, and the interval's kind and level, are both missing; "informative" cannot be compared to n = 18, and "0.068 to 0.159" could be 89 percent equal-tailed or something else entirely</button>
+      <p class="qwhy">Line 1 requires a pseudo-count and a source, here Beta(12, 88), a hundred pseudo-observations from the chain-wide history, so that a reader can see the belief outweighs the eighteen customers 85 to 15. Line 2 requires the kind and level, because the tooling default changed in 2026 and a reader who assumes 95 percent misreads the range. The check matters too, but the report as written cannot even be argued with yet.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">A team proposes to write the stopping threshold once they have seen the first fifty customers per arm, "so we can set it realistically". What does the brief say?</p>
+      <button class="qopt" type="button">A · No. A stopping rule chosen after seeing results is a decision to stop with a number attached afterwards; the pre-written rule kept going at P(B &gt; A) = 0.915 because the expected loss was 0.0029, and its two wrong stops in two hundred are only a fair price if the rule was fixed first</button>
+      <button class="qopt" type="button">B · Yes, as long as the threshold is written down before the second look at the data</button>
+      <button class="qopt" type="button">C · Yes, because Bayesian A/B testing has no peeking problem and the rule can be set at any time</button>
+      <p class="qwhy">Line 3 has a deadline: before the data arrive. The expected-loss rule controls the cost of a wrong decision, not the frequency of one, and the measured 2 in 200 is the frequency. Why looking early inflates it is the experimentation course's argument; the brief simply insists the rule carry a date that precedes the data.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">Northgate's estimate under partial pooling is 0.124, and the analyst wants to write "Northgate's rate is now well estimated". What should the brief require instead?</p>
+      <button class="qopt" type="button">A · The sentence as written; the error halved, which is a success</button>
+      <button class="qopt" type="button">B · The estimate with what the method did not fix: 0.124 against a truth the method still under-estimates, leaning 0.87 on the other eleven outlets, so an unusual outlet will be pulled toward the ordinary ones</button>
+      <button class="qopt" type="button">C · A wider interval, so that the truth is more likely to be inside it</button>
+      <p class="qwhy">Partial pooling took Northgate's error from 0.136 to 0.068. Halved, not removed. The brief's last line exists so that the sentence acted on is the one the analysis supports, and "well estimated" is not that sentence for an outlet with eighteen customers and a weight of 0.13 on its own data.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>After the track</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Send the four-line brief you wrote tonight to whoever will actually produce the number, before they start. Ask them to return it with each line filled in and dated, and with the five questions answered in a sentence each. Keep the returned brief next to the result when it arrives. If you want to see where the numbers in this track came from, the practitioner capstone, <a href="p10-the-pooling-bench.html">The pooling bench</a>, runs all three Halloway benches live: the four priors at Northgate and Westfield, the pooling ladder at 0.054, 0.031 and 0.025, and the stopping rule with its two wrong stops in two hundred. Nothing on it needs code to read.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The four lines of a Bayesian brief</span>
+        <span class="note">The prior as a pseudo-count with a source; the interval kind and level; the decision rule dated before the data; the prior and posterior predictive checks. Each line anchored to the session that taught it.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Northgate three ways, as the brief's justification</span>
+        <span class="note">Sensible 0.068 to 0.159, missed; flat 0.020 to 0.222, contained the truth uselessly; learned 0.124 with kappa 116, error halved from 0.136 to 0.068 against a truth of 0.192.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The tooling as it is in September 2026</span>
+        <span class="note">PyMC 6.3.2, ArviZ 1.3.0, the interval default at 89 percent equal-tailed since ArviZ 1, DataTree in place of InferenceData, pymc3 a dead import. Known to exist, not learned.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Kruschke's region of practical equivalence, as a rule the brief can name</span>
+        <span class="note">Bayesian estimation supersedes the t test, 2013: a decision rule that compares the interval to a region of practical equivalence and can accept the null when the estimate is precise.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Running the checks the brief requires</span>
+        <span class="note">Practitioner session 8 owns prior and posterior predictive checks at working depth. Tonight asks whether they were run; it does not read them.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Why peeking inflates the wrong-stop rate</span>
+        <span class="note">Not covered by design. <strong>learn-experimentation-with-phoebe</strong> owns the peeking argument and experiment mechanics; the brief requires the rule to be dated and reports the measured 2 in 200.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether a stated 89 percent is honest over many forecasts</span>
+        <span class="note">Not covered by design. Measuring calibration is <strong>learn-decision-intelligence-with-phoebe</strong>'s territory; the brief produces the Bayesian sentence and hands the audit of it there.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and the frequentist sentence</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference; the brief's interval line is Bayesian and says so.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 6 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Line 1 · the prior</b><span>A pseudo-count and a source. "Beta(12, 88), 100 pseudo-obs, chain-wide history" or "learned across 12 outlets, kappa 116".</span></div>
+      <div class="cheat-item"><b>Line 2 · the interval</b><span>Kind and level, both words. 89 percent equal-tailed, the 5.5 and 94.5 percent quantiles. The default changed in 2026.</span></div>
+      <div class="cheat-item"><b>Line 3 · the decision rule</b><span>Expected loss below a threshold, or a ROPE. Written and dated before the data arrive, or it is not a rule.</span></div>
+      <div class="cheat-item"><b>Line 4 · the check</b><span>Prior predictive before the fit, posterior predictive after. Ask whether they were made.</span></div>
+      <div class="cheat-item"><b>A prior chosen after the data</b><span>Is a conclusion wearing a costume. A stopping rule chosen after is peeking with extra steps.</span></div>
+      <div class="cheat-item"><b>Northgate, three ways</b><span>Sensible 0.068 to 0.159 missed; flat 0.020 to 0.222 useless; learned 0.124 halved the error. Name which.</span></div>
+      <div class="cheat-item"><b>Which version, which default</b><span>PyMC 6.3.2, ArviZ 1.3.0, 89 percent equal-tailed. "pymc3" or "InferenceData" means a stale notebook.</span></div>
+      <div class="cheat-item"><b>The fifth question</b><span>What did the method not fix? Northgate is 0.124 against 0.192. Halved, not removed.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Leader session 6 of 6 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="a5-the-prior-argument.html">← Leader session 5 · The prior argument</a>
+      <a href="../index.html">All sessions →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

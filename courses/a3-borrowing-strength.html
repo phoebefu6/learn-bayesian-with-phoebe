@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Leader session 3 of 6. Twelve small outlets know more together than any one alone. Treat each alone, treat them as one, or let the eleven inform the twelfth: root-mean-square error 0.054, 0.031, 0.025 against the true rates. Partial pooling helped six outlets and hurt six, and the pooled 0.124 is what saved Northgate.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Borrowing strength - learn bayesian with phoebe">
+<meta property="og:description" content="Leader session 3 of 6. The question is not what this outlet did. It is how much one outlet's month should be trusted, and that number can be learned rather than asserted.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/a3-borrowing-strength.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Borrowing strength - learn bayesian with phoebe">
+<meta name="twitter:description" content="The pooling ladder, 0.054 to 0.031 to 0.025. Shrinkage buys tenths on the outlets that need it and costs thousandths on the ones that do not.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Leader session 3 · Borrowing strength - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Leader session 3 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Leader session 3 of 6</div>
+    <h1>Borrowing <span class="accent">strength</span></h1>
+    <p class="sub">Northgate was flagged for closure on an observed redemption rate of 0.056, one voucher in eighteen. Session 2 showed what eighteen observations honestly support: an interval from 0.020 to 0.222, too wide to close anything or keep anything open. But Northgate is not alone. Halloway has eleven other outlets running the same voucher in the same month, and the question tonight is whether they are allowed to help. Treat each outlet alone and the twelve estimates miss the true rates by 0.054 on average. Treat them as one chain and the miss falls to 0.031. Let the eleven inform the twelfth, with the amount of trust learned from the data rather than asserted, and it falls to 0.025. Northgate's estimate under that third option is 0.124. It is still below the true 0.192, and it is the number that took the outlet off the closure list.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Whoever compares units of very different size</span>
+      <span class="chip audience">Product, finance and analytics leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-20 · Three ways to treat twelve outlets</span>
+      <span class="a3" style="flex:4">20-40 · Build-along: how much to trust one month</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where tonight sits</h2>
+    </div>
+    <p class="lede">Session 1 showed what an asserted prior costs: a belief worth a hundred pseudo-observations, centred on the chain-wide 0.12, was confidently wrong at Northgate. Session 2 took the belief away and showed what eighteen observations say alone: an honest interval too wide to act on. Tonight is the case in between, where the prior is neither asserted nor absent but learned from the other eleven outlets, and where how much it is allowed to pull is itself read off the data. Session 4 moves from estimating one rate to comparing two, the probability that B beats A and what it costs to be wrong. The example throughout is still <strong>Halloway Bakeries</strong>, twelve outlets, one voucher, one month, with every true rate known so every method can be scored.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A three-rung ladder you can hold in your head: no pooling 0.054, complete pooling 0.031, partial pooling 0.025, root-mean-square error against the true rates. The mechanism behind the third rung, stated as a weight anyone can read: each outlet's own month counts n / (n + 116), which is 0.13 at Northgate and 0.89 at Westfield, and nobody chose 116, the data did. And the honest half that usually gets left off the slide: the method helped six outlets and hurt six, the helps were tenths and the hurts were thousandths, and Northgate is still under-estimated at 0.124 against 0.192.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Three ways to treat twelve outlets<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Twelve outlets, twelve observed rates, one decision about how to read them. The first option is to treat each outlet alone: Northgate is 0.056, Westfield is 0.141, and the fact that they belong to the same chain is ignored. This is what the monthly pack does by default, and it scores 0.054. The second option is the opposite: treat the chain as one, give every outlet the grand rate of 0.141, and ignore the fact that outlets differ. It scores 0.031, better than the first, because most of the twelve observed rates are further from their own truth than the chain average is. That is a fact about small samples, not about the outlets.</p>
+        <p>The third option sits between them and is the subject of tonight. Each outlet's estimate is a blend of its own month and the chain, and the blend leans toward the chain for outlets with little data and toward the outlet's own month for outlets with a lot. It scores 0.025. The name for it is <strong>partial pooling</strong>, the eleven informing the twelfth, and its whole character is in one question: <strong>how much should one outlet's month be trusted?</strong> Under the first option the answer is completely; under the second, not at all; under the third, it depends on how big the month was and how different the outlets really are, and both of those can be measured.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's regional review ran on option one for six years without anyone naming it. Outlets were ranked by observed rate, the bottom two were reviewed, and the bottom two were almost always the smallest outlets, because the smallest outlets produce the most extreme numbers in both directions. Northgate, the best performer in the chain, sat in the review pile on 0.056. Nobody had asked how much one month at an eighteen-voucher outlet ought to be trusted.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>No pooling.</strong> Each outlet estimated from its own data alone. Twelve separate problems. RMSE 0.054 on the Halloway data.</li>
+          <li><strong>Complete pooling.</strong> Every outlet given the chain-wide rate. One problem, twelve copies of the answer. RMSE 0.031.</li>
+          <li><strong>Partial pooling.</strong> Each outlet blended with the chain, the blend set by its sample size and by how different the outlets are. RMSE 0.025.</li>
+          <li><strong>Shrinkage.</strong> What partial pooling does to an estimate: pulls it from the observed rate toward the chain centre. Thin outlets are pulled a long way, thick ones barely.</li>
+          <li><strong>mu.</strong> The centre the estimates are pulled toward. Learned from the twelve outlets: 0.135.</li>
+          <li><strong>kappa.</strong> How hard they are pulled, expressed as a pseudo-count, the same currency as session 1. Learned from the twelve outlets: 116. An outlet's own month carries weight n / (n + 116).</li>
+          <li><strong>Hierarchical model.</strong> The general name for a model in which the outlets are treated as draws from a chain-level distribution whose centre and spread are themselves estimated. Partial pooling is what it does for you; practitioner session 6 builds one.</li>
+          <li><strong>RMSE.</strong> Root-mean-square error of the twelve estimates against the twelve true rates. The score every rung of the ladder is judged on, possible only because the truth was written into the data.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers how the eleven inform the twelfth</span>
+      <h2>Nobody set the weight. The data did.</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">Every outlet's observed rate, every outlet's partially pooled estimate, and every outlet's true rate, on one axis. The arrows are the shrinkage: each estimate slides from what the outlet observed toward the chain centre of 0.135, and the length of the slide is set by the outlet's volume. Northgate slides a long way. Westfield does not visibly move.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 410" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Twelve rows, one per outlet from Northgate at n = 18 to Westfield at n = 900, on a redemption-rate axis from 0 to 0.25. Each row shows the observed rate as a hollow circle, the partially pooled estimate as a filled circle sized by sample size, an arrow from observed to pooled, and the true rate as a green tick. A dashed vertical line marks mu = 0.135, the centre learned from all twelve. Small outlets shrink a long way toward 0.135: Northgate moves from 0.056 to 0.124 against a truth of 0.192, Hillcrest from 0.225 toward 0.137, Old Quay from 0.032 toward 0.090. Large outlets barely move: The Arcade and Westfield are unchanged to three decimals. The weight on an outlet's own month is n over n plus 116, which is 0.13 at Northgate and 0.89 at Westfield.">
+        <defs>
+          <marker id="a3a-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#831843"></path></marker>
+        </defs>
+        <style>
+          .a3aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a3aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a3aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a3aN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a3aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="a3aH" x="14" y="22">Twelve outlets: observed rate against the partially pooled estimate. Every arrow points toward mu = 0.135.</text>
+
+        <!-- legend -->
+        <circle cx="268" cy="46" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <text class="a3aM" x="278" y="50">observed this month</text>
+        <circle cx="410" cy="46" r="4" fill="#9D174D"></circle>
+        <text class="a3aM" x="420" y="50">partially pooled</text>
+        <line x1="530" y1="40" x2="530" y2="52" stroke="#15803D" stroke-width="2.5"></line>
+        <text class="a3aM" x="538" y="50">true rate</text>
+        <line x1="612" y1="46" x2="640" y2="46" stroke="#831843" stroke-width="1.5" stroke-dasharray="4 3"></line>
+        <text class="a3aM" x="646" y="50">mu = 0.135, learned from the twelve</text>
+
+        <!-- rate 0 to 0.25 maps to x 260..850 -->
+        <line x1="578.6" y1="58" x2="578.6" y2="334" stroke="#831843" stroke-width="1.5" stroke-dasharray="4 3"></line>
+
+        <!-- Northgate -->
+        <text class="a3aL" x="14" y="74">Northgate · n = 18</text>
+        <line x1="391.1" y1="70" x2="546.7" y2="70" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="713.1" y1="62" x2="713.1" y2="78" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="391.1" cy="70" r="3.7" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="553.4" cy="70" r="3.7" fill="#9D174D"></circle>
+        <text class="a3aG" x="722" y="74">0.124 vs truth 0.192</text>
+
+        <!-- Riverside -->
+        <text class="a3aL" x="14" y="96">Riverside · n = 24</text>
+        <line x1="653.3" y1="92" x2="598.2" y2="92" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="552.6" y1="84" x2="552.6" y2="100" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="653.3" cy="92" r="3.8" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="591.4" cy="92" r="3.8" fill="#9D174D"></circle>
+
+        <!-- Old Quay -->
+        <text class="a3aL" x="14" y="118">Old Quay · n = 31</text>
+        <line x1="336.1" y1="114" x2="520.6" y2="114" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="472.4" y1="106" x2="472.4" y2="122" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="336.1" cy="114" r="3.9" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="527.5" cy="114" r="3.9" fill="#9D174D"></circle>
+
+        <!-- Hillcrest -->
+        <text class="a3aL" x="14" y="140">Hillcrest · n = 40</text>
+        <line x1="791.0" y1="136" x2="640.2" y2="136" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="583.3" y1="128" x2="583.3" y2="144" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="791.0" cy="136" r="4.1" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="633.1" cy="136" r="4.1" fill="#9D174D"></circle>
+
+        <!-- Market Row -->
+        <text class="a3aL" x="14" y="162">Market Row · n = 55</text>
+        <line x1="603.3" y1="158" x2="593.7" y2="158" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="602.2" y1="150" x2="602.2" y2="166" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="603.3" cy="158" r="4.2" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="586.5" cy="158" r="4.2" fill="#9D174D"></circle>
+
+        <!-- Station -->
+        <text class="a3aL" x="14" y="184">Station · n = 70</text>
+        <line x1="563.4" y1="180" x2="565.5" y2="180" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="517.2" y1="172" x2="517.2" y2="188" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="563.4" cy="180" r="4.4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="572.9" cy="180" r="4.4" fill="#9D174D"></circle>
+
+        <!-- Abbey Green -->
+        <text class="a3aL" x="14" y="206">Abbey Green · n = 95</text>
+        <line x1="433.9" y1="202" x2="505.8" y2="202" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="491.3" y1="194" x2="491.3" y2="210" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="433.9" cy="202" r="4.6" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="513.4" cy="202" r="4.6" fill="#9D174D"></circle>
+
+        <!-- Parkside -->
+        <text class="a3aL" x="14" y="228">Parkside · n = 140</text>
+        <line x1="630.9" y1="224" x2="615.2" y2="224" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="625.8" y1="216" x2="625.8" y2="232" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="630.9" cy="224" r="5" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="607.2" cy="224" r="5" fill="#9D174D"></circle>
+
+        <!-- Docklands -->
+        <text class="a3aL" x="14" y="250">Docklands · n = 210</text>
+        <line x1="473.5" y1="246" x2="502.5" y2="246" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="491.3" y1="238" x2="491.3" y2="254" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="473.5" cy="246" r="5.4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="510.9" cy="246" r="5.4" fill="#9D174D"></circle>
+
+        <!-- Kingsway -->
+        <text class="a3aL" x="14" y="272">Kingsway · n = 320</text>
+        <line x1="754.1" y1="268" x2="716.4" y2="268" stroke="#831843" stroke-width="1.5" marker-end="url(#a3a-arr)"></line>
+        <line x1="644.7" y1="260" x2="644.7" y2="276" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="754.1" cy="268" r="6" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="707.4" cy="268" r="6" fill="#9D174D"></circle>
+
+        <!-- The Arcade -->
+        <text class="a3aL" x="14" y="294">The Arcade · n = 540</text>
+        <line x1="562.1" y1="282" x2="562.1" y2="298" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="570.3" cy="290" r="6.9" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="571.8" cy="290" r="6.9" fill="#9D174D"></circle>
+        <text class="a3aM" x="600" y="294">unchanged to three decimals</text>
+
+        <!-- Westfield -->
+        <text class="a3aL" x="14" y="316">Westfield · n = 900</text>
+        <line x1="614.0" y1="304" x2="614.0" y2="320" stroke="#15803D" stroke-width="2.5"></line>
+        <circle cx="593.0" cy="312" r="8" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="591.4" cy="312" r="8" fill="#9D174D"></circle>
+        <text class="a3aM" x="630" y="316">unchanged to three decimals</text>
+
+        <!-- axis -->
+        <line x1="260" y1="334" x2="850" y2="334" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="a3aM" x="260" y="352" text-anchor="middle">0.00</text>
+        <text class="a3aM" x="378" y="352" text-anchor="middle">0.05</text>
+        <text class="a3aM" x="496" y="352" text-anchor="middle">0.10</text>
+        <text class="a3aM" x="614" y="352" text-anchor="middle">0.15</text>
+        <text class="a3aM" x="732" y="352" text-anchor="middle">0.20</text>
+        <text class="a3aM" x="850" y="352" text-anchor="middle">0.25</text>
+        <text class="a3aM" x="555" y="370" text-anchor="middle">redemption rate</text>
+
+        <rect x="14" y="380" width="852" height="26" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a3aN" x="28" y="398">Weight on the outlet's own month is n / (n + 116): 0.13 at Northgate, 0.89 at Westfield. Nobody set that; the data did.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the long arrows are all on the thin outlets, and every one of them points toward its truth. The thick outlets did not move.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>How partial pooling decides how much to pool<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 1 gave you the currency: a prior is worth a number of pseudo-observations, and an outlet's own data carry weight n over n plus that number. Tonight's method uses exactly that arithmetic, with one difference that changes everything. The prior's centre and its pseudo-count are not chosen by an analyst. They are learned from the twelve outlets themselves, by asking which chain-level centre and which spread of outlets around it make the twelve observed months most plausible. On the Halloway data the answer is a centre of <strong>mu = 0.135</strong> and a pseudo-count of <strong>kappa = 116</strong>.</p>
+        <p>Every outlet then gets the same treatment. Its own month carries weight n / (n + 116); the chain centre carries the rest. At Northgate that is 18 / 134, which is 0.13: the outlet's own month is trusted thirteen percent, and the other eleven outlets supply the remaining eighty-seven. At Westfield it is 900 / 1016, which is 0.89: the flagship's own month is trusted almost entirely, because it has earned it. Nobody set 0.13 or 0.89. Nobody set 116. The question "how much should one outlet's month be trusted" was answered by measuring how much the outlets actually differ, and the same measurement would have produced a different answer on a different chain.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Northgate: flagged on 0.056, kept on 0.124<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Northgate's observed 0.056 carries weight 0.13; the chain centre of 0.135 carries 0.87; the blend is 0.124. Its error against the true 0.192 falls from 0.136 to 0.068. That is the number that took it off the closure list, and it is worth being precise about why. The method did not discover that Northgate is the best outlet in the chain. It could not: one redemption in eighteen does not contain that information, and 0.124 is still well below 0.192. What the method did was refuse to believe that an eighteen-voucher month could place an outlet at 0.056 when eleven neighbours running the same voucher sat around 0.135. It halved the error. It did not remove it.</p>
+        <p>That is the right way to describe what shrinkage buys a leader. It does not find the truth from thin data. It stops thin data from producing confident nonsense, by lending the thin outlet the chain's experience in proportion to how thin it is. Northgate stayed open not because the analysis proved it was good but because the analysis showed the case for closing it was made of noise.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The closure memo quoted 0.056 and a chain average of 0.141. The reply quoted 0.124 with the weight beside it: "Northgate's own month is worth 13 percent of this estimate; the other 87 percent is what the chain does. To close on the 0.056 you would have to argue that an eighteen-voucher month deserves more trust than the eleven outlets that produced 0.135." Nobody argued it.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>A prior that was learned, and the price it still paid<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Put tonight's learned prior next to session 1's asserted one. The asserted prior was Beta(12, 88): centre 0.120, worth 100 pseudo-observations, and it put Northgate at 0.110 with an interval that missed. The learned prior has centre 0.135 and is worth 116 pseudo-observations, a similar strength and a slightly higher centre, and it puts Northgate at 0.124. The difference between them is not mainly in the numbers. It is in where the numbers came from. The asserted 100 was a feeling about the chain's history; the learned 116 is a measurement of how much the twelve outlets differ from each other this month, and it would fall if they differed more.</p>
+        <p>And the learned prior still paid session 1's price at Northgate. Northgate really is unlike the chain, the one outlet whose truth sits far above the centre, and a prior worth 116 pseudo-observations pulled it toward the crowd anyway. The estimate of 0.124 is better than 0.056 and worse than the truth by 0.068. There is no version of borrowing strength that is free for the outlet that genuinely differs; the method's virtue is that it charges the thin outlets a fee proportional to their thinness and charges the thick ones almost nothing, and that the fee is set by the data rather than by whoever built the slide. Session 5 takes up the argument about whether a prior should be learned this way at all, and does not settle it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the ladder, the other two worlds and the honest half</span>
+      <h2>Helped six, hurt six, and adapts to the world it is in</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">A method that pulls every estimate toward the middle should worry you. If the outlets really were identical, pulling toward the middle would be exactly right; if they were wildly different, it would be a disaster. So the same three methods were run in two more worlds built from the same twelve outlets, one where the true rates are identical and one where they are wildly spread, and scored against the truth in each. The bars below are the result. Partial pooling is the only method that is good in all three worlds, and the reason is that it read how different the outlets were before deciding how much to pool.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three groups of three bars showing root-mean-square error against the true rates, lower is better. In the real Halloway world: no pooling 0.054, complete pooling 0.031, partial pooling 0.025. In a world where the outlets are truly identical: no pooling 0.034, complete pooling 0.0065, partial pooling 0.0051. In a world where the outlets are wildly different: no pooling 0.033, complete pooling 0.145, partial pooling 0.030. Partial pooling is best or within a hair of best in every world; complete pooling collapses in the wild world.">
+        <style>
+          .a3bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a3bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a3bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a3bN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a3bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .a3bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="a3bH" x="14" y="20">Root-mean-square error against the true rates, three worlds. Lower is better.</text>
+
+        <!-- legend -->
+        <rect x="560" y="36" width="14" height="10" rx="2" fill="#FBCFE8" stroke="#9D174D"></rect>
+        <text class="a3bM" x="580" y="45">no pooling</text>
+        <rect x="660" y="36" width="14" height="10" rx="2" fill="#F9A8D4"></rect>
+        <text class="a3bM" x="680" y="45">complete pooling</text>
+        <rect x="790" y="36" width="14" height="10" rx="2" fill="#9D174D"></rect>
+        <text class="a3bM" x="810" y="45">partial</text>
+
+        <!-- baseline y=270; 0.15 of error = 190px -->
+        <!-- Real spread -->
+        <rect x="70" y="201.6" width="64" height="68.4" rx="3" fill="#FBCFE8" stroke="#9D174D"></rect>
+        <text class="a3bN" x="102" y="194" text-anchor="middle">0.054</text>
+        <rect x="138" y="230.7" width="64" height="39.3" rx="3" fill="#F9A8D4"></rect>
+        <text class="a3bN" x="170" y="223" text-anchor="middle">0.031</text>
+        <rect x="206" y="238.3" width="64" height="31.7" rx="3" fill="#9D174D"></rect>
+        <text class="a3bG" x="238" y="231" text-anchor="middle">0.025</text>
+
+        <!-- Identical -->
+        <rect x="340" y="226.9" width="64" height="43.1" rx="3" fill="#FBCFE8" stroke="#9D174D"></rect>
+        <text class="a3bN" x="372" y="219" text-anchor="middle">0.034</text>
+        <rect x="408" y="261.8" width="64" height="8.2" rx="3" fill="#F9A8D4"></rect>
+        <text class="a3bN" x="440" y="254" text-anchor="middle">0.0065</text>
+        <rect x="476" y="263.5" width="64" height="6.5" rx="3" fill="#9D174D"></rect>
+        <text class="a3bG" x="508" y="256" text-anchor="middle">0.0051</text>
+
+        <!-- Wild -->
+        <rect x="610" y="228.2" width="64" height="41.8" rx="3" fill="#FBCFE8" stroke="#9D174D"></rect>
+        <text class="a3bN" x="642" y="221" text-anchor="middle">0.033</text>
+        <rect x="678" y="86.3" width="64" height="183.7" rx="3" fill="#F9A8D4"></rect>
+        <text class="a3bR" x="710" y="79" text-anchor="middle">0.145</text>
+        <rect x="746" y="232" width="64" height="38" rx="3" fill="#9D174D"></rect>
+        <text class="a3bN" x="778" y="225" text-anchor="middle">0.030</text>
+
+        <line x1="40" y1="270" x2="840" y2="270" stroke="#6B5460" stroke-width="1.5"></line>
+
+        <text class="a3bL" x="170" y="292" text-anchor="middle">Real spread, the Halloway data</text>
+        <text class="a3bM" x="170" y="308" text-anchor="middle">learns kappa = 116, pools by volume</text>
+        <text class="a3bL" x="440" y="292" text-anchor="middle">Outlets truly identical</text>
+        <text class="a3bM" x="440" y="308" text-anchor="middle">learns to pool almost completely</text>
+        <text class="a3bL" x="710" y="292" text-anchor="middle">Outlets wildly different</text>
+        <text class="a3bM" x="710" y="308" text-anchor="middle">learns kappa = 3.6, barely pools</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the dark bar is never the tallest. The middle bar is the shortest in one world and the tallest by far in another.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The honest half: six helped, six hurt<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A ladder score of 0.025 against 0.054 is an average, and averages hide who paid. Outlet by outlet, partial pooling made six estimates better and six worse. The helps were large and landed on the thin outlets: Northgate's error fell from 0.136 to 0.068, Hillcrest's from 0.088 to 0.021, Old Quay's from 0.058 to 0.023. The hurts were small and landed on the thick ones: Market Row's error rose from 0.000 to 0.007, Parkside's from 0.002 to 0.008, Docklands' from 0.007 to 0.009, and The Arcade and Westfield did not change to three decimals. <strong>Shrinkage buys tenths on the outlets that need it and costs thousandths on the ones that do not.</strong></p>
+        <p>Say both halves. A slide that shows only the six helps is selling something; a manager who has only heard about the six hurts will veto the method and be wrong to. The trade is asymmetric in a way that favours the chain as a whole, and it is asymmetric for a reason you can explain: the thick outlets barely moved because the method trusted their own months, at weights near 0.89, and the thin ones moved a lot because the method did not trust theirs, at weights near 0.13. The hurts are the price of the trust; the helps are the price of the doubt. Northgate, the biggest winner, is still under-estimated at 0.124 against 0.192.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Adaptive: it pools hard when it should and barely when it should not<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>In the world where the twelve outlets are truly identical, complete pooling is the right answer by construction, and it scores 0.0065. Partial pooling learns that the outlets are the same, pushes its pseudo-count to the ceiling of what it was allowed to consider, pools almost completely, and scores 0.0051, a hair better still. In the world where the outlets are wildly different, complete pooling is the wrong answer by construction and collapses to 0.145, five times worse than doing nothing. Partial pooling learns a pseudo-count of 3.6, barely pools at all, and scores 0.030, level with treating each outlet alone.</p>
+        <p>That is the property a leader is buying. It is not that partial pooling is the best method in every world; in the identical world complete pooling is nearly as good, and in the wild world no pooling is. It is that partial pooling is never the wrong method, because it asks the data how alike the units are before deciding how much to borrow. The analyst who chooses complete pooling is asserting that the outlets are alike; the one who chooses no pooling is asserting that they are not; the one who chooses partial pooling is declining to assert either and measuring instead.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>"My number moved": the manager's objection, answered honestly<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The objection will come from the thick outlets, and it deserves a straight answer rather than a lecture. Yes, the number moved. At Market Row the error went from 0.000 to 0.007; at Parkside from 0.002 to 0.008; at Docklands from 0.007 to 0.009. Those are the movements. Now put them beside what session 2 showed about the same outlets: Westfield's own 89 percent interval, at 900 vouchers, was 0.037 wide, and Westfield did not move to three decimals. At a big outlet the estimate moved by less than the noise already in it, and the manager's month was never known to the precision the movement disturbs.</p>
+        <p>The honest version of the answer has three parts. The number moved by a few thousandths, which is less than the month-to-month noise at your volume. It moved because your outlet's month was trusted at nearly full weight, 0.89 at the flagship, and lent a little of its stability to outlets that had none. And in return, the outlets you are compared against are no longer swinging by tenths on eighteen vouchers, which makes the ranking you are judged on fairer to you as well. Nobody's number is now a fiction; every number now says how much it can be trusted. What that does to a monthly review is session 6's subject, and what it does to a comparison between two arms is session 4's.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>How much should one unit's month be trusted?</h2>
+      <span class="tag build">20 min build-along</span>
+    </div>
+    <p class="lede">No laptop. Bring the neighbours you found for homework: the outlets, regions, products or cohorts measured the same way at the same time as the number you have been carrying since session 1, with their counts. The build-along works out, in words and one fraction, how much each unit's own month ought to be trusted, and ends with the reply you would send to a memo that ranks them.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Name the family.</strong> Which units were measured the same way in the same period and could reasonably be expected to resemble each other? Halloway: twelve outlets, one voucher, one month. If the honest answer is "none", you are in session 2's world and the interval is all you have.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Rank them by count, not by rate.</strong> Write the sample size next to each. Eighteen at one end, nine hundred at the other. The point of the exercise is to notice that the ranking by rate and the ranking by count are two different lists and only one of them is about performance.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask how alike the units are.</strong> Not in your opinion; in their numbers. Do the well-measured units, the ones with big counts, sit close together or far apart? Close together says pool hard. Far apart says pool little. On the Halloway data the answer was "fairly alike", and the data turned it into a pseudo-count of 116.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write each unit's weight.</strong> Count over count plus the pseudo-count. Northgate 18 / 134 is 0.13; Westfield 900 / 1016 is 0.89. Say each one aloud as "this unit's own month is trusted this much". If a weight surprises you, it is because you had been trusting a tiny sample completely.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Find the six and the six.</strong> Which units will move a lot, and which barely? The thin ones move; the thick ones do not. Write down, before anyone runs anything, who will object and what the honest answer to them is: moved by less than the noise, in exchange for a fairer ranking.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Draft the reply to the ranking memo.</strong> "The bottom two are the two smallest units. At their counts a single month carries weight [w]; the rest of the estimate is what the family does. Before acting, here are the pooled estimates and the weights beside them." Northgate's version of that reply is the one that kept it open.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The question that changes the meeting.</strong> "How much should one month at that outlet be trusted?" It moves the argument from what the outlet did, which eighteen vouchers cannot settle, to how much eighteen vouchers can settle anything, which is a question with a measurable answer. At Northgate the answer was thirteen percent, and the closure case did not survive it.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">Twelve outlets, three ways to estimate their rates, scored against the known truth. Which is the measured ladder?</p>
+      <button class="qopt" type="button">A · Treating each outlet alone is best at 0.025, because it uses only that outlet's own data</button>
+      <button class="qopt" type="button">B · Treating the chain as one is best at 0.025, because the chain average is the most reliable number available</button>
+      <button class="qopt" type="button">C · No pooling 0.054, complete pooling 0.031, partial pooling 0.025: letting the eleven inform the twelfth, by an amount learned from the data, beats both extremes</button>
+      <p class="qwhy">Root-mean-square error against the true rates falls down the ladder. Complete pooling beats no pooling because most small outlets' observed rates are further from their own truth than the chain centre is; partial pooling beats both because it trusts each outlet's month in proportion to its volume.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">Under partial pooling, Northgate's own month carries weight 0.13 and Westfield's carries 0.89. Who decided those weights?</p>
+      <button class="qopt" type="button">A · The data did: the method learned a chain centre of 0.135 and a pseudo-count of 116 from the twelve outlets, and each weight is n over n plus 116</button>
+      <button class="qopt" type="button">B · The analyst did, by choosing to trust large outlets more than small ones</button>
+      <button class="qopt" type="button">C · Head office did, when it set the chain-wide target rate</button>
+      <p class="qwhy">Nobody set 116. It is a measurement of how much the twelve outlets actually differ this month, and it would be different on a different chain: at the ceiling when the outlets are identical, 3.6 when they are wildly different. The weights follow from it and from each outlet's count, and from nothing else.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">A manager at a large outlet objects that partial pooling moved their number. What is the honest reply?</p>
+      <button class="qopt" type="button">A · The number did not move; partial pooling only affects small outlets</button>
+      <button class="qopt" type="button">B · It moved by thousandths, less than the noise already in a month at that volume, and Westfield did not move to three decimals; the method helped six outlets by tenths and hurt six by thousandths, and both halves should be said</button>
+      <button class="qopt" type="button">C · It moved because the method found the large outlet was over-performing and corrected it</button>
+      <p class="qwhy">Market Row's error went from 0.000 to 0.007, Parkside's from 0.002 to 0.008, Docklands' from 0.007 to 0.009. Westfield's 89 percent interval alone is 0.037 wide. The hurts are real and small and land on the well-measured outlets; the helps are large and land on the thin ones. Denying the hurts is as dishonest as hiding the helps.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 4</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Find one comparison your area is about to make between two versions of something: two designs, two offers, two processes, two regions. Write down what "B is better than A" would be worth to you if it were true, and what acting on it would cost if it were false. Bring both. Session 4 moves from estimating one rate to comparing two: the probability that B beats A, the expected cost of choosing wrongly, and the measured case at Westfield where a probability of 0.915 was not enough to stop, because a probability alone is not a decision. A probability times a stake is.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The pooling ladder, scored against a known truth</span>
+        <span class="note">No pooling 0.054, complete pooling 0.031, partial pooling 0.025, root-mean-square error of twelve estimates against twelve true rates. Statistical Rethinking's "Multilevel Models" and "Multilevel Adventures" lectures, kept to the one ladder a leader needs.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">How much to pool, learned rather than asserted</span>
+        <span class="note">The method learns mu = 0.135 and kappa = 116 from the twelve outlets; each outlet's month carries weight n / (n + 116), 0.13 at Northgate and 0.89 at Westfield. Kappa is a pseudo-count, session 1's currency, but measured.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Adaptiveness across three worlds</span>
+        <span class="note">Identical outlets: partial pooling 0.0051 against complete pooling 0.0065. Wildly different outlets: partial pooling 0.030 while complete pooling collapses to 0.145 and kappa falls to 3.6.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The honest half: helped six, hurt six</span>
+        <span class="note">Helps by tenths on thin outlets (Northgate 0.136 to 0.068, Hillcrest 0.088 to 0.021, Old Quay 0.058 to 0.023); hurts by thousandths on thick ones (Market Row 0.000 to 0.007, Parkside 0.002 to 0.008, Docklands 0.007 to 0.009; The Arcade and Westfield unchanged). Northgate still under-estimated at 0.124 against 0.192.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Building the hierarchical model and reading its diagnostics</span>
+        <span class="note">Practitioner session 6, with the bench live in session 10. Tonight is the ladder, the weight and the honest half; the model that produces them is built there. Also the session that <strong>learn-ai-sports-with-phoebe</strong> b3 points at when it names hierarchical pooling of player effects.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Whether a prior should be learned this way at all</span>
+        <span class="note">Session 5, taught as the unsettled argument it is: subjective, reference and weakly-informative positions, and Gelman, Simpson and Betancourt's resolution. Tonight shows the learned prior working and the price it still paid at Northgate; it does not declare the argument won.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether the outlets should be compared at all, and what caused the differences</span>
+        <span class="note">Not covered by design. Nothing tonight is causal; why Northgate's true rate is 0.192 and Old Quay's is 0.090 is <strong>learn-causal-inference-with-phoebe</strong>'s territory. Tonight estimates the rates; it does not explain them.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Frequentist estimation of the same twelve rates</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns estimation and its intervals from the frequentist side; tonight's estimates are posterior means and the ladder is scored on them alone.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="section cheat" id="cheatsheet">
+    <h3>Session 3 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The ladder: 0.054, 0.031, 0.025</b><span>No pooling, complete pooling, partial pooling. RMSE against the true rates. Lower is better.</span></div>
+      <div class="cheat-item"><b>The question</b><span>Not "what did this outlet do" but "how much should one outlet's month be trusted". That number can be learned.</span></div>
+      <div class="cheat-item"><b>mu = 0.135, kappa = 116</b><span>Learned from the twelve. Each outlet's month carries n / (n + 116): 0.13 at Northgate, 0.89 at Westfield.</span></div>
+      <div class="cheat-item"><b>Northgate: 0.056 to 0.124, truth 0.192</b><span>Error halved, 0.136 to 0.068, not removed. The 0.124 is what kept it open.</span></div>
+      <div class="cheat-item"><b>Helped six, hurt six</b><span>Tenths on the thin outlets, thousandths on the thick ones. Say both halves.</span></div>
+      <div class="cheat-item"><b>Adaptive, not always best</b><span>Identical world 0.0051 vs 0.0065. Wild world 0.030 while complete pooling collapses to 0.145.</span></div>
+      <div class="cheat-item"><b>"My number moved"</b><span>By thousandths, less than the noise at that volume. Westfield did not move to three decimals.</span></div>
+      <div class="cheat-item"><b>The meeting question</b><span>"How much should one month at that outlet be trusted?" At Northgate: thirteen percent.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Leader session 3 of 6 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="a2-small-data-honest-uncertainty.html">← Leader session 2 · Small data, honest uncertainty</a>
+      <a href="a4-reading-a-posterior.html">Leader session 4 · Reading a posterior →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 8 of 10. Prior predictive checks and posterior predictive checks in PyMC 6 and ArviZ 1: simulate data from the prior alone, then from the fitted model, and ask whether either could have produced what Halloway actually saw. The Wrong prior Beta(40, 60) predicts roughly 40 percent redemption against a chain that has never seen above 0.225, and fails before any data are used. Then the honest limit: partial pooling passed every check and still put Northgate at 0.124 against a truth of 0.192.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Checking the model - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 8 of 10. pm.sample_prior_predictive(), pm.sample_posterior_predictive(dt), az.plot_ppc_dist: what a predictive check catches, and the one kind of wrong it cannot.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p8-checking-the-model.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Checking the model - learn bayesian with phoebe">
+<meta name="twitter:description" content="A prior that predicts 40 percent redemption for a chain that has never seen above 0.225 fails before the data arrive. A model that passes every check can still be wrong in the way the data agree with.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 8 · Checking the model - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 8 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 8 of 10</div>
+    <h1>Checking the <span class="accent">model</span></h1>
+    <p class="sub">Sessions 5, 6 and 7 fitted models and read their posteriors. Tonight turns each model round and asks it to produce data. Before any voucher is counted, a prior predictive check simulates what the prior alone expects to see: the Wrong prior from session 2, Beta(40, 60), predicts roughly 40 percent redemption, and Halloway has never observed above 0.225 at any outlet, so it fails on that alone. After the fit, a posterior predictive check simulates fresh data from the posterior and lays it beside the data that were observed. Under complete pooling every outlet is predicted at the grand rate of 0.141, and Northgate's one redemption in eighteen looks like a surprise; under partial pooling, which shrinks Northgate toward 0.135 with data weight 18 / (18 + 116), it looks less like one. Then the part most write-ups leave out. Partial pooling passed every check in session 6 and still put Northgate at 0.124 against a true 0.192, because one in eighteen is what 0.192 looks like at that size. A check compares the model to the data you have, and the data you have were small.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who has to sign off a fitted model</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-16 · Prior predictive, posterior predictive</span>
+      <span class="a3" style="flex:5">16-40 · Build-along: the two checks in PyMC 6 and scipy</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where session 8 sits</h2>
+    </div>
+    <p class="lede">Session 4 taught the diagnostics: R-hat, ESS, divergences. A passing set proves the sampler explored this model's posterior, and nothing about whether the model is right. That second question is tonight's, and the tool for it is the same in both directions: make the model generate data and look. The source is McElreath's <em>Statistical Rethinking</em>, lecture 7, "Overfitting", which is where predictive checks are introduced. Whichever position you hold in leader session 5's argument about how a prior should be chosen, you can run the prior predictive check, which is why that session names it as the shared ground. Session 9 takes what survives tonight into the room where it is read aloud.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> Two checks you can run on any model from sessions 5 to 7. The prior predictive, <span class="mono">pm.sample_prior_predictive()</span>, which fails the Wrong prior at Westfield before a single voucher is counted. The posterior predictive, <span class="mono">pm.sample_posterior_predictive(dt)</span> and <span class="mono">az.plot_ppc_dist(dt)</span>, which puts simulated months of 900 vouchers beside the observed 127. A scipy version of the same idea at Northgate that compares complete and partial pooling on the one count Halloway actually saw. And the sentence that keeps the checks honest: a model wrong in a way the data confirm passes them, and session 6's Northgate is the worked case.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Two directions, one move: make the model produce data<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Every model from sessions 5 to 7 is a machine for turning a rate into a count: a Beta on the rate, a Binomial on the redemptions. Run the machine forwards instead of backwards and it produces data. Run it forwards <strong>from the prior</strong>, before touching the observed counts, and you get the prior predictive: the redemption counts the prior alone considers plausible. Run it forwards <strong>from the posterior</strong>, after the fit, and you get the posterior predictive: the counts the fitted model expects in a fresh month. Both are simulations, both are cheap, and both end with the same question. Does this look like data that could exist, and does it look like the data that did?</p>
+        <p>The prior predictive is the check leader session 5 lands on as common ground, because it needs no agreement about where priors come from. A subjectivist, a reference-prior analyst and a weakly-informative one can all look at what Beta(40, 60) predicts for 900 vouchers and agree it is not a bakery chain. The posterior predictive is McElreath's lecture 7 tool for asking whether the fitted model has missed a shape in the data. Neither check produces a verdict on its own. They produce a picture, and the analyst produces the verdict.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The analyst who inherited the Wrong prior at Halloway did not argue about it. She ran <span class="mono">sample_prior_predictive</span> on the Westfield model, printed the counts it produced for 900 vouchers, and put the highest rate any outlet had ever recorded beside them: Hillcrest, 9 of 40, 0.225. The prior was predicting nearly twice that before it had seen a voucher. The meeting took four minutes.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Prior predictive check.</strong> Simulate data from the prior alone, with no observed counts used, and ask whether it looks like data that could exist. <span class="mono">pm.sample_prior_predictive()</span> in PyMC 6; its deprecated <span class="mono">samples</span> argument is gone.</li>
+          <li><strong>Posterior predictive check.</strong> Simulate new data from the posterior and compare to what was observed. <span class="mono">pm.sample_posterior_predictive(dt)</span>, which gained <span class="mono">sample_vars</span> and <span class="mono">freeze_vars</span> in PyMC 6.</li>
+          <li><strong>plot_ppc_dist.</strong> The ArviZ 1.x plot that lays the predictive draws over the observed data. It replaces the old <span class="mono">plot_ppc</span> and, like every ArviZ 1.x plot, returns a PlotCollection.</li>
+          <li><strong>Grand rate.</strong> 0.141, the chain-wide redemption rate. What complete pooling predicts for every outlet.</li>
+          <li><strong>Data weight.</strong> n / (n + 116) under partial pooling on the Halloway data: 0.13 at Northgate, 0.89 at Westfield. How far the posterior predictive for an outlet is allowed to leave the centre of 0.135.</li>
+          <li><strong>What a check cannot catch.</strong> A model wrong in a way the data confirm. Northgate at 0.124 against 0.192, because 1 of 18 is what 0.192 looks like at that size.</li>
+          <li><strong>Diagnostics.</strong> R-hat, ESS, divergences: proof the sampler explored this model's posterior. Not proof of the model.</li>
+          <li><strong>LOO cross-validation.</strong> Named, not taught: the tool for comparing models by predictive accuracy on held-out points.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the prior predictive check and the prior it fails</span>
+      <h2>Before the data: what does the prior alone predict?</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">Session 2 put four priors on the bench: Flat Beta(1, 1), Weak Beta(2, 14), Informed Beta(12, 88), Wrong Beta(40, 60). Session 2 scored them after the fit. Tonight scores them before it, by asking each one what redemption rate it expects to see and laying that against the only fact about Halloway that needs no model: across twelve outlets the observed rate has ranged from 0.032 at Old Quay to 0.225 at Hillcrest. The figure draws each prior's predicted rate as a shape against that range.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 410" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four rows, one per prior, each drawn as the shape of the redemption rate the prior alone predicts on a shared axis from 0 to 0.6, against a green band marking the observed range across the twelve Halloway outlets, 0.032 at Old Quay to 0.225 at Hillcrest. Flat, Beta(1, 1), mean 0.500, 2 pseudo-observations: a level strip across the whole axis, extending to 1.0, every count from 0 to n equally plausible; verdict, rules nothing out. Weak, Beta(2, 14), mean 0.125, 16 pseudo-observations: a hill peaking inside the band with a long right tail; verdict, inside the observed range. Informed, Beta(12, 88), mean 0.120, 100 pseudo-observations: a narrow hill entirely inside the band; verdict, inside the observed range. Wrong, Beta(40, 60), mean 0.400, 100 pseudo-observations: a hill centred at 0.40, drawn in red, entirely to the right of the band; verdict, fails before any data are used. A band below reads: Flat rules nothing out. Weak and Informed sit inside the range. Wrong predicts roughly 40 percent and fails before any data.">
+        <style>
+          .p8aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p8aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p8aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p8aN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .p8aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p8aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .p8aT { font: 700 11px Inter, sans-serif; fill: #831843; }
+        </style>
+        <text class="p8aH" x="14" y="22">Four priors, before any data: the redemption rate each one predicts, against what Halloway has ever seen.</text>
+
+        <!-- observed range band: rate 0.032 to 0.225; axis maps 0..0.6 to x 230..850 -->
+        <path d="M263.1,58 h199.4 v272 h-199.4 Z" fill="#F0FDF4" stroke="#15803D" stroke-width="1.2" stroke-dasharray="4 3"></path>
+        <text class="p8aG" x="263" y="52">observed range across the twelve outlets: 0.032 (Old Quay) to 0.225 (Hillcrest)</text>
+
+        <!-- row 1: Flat -->
+        <text class="p8aL" x="14" y="78">Flat · Beta(1, 1)</text>
+        <text class="p8aM" x="14" y="94">mean 0.500 · 2 pseudo-obs</text>
+        <text class="p8aN" x="14" y="110">rules nothing out</text>
+        <rect x="230" y="96" width="620" height="14" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></rect>
+        <text class="p8aM" x="846" y="90" text-anchor="end">extends to 1.0: every count from 0 to n equally plausible</text>
+
+        <!-- row 2: Weak -->
+        <text class="p8aL" x="14" y="148">Weak · Beta(2, 14)</text>
+        <text class="p8aM" x="14" y="164">mean 0.125 · 16 pseudo-obs</text>
+        <text class="p8aG" x="14" y="180">inside the observed range</text>
+        <path d="M235.2,180.0 L235.2,172.1 L240.3,165.2 L245.5,159.2 L250.7,154.0 L255.8,149.6 L261.0,145.9 L266.2,142.8 L271.3,140.3 L276.5,138.3 L281.7,136.7 L286.8,135.5 L292.0,134.7 L297.2,134.2 L302.3,134.0 L307.5,134.1 L312.7,134.3 L317.8,134.8 L323.0,135.4 L328.2,136.2 L333.3,137.1 L338.5,138.1 L343.7,139.2 L348.8,140.3 L354.0,141.6 L359.2,142.8 L364.3,144.1 L369.5,145.4 L374.7,146.7 L379.8,148.1 L385.0,149.4 L390.2,150.7 L395.3,152.0 L400.5,153.3 L405.7,154.5 L410.8,155.8 L416.0,157.0 L421.2,158.1 L426.3,159.3 L431.5,160.4 L436.7,161.4 L441.8,162.5 L447.0,163.5 L452.2,164.4 L457.3,165.3 L462.5,166.2 L467.7,167.0 L472.8,167.8 L478.0,168.6 L483.2,169.3 L488.3,170.0 L493.5,170.6 L498.7,171.2 L503.8,171.8 L509.0,172.4 L514.2,172.9 L519.3,173.4 L524.5,173.9 L529.7,174.3 L534.8,174.7 L540.0,175.1 L545.2,175.5 L550.3,175.8 L555.5,176.1 L560.7,176.4 L565.8,176.7 L571.0,176.9 L576.2,177.2 L581.3,177.4 L586.5,177.6 L591.7,177.8 L596.8,178.0 L602.0,178.2 L607.2,178.3 L612.3,178.5 L617.5,178.6 L622.7,178.7 L627.8,178.8 L633.0,178.9 L638.2,179.0 L643.3,179.1 L648.5,179.2 L653.7,179.3 L658.8,179.3 L664.0,179.4 L669.2,179.5 L674.3,179.5 L679.5,179.6 L684.7,179.6 L689.8,179.6 L695.0,179.7 L700.2,179.7 L705.3,179.7 L710.5,179.8 L715.7,179.8 L720.8,179.8 L726.0,179.8 L731.2,179.9 L736.3,179.9 L741.5,179.9 L746.7,179.9 L746.7,180.0 Z" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></path>
+
+        <!-- row 3: Informed -->
+        <text class="p8aL" x="14" y="218">Informed · Beta(12, 88)</text>
+        <text class="p8aM" x="14" y="234">mean 0.120 · 100 pseudo-obs</text>
+        <text class="p8aG" x="14" y="250">inside the observed range</text>
+        <path d="M266.2,250.0 L266.2,249.8 L271.3,249.5 L276.5,248.9 L281.7,247.7 L286.8,245.9 L292.0,243.2 L297.2,239.7 L302.3,235.4 L307.5,230.5 L312.7,225.2 L317.8,220.0 L323.0,215.0 L328.2,210.7 L333.3,207.4 L338.5,205.1 L343.7,204.0 L348.8,204.1 L354.0,205.2 L359.2,207.2 L364.3,210.0 L369.5,213.3 L374.7,216.9 L379.8,220.7 L385.0,224.5 L390.2,228.1 L395.3,231.5 L400.5,234.5 L405.7,237.3 L410.8,239.6 L416.0,241.7 L421.2,243.4 L426.3,244.8 L431.5,246.0 L436.7,246.9 L441.8,247.6 L447.0,248.2 L452.2,248.7 L457.3,249.0 L462.5,249.3 L467.7,249.5 L472.8,249.6 L478.0,249.7 L483.2,249.8 L488.3,249.9 L488.3,250.0 Z" fill="#FBCFE8" fill-opacity="0.85" stroke="#9D174D" stroke-width="1.5"></path>
+
+        <!-- row 4: Wrong -->
+        <text class="p8aL" x="14" y="288">Wrong · Beta(40, 60)</text>
+        <text class="p8aM" x="14" y="304">mean 0.400 · 100 pseudo-obs</text>
+        <text class="p8aR" x="14" y="320">fails before any data are used</text>
+        <path d="M478.0,320.0 L478.0,319.9 L483.2,319.8 L488.3,319.7 L493.5,319.6 L498.7,319.5 L503.8,319.2 L509.0,318.9 L514.2,318.5 L519.3,318.0 L524.5,317.4 L529.7,316.6 L534.8,315.7 L540.0,314.5 L545.2,313.1 L550.3,311.6 L555.5,309.7 L560.7,307.7 L565.8,305.4 L571.0,302.9 L576.2,300.3 L581.3,297.5 L586.5,294.6 L591.7,291.7 L596.8,288.8 L602.0,286.0 L607.2,283.3 L612.3,280.9 L617.5,278.7 L622.7,276.9 L627.8,275.5 L633.0,274.6 L638.2,274.0 L643.3,274.0 L648.5,274.4 L653.7,275.3 L658.8,276.6 L664.0,278.3 L669.2,280.3 L674.3,282.6 L679.5,285.1 L684.7,287.7 L689.8,290.4 L695.0,293.2 L700.2,295.9 L705.3,298.6 L710.5,301.2 L715.7,303.6 L720.8,305.8 L726.0,307.9 L731.2,309.7 L736.3,311.4 L741.5,312.8 L746.7,314.1 L751.8,315.2 L757.0,316.1 L762.2,316.9 L767.3,317.6 L772.5,318.1 L777.7,318.5 L782.8,318.9 L788.0,319.1 L793.2,319.3 L798.3,319.5 L803.5,319.6 L808.7,319.7 L813.8,319.8 L819.0,319.9 L824.2,319.9 L824.2,320.0 Z" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"></path>
+        <text class="p8aR" x="643" y="266" text-anchor="middle">centred at 0.400, nowhere Halloway has been</text>
+
+        <!-- axis -->
+        <line x1="230" y1="330" x2="850" y2="330" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="p8aM" x="230" y="348" text-anchor="middle">0</text>
+        <text class="p8aM" x="333.3" y="348" text-anchor="middle">0.1</text>
+        <text class="p8aM" x="436.7" y="348" text-anchor="middle">0.2</text>
+        <text class="p8aM" x="540" y="348" text-anchor="middle">0.3</text>
+        <text class="p8aM" x="643.3" y="348" text-anchor="middle">0.4</text>
+        <text class="p8aM" x="746.7" y="348" text-anchor="middle">0.5</text>
+        <text class="p8aM" x="850" y="348" text-anchor="middle">0.6</text>
+        <text class="p8aM" x="540" y="366" text-anchor="middle">redemption rate the prior alone predicts</text>
+
+        <rect x="14" y="378" width="852" height="26" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p8aN" x="28" y="396">Flat rules nothing out. Weak and Informed sit inside the range. Wrong predicts roughly 40 percent and fails before any data.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three shapes touch the green band and one does not. The one that does not is worth 100 pseudo-observations, the same weight as the Informed prior beside it, which is the whole reason to look before fitting.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The Wrong prior fails on the highest number in the table<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Beta(40, 60) has mean 0.400 and is worth 100 pseudo-observations. Run the Westfield model forwards from it and the counts it produces for 900 vouchers sit around 40 percent redemption. Now the only fact you need: across the twelve outlets, in the month on the table, the highest observed rate anywhere is Hillcrest's 9 of 40, 0.225. The prior is predicting a business that Halloway has never once been, at any outlet, at any size. It has failed, and it failed with no data used, because the check never looked at Westfield's 127. It looked at what the prior expects and asked whether that could be a bakery chain.</p>
+        <p>This is what makes the prior predictive the shared ground of leader session 5's argument. The subjectivist says the prior encodes belief and nothing else; fine, but a belief that predicts 40 percent redemption is a belief the believer would disown on sight. The reference-prior analyst wants the data to speak; fine, but the flat prior's predictive, every count from 0 to n equally plausible, is what "letting the data speak" looks like before they do, and it is worth seeing. The weakly-informative analyst regularises toward plausible values and checks by prior prediction; this is the check. Nobody has to concede anything about where priors come from to run it, and the Wrong prior fails under all three positions.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What Flat, Weak and Informed look like before the data<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The Flat prior, Beta(1, 1), treats every count from 0 to n as equally plausible. Its predictive is a level strip from zero redemptions to all of them. That is not a failure; it is a statement that the prior contributes two pseudo-observations and no opinion, and seeing the strip is how you confirm the prior you wrote is the prior you meant. Weak, Beta(2, 14), predicts a hill peaking inside the observed range with a long right tail that reaches well past it. Informed, Beta(12, 88), predicts a narrow hill entirely inside the range. Both pass the check in the only sense a prior predictive check has: they predict data that could be Halloway's.</p>
+        <p>Passing says nothing about whether the prior will be right for a given outlet. Session 2 already showed the Informed prior confidently wrong at Northgate, 0.110 with an interval of 0.068 to 0.159 against a truth of 0.192. It passed tonight's check anyway, because Northgate's truth of 0.192 is inside the range Halloway has seen and a prior centred at 0.120 predicts data like Halloway's. A prior predictive check catches a prior that predicts an impossible business. It does not catch a prior that predicts a plausible business and happens to be wrong about one shop. Hold onto that shape of sentence; Part 2 needs it again.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What changed in the tool, and why the check is cheap now<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>In PyMC 6, <span class="mono">pm.sample_prior_predictive()</span> is called bare inside the model block, before <span class="mono">pm.sample()</span>. Its deprecated <span class="mono">samples</span> argument was removed in 6.0.0, so a 2023 notebook that asked for a particular number of prior draws by that name stops at that line. The observed data are declared in the block so the model knows the shape of what it is predicting, 900 vouchers at Westfield, but the prior predictive does not condition on the 127. That is the whole point: the counts it returns are what the prior alone would produce.</p>
+        <p>Because it is one call and no sampler runs, there is no reason not to do it every time, and session 5's six-move walk already has it as move two. Leader session 6 tells a commissioning executive to ask whether a prior predictive simulation was run and reported as the range of counts the prior expects. Tonight is the session that produces the thing they are asking for.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the posterior predictive check and the wrong it cannot see</span>
+      <h2>After the fit: could this model have produced these data?</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Now the model has been fitted and the question turns round. Simulate a fresh month from the posterior and lay it beside the month that happened. At Northgate the month that happened was one redemption in eighteen, 0.056. Complete pooling, which predicts every outlet at the grand rate of 0.141, expects more than that and treats one as a thin-tail event. Partial pooling, which shrinks Northgate toward 0.135 with its own month carrying weight 18 / (18 + 116), expects a little less and a little more spread, and the same count sits in a fatter tail. The figure draws the two predictive shapes with the observed count marked, and deliberately prints no tail probability, because that number is yours to compute in the build-along.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels of bars showing the number of redemptions each fitted model predicts in a fresh Northgate month of 18 vouchers, for counts 0 to 8, with the observed count of 1 highlighted in solid raspberry. Left panel, complete pooling, every outlet at the grand rate 0.141: the bars peak at 2 and the bar at 1 is clearly shorter than the peak, with a short bar at 0; the verdict pill reads 1 of 18 sits in a thin left tail: surprising. Right panel, partial pooling, Northgate shrunk to 0.124 with data weight 0.13: the bars peak at 2 but the bars at 0 and 1 are taller than on the left; the verdict pill reads 1 of 18 sits in a fatter left tail: less surprising. A line below reads: bar heights are the shapes the two models predict; no tail probability is printed here, the build-along counts it from your draws.">
+        <style>
+          .p8bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p8bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p8bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p8bN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .p8bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p8bP { font: 800 11px Inter, sans-serif; fill: #9D174D; }
+          .p8bT { font: 700 11px Inter, sans-serif; fill: #831843; }
+        </style>
+        <text class="p8bH" x="14" y="22">Northgate, one redemption in eighteen. What each fitted model expects to see in a fresh month of 18 vouchers.</text>
+
+        <!-- left panel: complete pooling -->
+        <text class="p8bL" x="40" y="48">Complete pooling · every outlet at the grand rate 0.141</text>
+        <line x1="40" y1="270" x2="420" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <rect x="44" y="226.5" width="34" height="43.5" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="86" y="141.3" width="34" height="128.7" rx="3" fill="#9D174D"></rect>
+        <rect x="128" y="90.1" width="34" height="179.9" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="170" y="112.2" width="34" height="157.8" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="212" y="172.7" width="34" height="97.3" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="254" y="225.2" width="34" height="44.8" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="296" y="254" width="34" height="16" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="338" y="265.5" width="34" height="4.5" rx="2" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="380" y="269" width="34" height="1" fill="#9D174D"></rect>
+        <text class="p8bM" x="61" y="288" text-anchor="middle">0</text>
+        <text class="p8bP" x="103" y="288" text-anchor="middle">1</text>
+        <text class="p8bM" x="145" y="288" text-anchor="middle">2</text>
+        <text class="p8bM" x="187" y="288" text-anchor="middle">3</text>
+        <text class="p8bM" x="229" y="288" text-anchor="middle">4</text>
+        <text class="p8bM" x="271" y="288" text-anchor="middle">5</text>
+        <text class="p8bM" x="313" y="288" text-anchor="middle">6</text>
+        <text class="p8bM" x="355" y="288" text-anchor="middle">7</text>
+        <text class="p8bM" x="397" y="288" text-anchor="middle">8</text>
+        <text class="p8bP" x="103" y="304" text-anchor="middle">observed 1 of 18</text>
+        <text class="p8bM" x="414" y="304" text-anchor="end">redemptions predicted in 18 vouchers</text>
+        <rect x="40" y="318" width="380" height="24" rx="12" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p8bN" x="230" y="335" text-anchor="middle">1 of 18 sits in a thin left tail: surprising</text>
+
+        <!-- right panel: partial pooling -->
+        <text class="p8bL" x="470" y="48">Partial pooling · Northgate shrunk to 0.124, data weight 0.13</text>
+        <line x1="470" y1="270" x2="850" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <rect x="474" y="198.4" width="34" height="71.6" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="516" y="110.1" width="34" height="159.9" rx="3" fill="#9D174D"></rect>
+        <rect x="558" y="90" width="34" height="180" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="600" y="134.6" width="34" height="135.4" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="642" y="194" width="34" height="76" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="684" y="236.3" width="34" height="33.7" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="726" y="257.8" width="34" height="12.2" rx="3" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="768" y="266.3" width="34" height="3.7" rx="2" fill="#FBCFE8" stroke="#9D174D" stroke-width="1.2"></rect>
+        <rect x="810" y="269.1" width="34" height="0.9" fill="#9D174D"></rect>
+        <text class="p8bM" x="491" y="288" text-anchor="middle">0</text>
+        <text class="p8bP" x="533" y="288" text-anchor="middle">1</text>
+        <text class="p8bM" x="575" y="288" text-anchor="middle">2</text>
+        <text class="p8bM" x="617" y="288" text-anchor="middle">3</text>
+        <text class="p8bM" x="659" y="288" text-anchor="middle">4</text>
+        <text class="p8bM" x="701" y="288" text-anchor="middle">5</text>
+        <text class="p8bM" x="743" y="288" text-anchor="middle">6</text>
+        <text class="p8bM" x="785" y="288" text-anchor="middle">7</text>
+        <text class="p8bM" x="827" y="288" text-anchor="middle">8</text>
+        <text class="p8bP" x="533" y="304" text-anchor="middle">observed 1 of 18</text>
+        <text class="p8bM" x="844" y="304" text-anchor="end">redemptions predicted in 18 vouchers</text>
+        <rect x="470" y="318" width="380" height="24" rx="12" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p8bG" x="660" y="335" text-anchor="middle">1 of 18 sits in a fatter left tail: less surprising</text>
+
+        <text class="p8bT" x="40" y="366">Bar heights are the shapes the two models predict; no tail probability is printed. The build-along counts it, from your draws.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the solid bar is the month that happened. On the left the model that gives every outlet the same rate did not expect it much. On the right the model that let Northgate be a little different expected it more. Neither picture says the model is right.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Northgate and Hillcrest under complete pooling, then under partial<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Complete pooling has one rate, the grand rate 0.141, and predicts every outlet's fresh month from it. Northgate's observed 1 of 18, 0.056, sits below that; Hillcrest's observed 9 of 40, 0.225, sits well above it. Under a single shared rate both months look like surprises, in opposite directions, and a posterior predictive check on complete pooling shows two outlets the model would not readily have produced. That is the check doing its job: the model's picture of the data is too tidy, and the twelve outlets are not all copies of 0.141.</p>
+        <p>Partial pooling, session 6's fit with mu = 0.135 and kappa = 116, predicts each outlet from its own shrunk rate. Northgate's is 0.124, its own month weighted at 18 / (18 + 116), so the fresh months it expects are lower and wider than complete pooling's, and one in eighteen sits in a fatter tail. Hillcrest, at n = 40, gets a data weight of 40 / (40 + 116), larger than Northgate's 0.13, so its predictive is allowed further from the centre toward its 0.225 and nine of forty is less of a surprise there too. The check cannot say partial pooling is right. It can say complete pooling has missed a shape in the data and partial pooling has not, and that is the kind of sentence McElreath's lecture 7 builds the check to produce. <span class="mono">az.plot_ppc_dist(dt)</span> draws exactly this comparison for any model in the tree.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What a check cannot catch: wrong in the way the data agree with<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 6's partial pooling passed every check. Its diagnostics were clean, its predictive months at every outlet looked like the months on the table, and its ledger against the truth was the best of the three estimators, 0.025 root-mean-square error. It still put Northgate at 0.124 against a true rate of 0.192, and no predictive check could have told you so. Northgate's one redemption in eighteen is what a true 0.192 looks like at that size, so a model that predicts fresh months centred near 0.124 produces months that look like the observed one. The observed data confirm the model. The model is wrong about the one shop that mattered.</p>
+        <p>This is the sentence to carry out of tonight, and it is the honest limit of the whole idea. <strong>A predictive check compares the model to the data you have, and the data you have were small.</strong> It catches a model that could not have produced these data: the Wrong prior at Westfield, complete pooling at Northgate and Hillcrest. It cannot catch a model that produces these data comfortably and is wrong anyway, because the only evidence against it is a truth the data are too few to show. The same goes for the diagnostics, in the other direction: a passing R-hat and ESS set proves the sampler explored this model's posterior, and nothing about whether the model is right, which is exactly what tonight's checks are for. Two layers, two limits, and neither one is the truth.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The regional director asked the analyst whether the Northgate estimate had been checked. It had, twice: the diagnostics and the posterior predictive both passed. She said so, then added the line that mattered: "passing means the model could have produced one redemption in eighteen. So could a shop redeeming at nineteen percent. Eighteen vouchers cannot tell those apart, and no check on eighteen vouchers will." The director moved the question from the model to the sample size, which is where it belonged.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Named, not taught: the road onward from here<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three things tonight names and leaves. <strong>LOO cross-validation</strong> is the tool for comparing two or more models by their predictive accuracy on held-out points; when the question is "which of these models predicts better", that is the answer, and it is a subject of its own. <strong>Bayes factors</strong> and comparison by marginal likelihood are a different way of comparing models, and they are what Kruschke's ROPE rule in session 7 is explicitly not: that rule is estimation against a band of practical equivalence, not a ratio of model evidences. And <strong>McElreath's lectures 14 to 18</strong> are the road onward from twelve Beta-Binomial outlets: Gaussian processes, measurement error, missing data, social networks. Each is the same machine, a model run forwards to produce data, pointed at a harder shape of data.</p>
+        <p>One thing tonight does not do at all. Whether the 89 percent intervals these models report are honest over many forecasts, measured against what happened, is a calibration question, and <strong>learn-decision-intelligence-with-phoebe</strong> sessions 02 and 04 own it. A posterior predictive check asks whether the model could have made this month's data. Calibration asks whether its stated probabilities come true at the stated rate across many months. They are different questions with different owners.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 - BUILD-ALONG ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>The two checks in PyMC 6, then the Northgate comparison in scipy</h2>
+      <span class="tag build">24 min build-along</span>
+    </div>
+    <p class="lede">Two blocks. The first is PyMC 6.3 syntax: a prior predictive under the Wrong prior for Westfield, which should produce counts of 900 nowhere near anything Halloway has seen, then the flat Westfield model from session 5 with a posterior predictive and <span class="mono">az.plot_ppc_dist</span>. The canon numbers are in the comments: 127 of 900 observed, flat posterior mean 0.142. The second block is the Northgate comparison by pure simulation in scipy, which prints two shares and no course number, because the tail probabilities are yours.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Write the Westfield model with the Wrong prior.</strong> <span class="mono">pm.Beta("rate", alpha=40, beta=60)</span>, <span class="mono">pm.Binomial("redeemed", n=900, p=rate, observed=127)</span>. The observed line tells the model the shape of the data; the prior predictive will not use its value.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Sample the prior predictive, bare.</strong> <span class="mono">pm.sample_prior_predictive()</span> with no arguments; the <span class="mono">samples</span> argument is gone in PyMC 6. Print the result and read the redeemed counts: roughly 40 percent of 900, against a chain whose highest observed rate is 0.225. The prior has failed and no data were used.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Fit the flat model and sample its posterior predictive.</strong> Session 5's block, <span class="mono">pm.sample()</span>, then <span class="mono">pm.sample_posterior_predictive(dt)</span>. Check the summary says 0.142 before going further; if it does not, the model or the count is wrong, not the check.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Plot it.</strong> <span class="mono">az.plot_ppc_dist(dt)</span>, the ArviZ 1.x name; <span class="mono">plot_ppc</span> is the old one. Simulated counts of 900 against the observed 127. It returns a PlotCollection, not axes.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Build Northgate's two posteriors in scipy.</strong> Complete pooling: one flat-prior Beta on the grand rate from the summed counts of all twelve outlets. Partial pooling: Northgate's rate under the learned Beta(mu kappa, (1 - mu) kappa) prior with mu 0.135 and kappa 116, updated by 1 of 18.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Simulate fresh months and count.</strong> For each rate draw, a Binomial month of 18. Count how often 1 or fewer redeem under each model. Read the two printed values. They are from your draws and they are not course numbers; the shape, which is larger, is the lesson.</p></div>
+      </div>
+    </div>
+
+    <div class="prompt-box good"><span class="label">★ Run it now (Python) - prior predictive under the Wrong prior, then posterior predictive for the flat model</span># Westfield: 127 redeemed of 900. PyMC 6.3.2, ArviZ 1.3.0, Python 3.12 or later.
+import pymc as pm
+import arviz as az
+
+# 1. Prior predictive under the Wrong prior. No data are used: the observed line only tells
+#    the model the shape of the data it is predicting, 900 vouchers.
+with pm.Model() as wrong_prior:
+    rate = pm.Beta("rate", alpha=40, beta=60)              # the Wrong prior: mean 0.400, worth 100 pseudo-observations
+    pm.Binomial("redeemed", n=900, p=rate, observed=127)
+    prior = pm.sample_prior_predictive()                    # PyMC 6: the deprecated samples argument is gone
+
+print(prior)                                                # read the redeemed counts in the prior predictive group:
+                                                            # roughly 40 percent of 900, and Halloway has never seen
+                                                            # above 0.225 at any outlet (Hillcrest, 9 of 40).
+                                                            # The prior fails here, before the fit.
+
+# 2. Posterior predictive for the flat model, session 5's Westfield block.
+with pm.Model() as westfield:
+    rate = pm.Beta("rate", alpha=1, beta=1)                 # flat, worth 2 pseudo-observations
+    pm.Binomial("redeemed", n=900, p=rate, observed=127)
+    dt = pm.sample()                                        # nutpie when installed, 400 tuning steps
+    dt = pm.sample_posterior_predictive(dt)                 # PyMC 6 added sample_vars and freeze_vars; extends dt and returns it
+
+print(az.rhat(dt))                                          # session 4's checks first: the sampler explored THIS posterior
+print(az.ess(dt, sample_dims=["chain", "draw"]))
+print(az.summary(dt))                                       # rate: mean 0.142, interval 89 percent equal-tailed by default
+
+pc = az.plot_ppc_dist(dt)                                   # replaces plot_ppc; simulated counts of 900 against the observed 127
+                                                            # returns a PlotCollection, like every ArviZ 1.x plot</div>
+
+    <div class="prompt-box good"><span class="label">★ Then the Northgate comparison - pure simulation in scipy, no PyMC</span># Northgate: 1 redeemed of 18. Two fitted models, two predictive distributions, one observed count.
+import numpy as np
+from scipy.stats import beta
+
+rng   = np.random.default_rng(11)
+DRAWS = 20_000
+n_out = np.array([18, 24, 31, 40, 55, 70, 95, 140, 210, 320, 540, 900])   # the twelve outlets
+y_out = np.array([1, 4, 1, 9, 8, 9, 7, 22, 19, 67, 71, 127])
+
+# complete pooling: one rate for the whole chain, flat prior, conjugate posterior on the summed counts
+grand = beta(1 + y_out.sum(), 1 + n_out.sum() - y_out.sum()).rvs(DRAWS, random_state=rng)   # centred on 0.141
+
+# partial pooling: Northgate under the learned Beta(mu kappa, (1 - mu) kappa) prior, mu 0.135, kappa 116
+mu, kappa = 0.135, 116
+north = beta(mu * kappa + 1, (1 - mu) * kappa + 18 - 1).rvs(DRAWS, random_state=rng)         # mean 0.124
+
+# a fresh month of 18 vouchers from every rate draw, then: how often does 1 or fewer redeem?
+fresh_complete = rng.binomial(18, grand)
+fresh_partial  = rng.binomial(18, north)
+print("complete pooling, share of fresh months with 1 or fewer redemptions:", np.mean(fresh_complete &lt;= 1))
+print("partial pooling,  share of fresh months with 1 or fewer redemptions:", np.mean(fresh_partial  &lt;= 1))
+# Read the two printed values. Neither is a course number; both are yours, from your draws.
+# The shape is the lesson: the second is larger, because Northgate's partially pooled rate sits
+# lower and wider than the grand rate. Less surprising is not the same as right: the truth is 0.192.</div>
+
+    <div class="callout tip">
+      <p><strong>Run the prior predictive before you have an opinion about the fit.</strong> Once the posterior is on the screen it is very hard to look at Beta(40, 60) and see anything but the answer it produced, 0.167 at Westfield against a truth of 0.150. Before the fit it is easy: the prior predicts a business that has never existed. The check costs one line and it is the one line leader session 6 tells an executive to ask for.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">The Wrong prior Beta(40, 60) fails a prior predictive check at Westfield. What was compared to what?</p>
+      <button class="qopt" type="button">A · The prior's posterior mean, 0.167, against the true rate of 0.150, which the check knows from the generator</button>
+      <button class="qopt" type="button">B · The prior's predicted counts against Westfield's observed 127 of 900, which the check conditions on</button>
+      <button class="qopt" type="button">C · The prior's predicted counts for 900 vouchers, roughly 40 percent redemption, against the fact that no Halloway outlet has ever observed above 0.225; no data were used in the fit</button>
+      <p class="qwhy">A prior predictive check simulates from the prior alone. It never conditions on the observed count and never sees the truth. The Wrong prior fails because it predicts a business that has never existed at any outlet: the highest observed rate in the twelve-outlet table is Hillcrest's 9 of 40. That is why all three positions in leader session 5's argument can run it.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">Session 6's partial pooling passed its diagnostics and its posterior predictive check, and estimated Northgate at 0.124 against a truth of 0.192. Which sentence is right?</p>
+      <button class="qopt" type="button">A · The checks worked as designed; one redemption in eighteen is what 0.192 looks like at that size, so a model centred near 0.124 produces data like the observed data, and no check on the data you have can see a truth the data are too few to show</button>
+      <button class="qopt" type="button">B · The posterior predictive check was run wrongly; a correct check would have flagged Northgate</button>
+      <button class="qopt" type="button">C · The diagnostics must have been marginal; a clean R-hat and ESS set would have caught the under-estimate</button>
+      <p class="qwhy">A predictive check compares the model to the data you have, and the data you have were small. It catches a model that could not have produced these data, such as complete pooling at Northgate and Hillcrest. It cannot catch a model that produces them comfortably and is wrong anyway. Diagnostics are a different layer altogether: they prove the sampler explored this model's posterior, and nothing about the model.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">Under complete pooling, Northgate's 1 of 18 and Hillcrest's 9 of 40 both look surprising in a posterior predictive check. Why does the same check make them look less surprising under partial pooling?</p>
+      <button class="qopt" type="button">A · Partial pooling fits each outlet to its own observed rate, so every outlet's data are reproduced exactly</button>
+      <button class="qopt" type="button">B · Complete pooling predicts every outlet at the grand rate 0.141; partial pooling predicts each from its own shrunk rate, Northgate's month weighted at 18 / (18 + 116) and Hillcrest's at 40 / (40 + 116), so each outlet's predictive is allowed some distance from 0.135 toward what it observed</button>
+      <button class="qopt" type="button">C · Partial pooling knows the true rates and predicts from them</button>
+      <p class="qwhy">The pooling ladder gives each outlet a data weight n / (n + 116), so the shrunk rate sits between the centre 0.135 and the observed rate, and the predictive for a fresh month sits there too. Northgate is 0.124 under that rule, not 0.056, so option A is wrong; and the fit never sees the truth, so option C is wrong. Less surprising is not the same as right: Northgate's truth is still 0.192.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 9</h2>
+      <span class="tag time">45 min</span>
+    </div>
+    <div class="callout">
+      <p>Take the model you brought from session 5 and run both checks on it. First the prior predictive: print the counts the prior alone produces and write one sentence saying whether they describe a business you have ever seen; if you have a Wrong prior in your notebook, this is where it dies. Then the posterior predictive with <span class="mono">az.plot_ppc_dist</span>, and one more sentence saying what shape in your data, if any, the model has missed. Finally write the sentence that tonight is really about, in your own units: "passing means the model could have produced these data; so could a model that is wrong by this much, and n of this size cannot tell them apart". Session 9 is the room where the number is read aloud, and that sentence is the one that has to survive the reading.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Statistical Rethinking, lecture 7</span>
+        <span class="note">"Overfitting", from the 2024 course: the source for predictive checks, run here forwards from the prior and forwards from the posterior on the Halloway models.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The prior predictive check</span>
+        <span class="note">pm.sample_prior_predictive() in PyMC 6, the deprecated samples argument gone. The Wrong prior Beta(40, 60) predicts roughly 40 percent redemption against a highest observed rate of 0.225 (Hillcrest, 9 of 40) and fails before any data are used. Under Beta(1, 1) every count from 0 to n is equally plausible. The shared ground of leader session 5's prior argument.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The posterior predictive check</span>
+        <span class="note">pm.sample_posterior_predictive(dt), which gained sample_vars and freeze_vars in PyMC 6; az.plot_ppc_dist replaces plot_ppc and returns a PlotCollection. Westfield flat model: 127 of 900 observed, posterior mean 0.142. Complete pooling predicts every outlet at 0.141, so Northgate's 1 of 18 and Hillcrest's 9 of 40 look surprising; under partial pooling, mu 0.135 and kappa 116 with data weight n / (n + 116), less so.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">What a check cannot catch</span>
+        <span class="note">A model wrong in a way the data confirm. Session 6's partial pooling passed every check and still put Northgate at 0.124 against a truth of 0.192, because one redemption in eighteen is what 0.192 looks like at that size. A check compares to the data you have, and the data you have were small.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Diagnostics, in one clause</span>
+        <span class="note">A passing R-hat and ESS set proves the sampler explored this model's posterior and nothing about whether the model is right. Session 4 owns the diagnostics; tonight owns the other question.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">LOO cross-validation</span>
+        <span class="note">Named as the tool for comparing models by predictive accuracy on held-out points. Not taught.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">McElreath lectures 14 to 18</span>
+        <span class="note">Gaussian processes, measurement error, missing data, social networks. Named as the road onward; not taught.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Bayes factors and marginal-likelihood comparison</span>
+        <span class="note">Not covered by design. Named once as what Kruschke's ROPE rule in session 7 is explicitly not.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Calibration over many forecasts</span>
+        <span class="note">Not covered by design. Whether the stated 89 percent comes true at that rate across many months is <strong>learn-decision-intelligence-with-phoebe</strong> sessions 02 and 04. A predictive check asks a different question about one month's data.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 8 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Prior predictive</b><span>pm.sample_prior_predictive(), bare; no samples argument in PyMC 6. Simulate from the prior alone, ask if it could be real data.</span></div>
+      <div class="cheat-item"><b>The Wrong prior fails here</b><span>Beta(40, 60) predicts roughly 40 percent. Highest ever observed: Hillcrest 9 of 40, 0.225. Failed before any data.</span></div>
+      <div class="cheat-item"><b>Flat: every count equally plausible</b><span>Beta(1, 1) predicts 0 to n as a level strip. Two pseudo-observations and no opinion. Seeing it confirms the prior you meant.</span></div>
+      <div class="cheat-item"><b>Posterior predictive</b><span>pm.sample_posterior_predictive(dt); gained sample_vars and freeze_vars. az.plot_ppc_dist(dt) replaces plot_ppc, returns a PlotCollection.</span></div>
+      <div class="cheat-item"><b>Complete vs partial at Northgate</b><span>Complete predicts 0.141 everywhere; 1 of 18 and Hillcrest's 9 of 40 look surprising. Partial shrinks with weight n / (n + 116); less so.</span></div>
+      <div class="cheat-item"><b>What a check cannot catch</b><span>Wrong in the way the data confirm. Northgate 0.124 vs 0.192: 1 of 18 is what 0.192 looks like at that size. Small data, small check.</span></div>
+      <div class="cheat-item"><b>Diagnostics are not this</b><span>R-hat and ESS prove the sampler explored THIS posterior. Nothing about whether the model is right. That is the predictive check's job.</span></div>
+      <div class="cheat-item"><b>Named, not taught</b><span>LOO for comparing models by predictive accuracy. Bayes factors: what the ROPE rule is not. McElreath 14 to 18: the road onward.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 8 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p7-bayesian-ab-decisions.html">← Practitioner session 7 · Bayesian A/B decisions</a>
+      <a href="p9-saying-it-to-executives.html">Practitioner session 9 · Saying it to executives →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

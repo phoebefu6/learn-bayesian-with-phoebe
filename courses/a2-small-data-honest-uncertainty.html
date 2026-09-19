@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Leader session 2 of 6. Northgate redeemed 1 voucher in 18, an observed rate of 0.056 against a true rate of 0.192. Eighteen observations cannot give you a point. They give you a distribution, and the honest summary is an 89 percent interval from 0.020 to 0.222.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Small data, honest uncertainty - learn bayesian with phoebe">
+<meta property="og:description" content="Leader session 2 of 6. A point estimate from n = 18 is not wrong. It is meaningless without its spread.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/a2-small-data-honest-uncertainty.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Small data, honest uncertainty - learn bayesian with phoebe">
+<meta name="twitter:description" content="There is an 89 percent probability the rate is between 0.020 and 0.222. Honest, useless for a decision, and correct. That is what eighteen observations buy.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Leader session 2 · Small data, honest uncertainty - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Leader session 2 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Leader session 2 of 6</div>
+    <h1>Small data, <span class="accent">honest uncertainty</span></h1>
+    <p class="sub">Northgate redeemed one voucher in eighteen last month. The slide said 5.6 percent, the regional manager read it as a failing outlet, and the closure review was scheduled. Northgate's true redemption rate is 0.192, the highest of the twelve. Nothing about the 5.6 percent was a mistake: one redemption in eighteen is what a true rate of 0.192 looks like at that volume a good share of the time. The mistake was treating eighteen observations as if they could produce a point. They cannot. What they can produce is a distribution, and the honest summary of it, under a prior that claims almost nothing, is an 89 percent interval from 0.020 to 0.222. That sentence would have looked bad on a slide and would have saved an outlet. Tonight is about being able to say it.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Whoever reads a rate off a small sample</span>
+      <span class="chip audience">Product, finance and analytics leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-20 · The posterior as a shape</span>
+      <span class="a3" style="flex:4">20-40 · Build-along: rewrite the slide</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where tonight sits</h2>
+    </div>
+    <p class="lede">Session 1 priced a prior: a belief is worth a number of pseudo-observations, and at Northgate a belief worth a hundred outvoted eighteen real customers and missed. Tonight sets the prior almost to zero, a flat Beta(1, 1) worth two pseudo-observations, and asks what eighteen observations say on their own. The answer is not a number. Session 3 is where the other eleven outlets are allowed to help, and the interval you will see tonight is the one that session narrows. The example throughout is still <strong>Halloway Bakeries</strong>, its twelve outlets and one voucher.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> The habit of seeing a small-sample rate as a shape rather than a dot: Northgate's eighteen observations produce a posterior that runs from near zero to past 0.22, with its peak at the observed 0.056 and its truth, 0.192, comfortably inside. One sentence that replaces every point estimate from small data: "there is an 89 percent probability the rate is between 0.020 and 0.222". And the reflex to ask, of any interval anybody shows you, what kind it is and what level, because the tooling changed both defaults and some notebooks changed with it without anyone noticing.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Eighteen observations are not a number, they are a shape<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Ask what rate could have produced one redemption in eighteen and the honest answer is: a lot of them. A true rate of 0.05 would do it routinely. A true rate of 0.192 does it a good share of the time. A true rate of 0.30 would do it rarely, and 0.50 almost never. Lay those plausibilities out along the axis and you have drawn the posterior: a curve that peaks at the observed 0.056, falls away slowly to the right, and is still clearly above zero at 0.192, where Northgate actually is.</p>
+        <p>That curve is the whole result. The 0.056 on the slide is one point on it, the peak, and the peak of a wide shape is not a summary of the shape. A point estimate from n = 18 is not wrong; it is meaningless without its spread, in the same way that "the flight is at 3" is meaningless without knowing whether the airline means 3 o'clock or sometime in the afternoon. The spread is the information. Eighteen observations bought a shape, and the shape is wide because eighteen is small.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The Northgate closure review opened with a ranked bar chart of twelve observed rates. Northgate sat second from the bottom on 0.056, above only Old Quay, and Hillcrest sat at the top on 0.225. Hillcrest's true rate is 0.137 and Northgate's is 0.192; the ranking was close to upside down at the thin end, and nothing on the chart could have shown it, because the chart had no widths. Twelve dots, no shapes.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Posterior.</strong> The distribution over the rate after the data are in. Tonight, under a flat prior, it is almost entirely the data's own shape.</li>
+          <li><strong>Flat prior.</strong> Beta(1, 1), two pseudo-observations. As close to "no belief" as a prior gets. Session 1 showed it is not nothing; tonight it is used precisely because it claims so little.</li>
+          <li><strong>Posterior mean.</strong> The balance point of the shape. Northgate's is 0.100 under the flat prior, well above the observed 0.056, because the shape has a long right tail.</li>
+          <li><strong>89 percent interval.</strong> The range holding 89 percent of the posterior. Northgate: 0.020 to 0.222.</li>
+          <li><strong>Equal-tailed.</strong> How the interval is cut: 5.5 percent of the posterior left outside on each side. Every interval tonight, and every Halloway interval on the pages that follow, is 89 percent equal-tailed, and says so.</li>
+          <li><strong>Credible interval.</strong> The Bayesian interval. It supports the sentence "there is an 89 percent probability the rate is in here".</li>
+          <li><strong>Confidence interval.</strong> The frequentist interval. A different sentence about a different thing, owned by <strong>learn-statistics-with-phoebe</strong> b7, and contrasted with the credible interval in exactly one card tonight.</li>
+          <li><strong>Width.</strong> The interval's top minus its bottom. Northgate 0.202, Westfield 0.037. The number that does the arguing when a point cannot.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers what eighteen observations can say</span>
+      <h2>The posterior is a distribution. The summary is an interval.</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">Northgate's eighteen customers, a flat prior, and nothing else. What comes out is drawn below exactly as the arithmetic produces it: a shape, the middle 89 percent of it shaded, and the truth marked so the shape can be judged rather than admired. Under a flat prior Northgate's 89 percent interval is 0.020 to 0.222. It is honest, it is useless for a decision, and it is correct. That is what eighteen observations buy.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 356" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Northgate's posterior distribution for the redemption rate under a flat prior, from one redemption in eighteen. The curve peaks at the observed rate of 0.056, has its mean at 0.100, and falls away slowly to the right. The middle 89 percent is shaded, running from 0.020 to 0.222, an equal-tailed interval with 5.5 percent cut from each end. A dashed line marks the true rate of 0.192, which sits inside the shaded interval. The interval's width is 0.202. A scale from 0 to 0.40 runs along the bottom.">
+        <style>
+          .a2aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a2aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a2aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a2aN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a2aP { font: 800 11px Inter, sans-serif; fill: #9D174D; }
+          .a2aD { font: 700 11px Inter, sans-serif; fill: #831843; }
+          .a2aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="a2aH" x="14" y="22">Northgate, n = 18, flat prior. The posterior is a shape, and the interval is its middle 89 percent.</text>
+
+        <!-- rate 0 to 0.40 maps to x 60..850; baseline y=300 -->
+        <polygon points="99.5,300 99.5,151.6 109.4,129.9 121.7,109.4 134.1,95.1 146.4,86.0 158.8,81.2 171.1,80.0 183.4,81.7 195.8,85.7 208.1,91.5 220.5,98.7 232.8,107.0 245.2,116.0 257.5,125.5 269.8,135.3 282.2,145.2 294.5,155.1 306.9,164.9 319.2,174.4 331.6,183.6 343.9,192.5 356.3,200.9 368.6,209.0 380.9,216.6 393.3,223.7 405.6,230.4 418.0,236.7 430.3,242.5 442.7,247.9 455.0,252.9 467.3,257.5 479.7,261.7 492.0,265.6 498.4,267.4 498.4,300" fill="#FBCFE8"></polygon>
+        <polyline points="60.0,300.0 72.3,241.2 84.7,194.4 97.0,157.8 109.4,129.9 121.7,109.4 134.1,95.1 146.4,86.0 158.8,81.2 171.1,80.0 183.4,81.7 195.8,85.7 208.1,91.5 220.5,98.7 232.8,107.0 245.2,116.0 257.5,125.5 269.8,135.3 282.2,145.2 294.5,155.1 306.9,164.9 319.2,174.4 331.6,183.6 343.9,192.5 356.3,200.9 368.6,209.0 380.9,216.6 393.3,223.7 405.6,230.4 418.0,236.7 430.3,242.5 442.7,247.9 455.0,252.9 467.3,257.5 479.7,261.7 492.0,265.6 504.4,269.1 516.7,272.3 529.1,275.3 541.4,277.9 553.8,280.3 566.1,282.5 578.4,284.5 590.8,286.3 603.1,287.8 615.5,289.3 627.8,290.5 640.2,291.7 652.5,292.7 664.8,293.6 677.2,294.4 689.5,295.1 701.9,295.7 714.2,296.3 726.6,296.8 738.9,297.2 751.2,297.6 763.6,297.9 775.9,298.2 788.3,298.5 800.6,298.7 813.0,298.9 825.3,299.0 837.7,299.2 850.0,299.3" fill="none" stroke="#9D174D" stroke-width="2"></polyline>
+
+        <!-- observed 0.056 at the peak -->
+        <text class="a2aD" x="118" y="70">observed 0.056 sits at the peak</text>
+
+        <!-- posterior mean 0.100 -> x 257.5 -->
+        <line x1="257.5" y1="125.5" x2="257.5" y2="300" stroke="#831843" stroke-width="1.5" stroke-dasharray="3 3"></line>
+        <text class="a2aD" x="263" y="118">posterior mean 0.100</text>
+
+        <!-- truth 0.192 -> x 439.2 -->
+        <line x1="439.2" y1="56" x2="439.2" y2="300" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="a2aG" x="445" y="66">truth 0.192, inside</text>
+
+        <!-- axis -->
+        <line x1="60" y1="300" x2="850" y2="300" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <rect x="99.5" y="304" width="398.9" height="5" rx="2.5" fill="#9D174D"></rect>
+        <text class="a2aP" x="99.5" y="322" text-anchor="middle">0.020</text>
+        <text class="a2aP" x="498.4" y="322" text-anchor="middle">0.222</text>
+        <text class="a2aM" x="60" y="322" text-anchor="middle">0.00</text>
+        <text class="a2aM" x="257.5" y="322" text-anchor="middle">0.10</text>
+        <text class="a2aM" x="652.5" y="322" text-anchor="middle">0.30</text>
+        <text class="a2aM" x="850" y="322" text-anchor="middle">0.40</text>
+        <text class="a2aM" x="455" y="342" text-anchor="middle">redemption rate</text>
+
+        <!-- the sentence -->
+        <rect x="556" y="56" width="310" height="100" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="a2aM" x="568" y="76">The sentence this shape supports:</text>
+        <text class="a2aN" x="568" y="92">there is an 89 percent probability</text>
+        <text class="a2aN" x="568" y="108">the rate is between 0.020 and 0.222.</text>
+        <text class="a2aM" x="568" y="124">Equal-tailed: 5.5 percent cut from each end.</text>
+        <text class="a2aM" x="568" y="140">Width 0.202. Honest, and no use for a decision.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the peak is where the slide's 5.6 percent came from. The truth is inside the shape, well to the right of the peak.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Honest, useless, and correct<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three things are true of Northgate's interval at once, and a leader has to hold all three. It is honest: it contains the true rate, 0.192, which the point estimate missed by 0.136. It is useless for a decision: a rate somewhere between 0.020 and 0.222 covers "close the outlet" and "best in the chain" in one breath, and no budget can be built on it. And it is correct: eighteen observations under a prior that claims almost nothing do not support anything narrower, and any narrower interval would have been bought with a belief rather than with data.</p>
+        <p>The instinct in the room is to fix the third property by fixing the first two, to pull the interval in until it says something. Session 1 showed the price of doing that with an asserted prior: an interval of 0.068 to 0.159 that read like knowledge and excluded the truth. Session 3 shows the legitimate way, letting the other eleven outlets narrow it. Tonight the discipline is simpler and comes first: <strong>say the width before you try to shrink it.</strong> An outlet was nearly closed because nobody in the room knew the width was 0.202.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The sentence, and the other sentence<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>"There is an 89 percent probability the rate is between 0.020 and 0.222." That is a statement about the rate, and it is the sentence almost everybody believes a confidence interval is making. A credible interval is allowed to make it, because the posterior is a probability distribution over the rate itself and the interval is simply where 89 percent of it sits.</p>
+        <p>The frequentist confidence interval is a different sentence about a different thing. It describes the reliability of the procedure that produced the interval across many repeated samples, not the probability that this particular rate lies in this particular range, and reading it as the Bayesian sentence is one of the most common misreadings in applied work. <strong>learn-statistics-with-phoebe</strong> b7 owns that interval and the reasoning behind it; nothing here re-derives it. What matters tonight is narrower: when you hear the sentence "89 percent probability the rate is between", ask which kind of interval is being described, because only one of them earns those words.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why 89, why equal-tailed, and why you must say both<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Eighty-nine is not sacred. It is the level the standard Bayesian tooling ships with: ArviZ 1.x sets its default interval probability, the setting called stats.ci_prob, to 0.89, and its default interval kind, stats.ci_kind, to "eti", the equal-tailed interval. The previous defaults were 0.94 and the highest-density interval. The maintainers' stated reason for 0.89 is that it "produces intervals with lower variability, leading to more stable summaries": at the extremes of a distribution the estimated edge moves around a lot from one run to the next, and a slightly less ambitious level is steadier. Equal-tailed means 5.5 percent of the posterior is cut from each end, which is what every Halloway interval means and every page says.</p>
+        <p>The number matters less than the habit. There is a documented case, in a third party's notebooks, of intervals that silently changed kind when the library was upgraded: the code still ran, the numbers still printed, the prose still said "highest density", and the intervals were now equal-tailed. Nobody had done anything wrong; a default had moved under them. The defence is to state kind and level with every interval, so that "89 percent equal-tailed" travels with the numbers and a reader can tell when it stops matching. An interval with no kind and no level attached is not yet a result. It is a pair of numbers waiting for someone to ask.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers what volume buys and what it does not</span>
+      <h2>Volume narrows the interval. It does not remove it.</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">Westfield is Halloway's flagship: 900 vouchers a month, fifty times Northgate's volume, 127 redeemed. Under the same flat prior its posterior mean is 0.142 and its 89 percent interval runs from 0.124 to 0.161, with a true rate of 0.150 inside. Drawn beside Northgate's on the same axis, it shows what fifty times the data actually purchases: a much narrower shape, and still a shape.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 336" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two posterior distributions on one axis from 0 to 0.30, both under a flat prior. Northgate, n = 18, is a wide low hump peaking near 0.056 with its 89 percent equal-tailed interval shaded from 0.020 to 0.222, width 0.202, and its true rate of 0.192 marked inside. Westfield, n = 900, is a tall narrow spike peaking near 0.141 with its interval shaded from 0.124 to 0.161, width 0.037, posterior mean 0.142, and its true rate of 0.150 marked inside. Fifty times the vouchers gives an interval about a fifth as wide, not a point.">
+        <style>
+          .a2bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a2bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a2bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a2bN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .a2bP { font: 800 11px Inter, sans-serif; fill: #9D174D; }
+          .a2bD { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .a2bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="a2bH" x="14" y="22">Two outlets, one axis, one flat prior. Fifty times the vouchers, and the interval is still an interval.</text>
+
+        <!-- legend -->
+        <rect x="700" y="36" width="14" height="10" rx="2" fill="#FBCFE8" stroke="#9D174D"></rect>
+        <text class="a2bL" x="720" y="45">Northgate, n = 18</text>
+        <rect x="700" y="52" width="14" height="10" rx="2" fill="#F9A8D4" stroke="#831843"></rect>
+        <text class="a2bL" x="720" y="61">Westfield, n = 900</text>
+
+        <!-- rate 0 to 0.30 maps to x 60..850; baseline y=280; both peaks scaled to y=90 -->
+        <polygon points="112.7,280 112.7,151.8 121.7,138.5 134.1,123.5 146.4,111.8 158.8,103.0 171.1,96.8 183.4,92.7 195.8,90.5 208.1,90.0 220.5,90.9 232.8,93.0 245.2,96.0 257.5,99.9 269.8,104.5 282.2,109.6 294.5,115.2 306.9,121.1 319.2,127.2 331.6,133.5 343.9,139.9 356.2,146.3 368.6,152.7 380.9,159.1 393.3,165.4 405.6,171.5 418.0,177.5 430.3,183.4 442.7,189.0 455.0,194.4 467.3,199.7 479.7,204.7 492.0,209.5 504.4,214.1 516.7,218.5 529.1,222.7 541.4,226.6 553.8,230.3 566.1,233.9 578.4,237.2 590.8,240.3 603.1,243.3 615.5,246.0 627.8,248.6 640.2,251.0 644.6,251.9 644.6,280" fill="#FBCFE8"></polygon>
+        <polyline points="60.0,280.0 72.3,240.9 84.7,207.8 97.0,180.1 109.4,157.2 121.7,138.5 134.1,123.5 146.4,111.8 158.8,103.0 171.1,96.8 183.4,92.7 195.8,90.5 208.1,90.0 220.5,90.9 232.8,93.0 245.2,96.0 257.5,99.9 269.8,104.5 282.2,109.6 294.5,115.2 306.9,121.1 319.2,127.2 331.6,133.5 343.9,139.9 356.2,146.3 368.6,152.7 380.9,159.1 393.3,165.4 405.6,171.5 418.0,177.5 430.3,183.4 442.7,189.0 455.0,194.4 467.3,199.7 479.7,204.7 492.0,209.5 504.4,214.1 516.7,218.5 529.1,222.7 541.4,226.6 553.8,230.3 566.1,233.9 578.4,237.2 590.8,240.3 603.1,243.3 615.5,246.0 627.8,248.6 640.2,251.0 652.5,253.3 664.8,255.4 677.2,257.4 689.5,259.2 701.9,260.9 714.2,262.5 726.6,264.0 738.9,265.3 751.3,266.6 763.6,267.8 775.9,268.8 788.3,269.8 800.6,270.7 813.0,271.6 825.3,272.3 837.7,273.0 850.0,273.7" fill="none" stroke="#9D174D" stroke-width="2"></polyline>
+
+        <polygon points="386.5,280 386.5,220.9 387.5,217.7 392.0,202.1 396.6,185.1 401.1,167.3 405.6,149.5 410.2,132.7 414.7,117.6 419.2,105.3 423.7,96.3 428.3,91.1 432.8,90.1 437.3,93.3 441.8,100.2 446.4,110.5 450.9,123.5 455.4,138.3 459.9,154.3 464.5,170.6 469.0,186.6 473.5,201.7 478.0,215.6 482.6,228.0 484.0,231.5 484.0,280" fill="#F9A8D4"></polygon>
+        <polyline points="297.0,280.0 306.1,280.0 315.1,280.0 324.2,279.9 333.2,279.6 342.3,278.7 346.8,277.8 351.3,276.3 355.8,274.2 360.4,271.1 364.9,266.7 369.4,260.8 373.9,253.1 378.5,243.4 383.0,231.6 387.5,217.7 392.0,202.1 396.6,185.1 401.1,167.3 405.6,149.5 410.2,132.7 414.7,117.6 419.2,105.3 423.7,96.3 428.3,91.1 432.8,90.1 437.3,93.3 441.8,100.2 446.4,110.5 450.9,123.5 455.4,138.3 459.9,154.3 464.5,170.6 469.0,186.6 473.5,201.7 478.0,215.6 482.6,228.0 487.1,238.7 491.6,247.8 496.1,255.3 500.7,261.4 505.2,266.2 509.7,269.9 514.3,272.8 518.8,274.9 523.3,276.5 527.8,277.6 532.4,278.4 541.4,279.3 550.5,279.7 559.5,279.9 568.6,280.0 586.7,280.0" fill="none" stroke="#831843" stroke-width="2"></polyline>
+
+        <!-- truths -->
+        <line x1="455" y1="66" x2="455" y2="280" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="a2bG" x="300" y="60">Westfield truth 0.150, inside</text>
+        <line x1="565.6" y1="82" x2="565.6" y2="280" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="a2bG" x="571" y="92">Northgate truth 0.192, inside</text>
+
+        <!-- annotations -->
+        <text class="a2bP" x="600" y="122">Northgate: 0.020 to 0.222, width 0.202</text>
+        <text class="a2bD" x="600" y="140">Westfield: 0.124 to 0.161, width 0.037</text>
+        <text class="a2bM" x="600" y="164">Fifty times the vouchers buys an interval</text>
+        <text class="a2bM" x="600" y="180">about a fifth as wide. It does not buy a point.</text>
+
+        <!-- axis -->
+        <line x1="60" y1="280" x2="850" y2="280" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <rect x="112.7" y="284" width="531.9" height="5" rx="2.5" fill="#9D174D"></rect>
+        <rect x="386.5" y="291" width="97.5" height="5" rx="2.5" fill="#831843"></rect>
+        <text class="a2bM" x="60" y="310" text-anchor="middle">0.00</text>
+        <text class="a2bM" x="191.7" y="310" text-anchor="middle">0.05</text>
+        <text class="a2bM" x="323.3" y="310" text-anchor="middle">0.10</text>
+        <text class="a2bM" x="455" y="310" text-anchor="middle">0.15</text>
+        <text class="a2bM" x="586.7" y="310" text-anchor="middle">0.20</text>
+        <text class="a2bM" x="718.3" y="310" text-anchor="middle">0.25</text>
+        <text class="a2bM" x="850" y="310" text-anchor="middle">0.30</text>
+        <text class="a2bM" x="455" y="330" text-anchor="middle">redemption rate</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - both truths are inside both intervals. One interval could support a budget; the other could support a closure or a bonus with equal ease.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What the flagship's 900 actually bought<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Westfield's interval, 0.124 to 0.161, is 0.037 wide. Northgate's is 0.202 wide. Fifty times the data produced an interval about a fifth as wide, which is a great deal, and a long way from a point. The posterior mean of 0.142 is still 0.008 below the true 0.150, and the interval is what tells you that gap is unremarkable: 0.150 sits well inside it. Without the interval, a finance team comparing 0.142 to last year's 0.150 might have called it a decline. With it, the honest reading is that 900 vouchers cannot tell those two numbers apart.</p>
+        <p>That is the general lesson about volume. More data narrows the shape, and each extra voucher narrows it by less than the one before. It never collapses the shape to a dot, and the width at any given volume is a fact about the data, not a fault in the analysis. A slide that shows Westfield as 14.2 percent and Northgate as 5.6 percent is showing two dots of wildly different reliability at identical size. The interval is the only thing on the page that knows the difference.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's monthly pack ranked all twelve outlets by observed rate in one column. Once the 89 percent intervals were added as a second column, the ranking stopped being read as a ranking: the thin outlets' intervals overlapped almost everything, and Northgate's alone, 0.020 to 0.222, covered the observed rate of nearly every other outlet in the chain. The closure review was withdrawn on the strength of the second column and nothing else.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The executive move: let the width do the arguing<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Replace "the rate is 5.6 percent" with "there is an 89 percent probability the rate is between 2.0 and 22.2 percent" and stop talking. The width does the arguing for you. Nobody hearing that sentence proposes a closure, and nobody hearing it proposes a bonus either; they propose getting more data or borrowing some, which is the right next move and the subject of session 3. The point estimate invited a decision the evidence could not support. The interval declines the invitation on your behalf.</p>
+        <p>Two cautions. First, an interval you cannot describe is not one you should present: say the level and the kind, "89 percent, equal-tailed", or someone will assume 95 and be wrong about what you claimed. Second, this is one card, not the method. The full craft of saying uncertainty to executives, the interval, the probability of a difference, the stake attached to being wrong, is practitioner session 9's whole 45 minutes. Whether a stated 89 percent turns out to be honest when scored across many such statements is a separate question again, and <strong>learn-decision-intelligence-with-phoebe</strong> owns it. Tonight's move is the first and smallest: never show a small-data point without its width.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Rewrite a slide that shows a point</h2>
+      <span class="tag build">20 min build-along</span>
+    </div>
+    <p class="lede">No laptop. Bring the number you priced in session 1, or any small-sample rate your area acts on, and the slide it appears on. The build-along turns the point into the sentence, using only things you can find out by asking, and ends with a slide that could survive the Northgate meeting.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Find the count behind the rate.</strong> "5.6 percent" is one of eighteen. "14.1 percent" is 127 of 900. If nobody can tell you the two integers, the rate has no width yet and the slide is not ready. Write both integers on the slide, next to the percentage, before anything else.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask for the shape, not the number.</strong> The request to whoever produced the figure is "give me the 89 percent equal-tailed interval under a flat prior". It is a two-minute job for them and it names the level, the kind and the prior, so the answer comes back as a result rather than a pair of numbers.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the width down.</strong> Top minus bottom. Northgate 0.202, Westfield 0.037. Put it in the margin. If the width is bigger than the difference the slide is claiming, the slide is claiming something the data cannot see, and you have found the finding.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Replace the headline.</strong> "The rate is 5.6 percent" becomes "there is an 89 percent probability the rate is between 2.0 and 22.2 percent". Say it aloud once. If it sounds embarrassingly wide, the embarrassment belongs to the sample size, and it has been hiding behind the point.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Mark the decision the old slide invited.</strong> Closure, bonus, budget, launch. Ask whether the interval supports it, whether it supports the opposite equally well, or whether it supports neither. Northgate's interval supports closure and best-in-chain equally well, which is the same as supporting neither.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the next move, not the verdict.</strong> When the interval supports neither, the honest slide ends with "more data" or "borrow strength from the other outlets", and session 3 is the second of those. A slide that ends in a sentence about what to find out next is not a weaker slide. It is the one that was true.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The question that changes the meeting.</strong> "How wide is that?" Three words, no technical content, and it separates every number that can carry a decision from every number that cannot. Asked of Northgate's 5.6 percent, the answer was 0.202, and the closure review did not survive hearing it.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">Northgate redeemed 1 voucher in 18, observed 0.056, and its true rate is 0.192. Which statement is right?</p>
+      <button class="qopt" type="button">A · The observed 0.056 was a measurement error and should have been checked</button>
+      <button class="qopt" type="button">B · The observed 0.056 proves Northgate is under-performing this month even if its long-run rate is higher</button>
+      <button class="qopt" type="button">C · One in eighteen is what a true 0.192 looks like at that volume a good share of the time; the point is not wrong, it is meaningless without its spread</button>
+      <p class="qwhy">Nothing went wrong with the count. Eighteen observations produce a posterior that runs from 0.020 to 0.222 under a flat prior, and 0.192 sits comfortably inside it. The 0.056 is the peak of a wide shape, and the peak of a wide shape is not a summary of it.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">An analyst says "there is an 89 percent probability the rate is between 0.020 and 0.222". Which kind of interval earns that sentence?</p>
+      <button class="qopt" type="button">A · A credible interval, because the posterior is a probability distribution over the rate itself; a confidence interval is a different sentence about the procedure, owned by learn-statistics-with-phoebe</button>
+      <button class="qopt" type="button">B · Either kind, because both are 89 percent intervals and the words mean the same thing</button>
+      <button class="qopt" type="button">C · A confidence interval, because only frequentist intervals can make probability statements</button>
+      <p class="qwhy">The credible interval is where 89 percent of the posterior sits, so the sentence is exactly what it claims. The confidence interval describes the reliability of a procedure across repeated samples and does not make that statement about this rate. The two are contrasted in one card and never re-derived here.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">Why is every Halloway interval 89 percent equal-tailed, and what is the lesson?</p>
+      <button class="qopt" type="button">A · Because 89 percent is the mathematically correct level for small samples and 95 percent is wrong</button>
+      <button class="qopt" type="button">B · Because it is the default the tooling ships with, chosen for more stable summaries; the number is not sacred, but stating the kind and level with every interval is, since intervals have silently changed kind on upgrade</button>
+      <button class="qopt" type="button">C · Because equal-tailed intervals are always narrower than any alternative</button>
+      <p class="qwhy">ArviZ 1.x moved its defaults to 0.89 and equal-tailed from 0.94 and highest-density, citing lower variability in summaries. A documented case exists of notebooks whose intervals changed kind on upgrade while the prose still said otherwise. The habit of saying "89 percent, equal-tailed" every time is the protection, not the number itself.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 3</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Take the slide you rewrote tonight and find its neighbours: the other outlets, regions, products or cohorts that were measured the same way at the same time, with their counts. Bring the list, however short. Session 3 is about how those neighbours can legitimately narrow an interval that eighteen observations left wide, how much they should be allowed to, and the fact that the answer can be learned from the data rather than asserted. Northgate's 0.020 to 0.222 is the interval that session narrows, and the eleven other outlets are what it narrows it with.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The posterior as a distribution, the summary as an interval</span>
+        <span class="note">Northgate, 1 of 18 under a flat prior: posterior mean 0.100, 89 percent equal-tailed interval 0.020 to 0.222, truth 0.192 inside. Statistical Rethinking's "garden of forking data" reading, kept to the one picture a leader needs.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The credible-interval sentence and what it claims</span>
+        <span class="note">"There is an 89 percent probability the rate is between 0.020 and 0.222" is a statement about the rate, which a credible interval can make. Contrasted with the confidence interval in one card, not re-derived.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Why 89 percent and equal-tailed, and why both must be stated</span>
+        <span class="note">ArviZ 1.x defaults: stats.ci_prob 0.89 and stats.ci_kind "eti", previously 0.94 and HDI, chosen for lower variability in summaries. A documented case of notebooks whose intervals changed kind silently on upgrade.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Volume narrows, volume does not remove</span>
+        <span class="note">Westfield, 127 of 900 under a flat prior: mean 0.142, interval 0.124 to 0.161, truth 0.150 inside. Width 0.037 against Northgate's 0.202.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Narrowing the interval with the other eleven outlets</span>
+        <span class="note">Session 3. Tonight's flat-prior interval is the honest starting point; partial pooling is the legitimate way to narrow it, with the amount learned from the data.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The full method for saying uncertainty to executives</span>
+        <span class="note">Practitioner session 9: the interval, the probability of a difference, the stake. Tonight is the first move only, replacing a point with the interval sentence.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and the frequentist sentence</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> b7 owns confidence intervals; here the credible interval is contrasted with them in one card and never re-derived.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether a stated 89 percent is honest over many forecasts</span>
+        <span class="note">Not covered by design. Measuring calibration is <strong>learn-decision-intelligence-with-phoebe</strong>'s territory; this track produces the Bayesian sentence and hands the audit of it there.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 2 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Eighteen observations buy a shape</b><span>Not a number. The 0.056 is the peak of a wide posterior, and the peak is not a summary.</span></div>
+      <div class="cheat-item"><b>Northgate: 0.020 to 0.222</b><span>89 percent equal-tailed under a flat prior. Honest, useless for a decision, correct. Truth 0.192 inside.</span></div>
+      <div class="cheat-item"><b>The sentence</b><span>"There is an 89 percent probability the rate is between 0.020 and 0.222." A credible interval earns it.</span></div>
+      <div class="cheat-item"><b>The other sentence</b><span>A confidence interval is about the procedure, not this rate. learn-statistics-with-phoebe b7 owns it.</span></div>
+      <div class="cheat-item"><b>89, equal-tailed, said every time</b><span>The tooling's default, chosen for stability. The number is not sacred; stating kind and level is.</span></div>
+      <div class="cheat-item"><b>Westfield: 0.124 to 0.161</b><span>n = 900, mean 0.142, truth 0.150 inside. Width 0.037, about a fifth of Northgate's. Still an interval.</span></div>
+      <div class="cheat-item"><b>Volume narrows, never removes</b><span>Each extra observation narrows the shape by less than the last. No amount collapses it to a dot.</span></div>
+      <div class="cheat-item"><b>The meeting question</b><span>"How wide is that?" Three words that sort every number into carries-a-decision or does-not.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Leader session 2 of 6 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="a1-what-a-prior-costs.html">← Leader session 1 · What a prior costs</a>
+      <a href="a3-borrowing-strength.html">Leader session 3 · Borrowing strength →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

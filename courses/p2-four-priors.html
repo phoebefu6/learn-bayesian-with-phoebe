@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 2 of 10. The same eighteen Northgate customers under four priors: flat, weak, informed, wrong. Only the flat prior's interval contains the truth of 0.192. The informed prior, worth 100 pseudo-observations, was confidently wrong at 0.068 to 0.159; at Westfield, n = 900, the wrong prior still moves the answer by 0.026.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Four priors - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 2 of 10. Four priors, one outlet, one truth. Three intervals miss it, and the narrowest one misses by the most.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p2-four-priors.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Four priors - learn bayesian with phoebe">
+<meta name="twitter:description" content="Data weight 18 / (18 + 100) = 0.15 at Northgate. Residual bias +0.0259 at Westfield. Data outvote a prior; they do not wash it out.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 2 · Four priors - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 2 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 2 of 10</div>
+    <h1>Four <span class="accent">priors</span></h1>
+    <p class="sub">Session 1 gave you the update: Beta(a, b) plus y of n is Beta(a + y, b + n - y). Tonight the data are held fixed and only a and b change. Northgate's one redemption in eighteen goes through a flat prior, a weak one, an informed one and a wrong one, and each posterior is scored against the outlet's true rate of 0.192, which is written into the data. Then the same four priors go through Westfield's 900 vouchers. The two results together are the measured cost of a prior: what it does when it is worth more than your data, and what it still does when it is worth a tenth of them.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Foundations</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who has ever typed a prior and hoped</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-20 · Four posteriors, two outlets</span>
+      <span class="a3" style="flex:4">20-40 · Build-along: the loop</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Same data, four beliefs</h2>
+    </div>
+    <p class="lede">A prior is not a setting to get right. It is a claim about the rate before the data arrive, and like any claim it can be worth a little or a lot and it can be right or wrong. Session 1 gave the unit: a Beta(a, b) prior is worth a + b pseudo-observations. Tonight puts four priors of different worth and different centre on the same eighteen customers, and because the truth is known, each one gets a score rather than a defence.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> The Northgate table: four priors, four posterior means, four 89 percent intervals, one truth, and only the flat prior's interval containing it. The arithmetic of why: an informed prior worth 100 pseudo-observations gave the eighteen real customers a weight of 18 / (18 + 100) = 0.15, and Northgate's truth sat outside what the prior allowed. And the Westfield result that ends "the data will wash it out": at n = 900 a wrong prior worth 100 still moves the posterior mean by 0.026. Data outvote a prior; they do not wash it out.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The four priors on the bench<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Flat is Beta(1, 1): mean 0.500, two pseudo-observations, one of each. It says almost nothing and it is not nothing. Weak is Beta(2, 14): mean 0.125, sixteen pseudo-observations, a gentle lean toward the chain's neighbourhood. Informed is Beta(12, 88): mean 0.120, a hundred pseudo-observations, the chain-wide rate held with real conviction. Wrong is Beta(40, 60): mean 0.400, also a hundred pseudo-observations, held with the same conviction and centred somewhere no Halloway outlet has ever been.</p>
+        <p>The two hundred-observation priors are the interesting pair. They have identical weight against the data and opposite relationships to the truth, so between them they separate the two things a prior can cost you: its weight, which is how much of the answer it decides, and its distance, which is how wrong that share of the answer is. Weight is arithmetic and falls with n. Distance is a fact about the world and does not fall at all.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst ran Northgate under Beta(12, 88) because the chain had sat near 0.12 for years, and reported 0.110 with an interval of 0.068 to 0.159. It was the tidiest number in the deck. Northgate's true rate is 0.192. Nobody had asked whether the newest outlet, in a different kind of neighbourhood, was the kind of outlet the hundred pseudo-observations had been drawn from.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What each prior is actually claiming<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Flat, Beta(1, 1).</strong> "Any rate from 0 to 1 is equally plausible." Two votes. The posterior will be almost entirely the data, which at n = 18 means almost entirely noise.</li>
+          <li><strong>Weak, Beta(2, 14).</strong> "Probably somewhere around 0.125, but I would not bet much." Sixteen votes against Northgate's eighteen, so the data carry 18 / 34, a little over half.</li>
+          <li><strong>Informed, Beta(12, 88).</strong> "Around 0.120, and I have a hundred customers' worth of reasons to think so." The data carry 18 / 118 = 0.15. The prior decides 85 percent of the answer before a single voucher is counted.</li>
+          <li><strong>Wrong, Beta(40, 60).</strong> "Around 0.400, with the same hundred customers' worth of confidence." Same 0.15 data weight as informed. The difference between the two posteriors is entirely distance.</li>
+          <li><strong>Pseudo-observations, a + b.</strong> The single number to ask of any prior. It is in the same units as n, so the comparison is immediate: is the belief worth more or less than the evidence?</li>
+          <li><strong>Data weight, n / (n + a + b).</strong> The share of the posterior mean the evidence decides. 0.90 for flat at Northgate, 0.15 for either hundred-observation prior, 0.90 for either of them at Westfield.</li>
+          <li><strong>Residual bias.</strong> Posterior mean minus observed rate. What the prior is still doing to the answer after the data have voted. At Westfield it runs from -0.0021 to +0.0259.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the Northgate table</span>
+      <h2>Four posteriors, one truth, three misses</h2>
+      <span class="tag concept">9 min live</span>
+    </div>
+    <p class="lede">The same one redemption in eighteen, four times over. Each posterior is a Beta with the counts added, exactly as in session 1, so the four curves below are Beta(2, 18), Beta(3, 31), Beta(13, 105) and Beta(41, 77). The truth is 0.192. Look at which curves put any weight there.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four Northgate posterior density curves over redemption rates from 0 to 0.5, with a green dashed line at the true rate 0.192. The flat prior gives Beta(2, 18), a broad curve peaking near 0.056. The weak prior gives Beta(3, 31), peaking near 0.06. The informed prior gives Beta(13, 105), a tall narrow curve peaking near 0.10 that is almost zero at 0.192. The wrong prior gives Beta(41, 77), a curve centred near 0.35, far to the right. Below the axis, four 89 percent interval bars: flat 0.020 to 0.222 contains the truth; weak 0.026 to 0.175 misses by 0.017; informed 0.068 to 0.159 misses by 0.033; wrong 0.279 to 0.419 misses on the other side.">
+        <style>
+          .p2aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p2aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p2aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p2aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p2aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p2aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+        <text class="p2aH" x="14" y="22">Northgate, n = 18, one redemption. The same data through four priors, against the truth.</text>
+
+        <!-- rate 0 to 0.5 maps to x 60..840; curves baseline y = 250 -->
+        <line x1="60" y1="250" x2="840" y2="250" stroke="#E4CBD6" stroke-width="1.5"></line>
+
+        <polyline points="60,250 66,233 72,218 79,205 85,194 91,185 97,177 104,171 110,165 116,161 122,158 129,156 135,154 141,154 147,153 154,154 160,154 166,156 172,157 179,159 185,161 191,163 197,165 204,168 210,171 216,173 222,176 228,179 235,182 241,184 247,187 253,190 260,193 266,195 272,198 278,200 285,203 291,205 297,208 303,210 310,212 316,214 322,216 328,218 335,220 341,222 347,223 353,225 360,226 366,228 372,229 378,231 384,232 391,233 397,234 403,235 409,236 416,237 422,238 428,239 434,240 441,240 447,241 453,242 459,242 466,243 472,243 478,244 484,244 491,245 497,245 503,246 509,246 516,246 522,247 528,247 534,247 540,247 547,248 553,248 559,248 565,248 572,248 578,248 584,249 590,249 597,249 603,249" fill="none" stroke="#6B5460" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"></polyline>
+
+        <polyline points="60,250 66,247 72,239 79,228 85,215 91,202 97,189 104,176 110,165 116,155 122,147 129,140 135,134 141,130 147,127 154,126 160,126 166,127 172,129 179,131 185,135 191,138 197,142 204,147 210,152 216,157 222,162 228,167 235,172 241,177 247,182 253,186 260,191 266,195 272,199 278,203 285,207 291,211 297,214 303,217 310,220 316,223 322,225 328,227 335,230 341,231 347,233 353,235 360,236 366,238 372,239 378,240 384,241 391,242 397,243 403,244 409,245 416,245 422,246 428,246 434,247 441,247 447,247 453,248 459,248 466,248 472,248 478,249 484,249 491,249 497,249 503,249 509,249 516,249 522,249 528,250" fill="none" stroke="#F9A8D4" stroke-width="3.5" stroke-linejoin="round"></polyline>
+
+        <polyline points="110,250 116,249 122,247 129,245 135,240 141,234 147,224 154,212 160,197 166,180 172,161 179,142 185,123 191,105 197,89 204,76 210,67 216,61 222,60 228,62 235,68 241,77 247,88 253,100 260,114 266,128 272,142 278,155 285,168 291,180 297,191 303,201 310,209 316,217 322,223 328,228 335,233 341,236 347,239 353,242 360,244 366,245 372,246 378,247 384,248 391,248 397,249 403,249 409,249 416,250" fill="none" stroke="#9D174D" stroke-width="2.5" stroke-linejoin="round"></polyline>
+
+        <polyline points="434,245 441,244 447,242 453,240 459,237 466,234 472,231 478,227 484,222 491,217 497,212 503,206 509,199 516,193 522,186 528,179 534,172 540,165 547,158 553,152 559,146 565,141 572,136 578,133 584,130 590,128 597,128 603,128 609,129 615,132 622,135 628,139 634,143 640,148 647,154 653,160 659,166 665,173 672,179 678,186 684,192 690,198 696,204 703,209 709,214 715,219 721,223 728,227 734,230 740,234 746,236 753,238 759,240 765,242 771,244 778,245 784,246 790,247 796,247 803,248 809,248 815,249 821,249 828,249 834,249 840,250" fill="none" stroke="#991B1B" stroke-width="2.5" stroke-linejoin="round"></polyline>
+
+        <!-- truth 0.192 -> x 360 -->
+        <line x1="360" y1="32" x2="360" y2="250" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <line x1="360" y1="276" x2="360" y2="356" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="p2aG" x="366" y="44">truth 0.192</text>
+
+        <!-- legend -->
+        <line x1="560" y1="60" x2="584" y2="60" stroke="#6B5460" stroke-width="2" stroke-dasharray="6 4"></line>
+        <text class="p2aB" x="592" y="64">Flat · Beta(1, 1) · 2 pseudo-obs</text>
+        <line x1="560" y1="78" x2="584" y2="78" stroke="#F9A8D4" stroke-width="3.5"></line>
+        <text class="p2aB" x="592" y="82">Weak · Beta(2, 14) · 16 pseudo-obs</text>
+        <line x1="560" y1="96" x2="584" y2="96" stroke="#9D174D" stroke-width="2.5"></line>
+        <text class="p2aB" x="592" y="100">Informed · Beta(12, 88) · 100 pseudo-obs</text>
+        <line x1="560" y1="114" x2="584" y2="114" stroke="#991B1B" stroke-width="2.5"></line>
+        <text class="p2aB" x="592" y="118">Wrong · Beta(40, 60) · 100 pseudo-obs</text>
+
+        <!-- axis ticks -->
+        <text class="p2aM" x="60" y="268" text-anchor="middle">0.0</text>
+        <text class="p2aM" x="216" y="268" text-anchor="middle">0.1</text>
+        <text class="p2aM" x="372" y="268" text-anchor="middle">0.2</text>
+        <text class="p2aM" x="528" y="268" text-anchor="middle">0.3</text>
+        <text class="p2aM" x="684" y="268" text-anchor="middle">0.4</text>
+        <text class="p2aM" x="840" y="268" text-anchor="middle">0.5</text>
+
+        <!-- interval bars: x = 60 + rate * 1560 -->
+        <text class="p2aL" x="14" y="296">Flat</text>
+        <rect x="91" y="286" width="315" height="12" rx="6" fill="#FBCFE8"></rect>
+        <circle cx="216" cy="292" r="4" fill="#1F1420"></circle>
+        <text class="p2aG" x="414" y="296">0.020 to 0.222 · contains 0.192, near its upper edge</text>
+
+        <text class="p2aL" x="14" y="316">Weak</text>
+        <rect x="101" y="306" width="232" height="12" rx="6" fill="#FBCFE8"></rect>
+        <circle cx="197" cy="312" r="4" fill="#1F1420"></circle>
+        <text class="p2aR" x="372" y="316">0.026 to 0.175 · misses; the truth is 0.017 above the top</text>
+
+        <text class="p2aL" x="14" y="336">Informed</text>
+        <rect x="166" y="326" width="142" height="12" rx="6" fill="#F9A8D4"></rect>
+        <circle cx="232" cy="332" r="4" fill="#1F1420"></circle>
+        <text class="p2aR" x="372" y="336">0.068 to 0.159 · misses by 0.033, and looks precise</text>
+
+        <text class="p2aL" x="14" y="356">Wrong</text>
+        <text class="p2aR" x="62" y="356">0.279 to 0.419 · misses on the far side</text>
+        <rect x="495" y="346" width="219" height="12" rx="6" fill="#F9A8D4"></rect>
+        <circle cx="601" cy="352" r="4" fill="#1F1420"></circle>
+
+        <text class="p2aM" x="14" y="376">Bars are 89 percent equal-tailed intervals; the dot is the posterior mean.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the informed prior's curve is the tallest and the narrowest, and it puts almost nothing at 0.192. Precision is not the same thing as being right.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The informed prior was confidently wrong<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Here is the table, and it is the one to remember.</p>
+        <table class="clean">
+          <thead>
+            <tr><th>Prior</th><th>Beta(a, b)</th><th>Prior mean</th><th>Pseudo-obs</th><th>Northgate post. mean</th><th>89% interval</th><th>Contains 0.192?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Flat</td><td>(1, 1)</td><td>0.500</td><td>2</td><td>0.100</td><td>0.020 to 0.222</td><td>yes, and it is wide</td></tr>
+            <tr><td>Weak</td><td>(2, 14)</td><td>0.125</td><td>16</td><td>0.088</td><td>0.026 to 0.175</td><td>no</td></tr>
+            <tr><td>Informed</td><td>(12, 88)</td><td>0.120</td><td>100</td><td>0.110</td><td>0.068 to 0.159</td><td>no</td></tr>
+            <tr><td>Wrong</td><td>(40, 60)</td><td>0.400</td><td>100</td><td>0.347</td><td>0.279 to 0.419</td><td>no</td></tr>
+          </tbody>
+        </table>
+        <p>The informed prior is the row that matters. It was a hundred pseudo-observations centred on 0.120 against eighteen real ones, so the data carried weight 18 / (18 + 100) = 0.15 and the prior decided the other 0.85. Northgate is the one outlet whose true rate, 0.192, sits outside what that prior allowed for, and so the posterior landed at 0.110 with an interval of 0.068 to 0.159 that does not reach the truth. That is the cost of a prior, measured. The prior was built from a true fact about the chain and applied to the one outlet unlike the chain, and no amount of care in choosing it would have changed the arithmetic: 0.15 of the answer was ever going to come from Northgate's own customers.</p>
+        <p>The flat prior's interval contains the truth, and it is wide enough to be nearly useless for any decision: 0.020 to 0.222 covers a rate that would close the outlet and a rate that would make it the best in the chain. So the table does not say "use flat priors". It says that the interval which reads like knowledge is the one that missed, and that the question to ask of a narrow interval is how many pseudo-observations bought the narrowness and where they came from.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Weight against distance, in numbers<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Informed and wrong have the same weight at Northgate, 0.15 for the data and 0.85 for the prior, so the gap between their posteriors is entirely the gap between their centres. Informed sits at 0.120 and lands at 0.110. Wrong sits at 0.400 and lands at 0.347. Both are 85 percent belief; one belief was 0.072 from the truth and the other was 0.208 from it. The posterior is only ever as good as the smaller of two things: how much of it the data decided, and how close the prior was on the part they did not.</p>
+        <p>The weak prior is the instructive middle case. Sixteen pseudo-observations against eighteen gives the data 18 / 34, a little over half, and the posterior mean of 0.088 lands between the observed 0.056 and the prior's 0.125, closer to the observed side. Its interval, 0.026 to 0.175, misses the truth by 0.017. A prior can be modest, sensible and still wrong on the one outlet that matters, and modesty only reduces the cost, it does not remove it. Session 6 shows the prior that does best here, and it is not chosen at all: it is learned from the other eleven outlets.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the same four priors at n = 900</span>
+      <h2>Data outvote a prior. They do not wash it out.</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Westfield is Halloway's flagship: 900 vouchers, 127 redeemed, observed 0.141, true rate 0.150. Fifty times Northgate's volume, and the standard reassurance is that at this size the prior no longer matters. Run the same four priors and read the posterior means: flat 0.142, weak 0.141, informed 0.139, wrong 0.167.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Westfield, n = 900. A horizontal axis of redemption rates from 0.13 to 0.18 with a green dashed line at the true rate 0.150 and a marker at the observed rate 0.141. Four posterior means are plotted, one per row: flat 0.142 with residual bias plus 0.0008, weak 0.141 with bias minus 0.0003, informed 0.139 with bias minus 0.0021, and wrong 0.167 with bias plus 0.0259, far to the right of the others. A note reads that at n equals 900 a hundred-observation prior still holds weight 0.10; the informed prior spends it 0.002 from the observed rate, the wrong prior 0.026.">
+        <style>
+          .p2bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p2bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p2bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p2bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p2bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p2bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+        <text class="p2bH" x="14" y="22">Westfield, n = 900, 127 redeemed. Where the four posterior means land against observed and truth.</text>
+
+        <!-- rate 0.13 to 0.18 maps to x 60..840 (1 unit = 15600 px) -->
+        <line x1="372" y1="50" x2="372" y2="250" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="p2bG" x="378" y="62">truth 0.150</text>
+
+        <line x1="232" y1="76" x2="232" y2="250" stroke="#6B5460" stroke-width="1.5" stroke-dasharray="3 4"></line>
+
+        <!-- rows -->
+        <line x1="60" y1="100" x2="840" y2="100" stroke="#EEDDE5" stroke-width="1"></line>
+        <circle cx="247" cy="100" r="7" fill="#FBCFE8" stroke="#831843" stroke-width="1.5"></circle>
+        <text class="p2bL" x="224" y="90" text-anchor="end">Flat · 0.142 · bias +0.0008</text>
+
+        <line x1="60" y1="140" x2="840" y2="140" stroke="#EEDDE5" stroke-width="1"></line>
+        <circle cx="232" cy="140" r="7" fill="#FBCFE8" stroke="#831843" stroke-width="1.5"></circle>
+        <text class="p2bL" x="220" y="130" text-anchor="end">Weak · 0.141 · bias -0.0003</text>
+
+        <line x1="60" y1="180" x2="840" y2="180" stroke="#EEDDE5" stroke-width="1"></line>
+        <circle cx="200" cy="180" r="7" fill="#F9A8D4" stroke="#831843" stroke-width="1.5"></circle>
+        <text class="p2bL" x="188" y="170" text-anchor="end">Informed · 0.139 · bias -0.0021</text>
+
+        <line x1="60" y1="220" x2="840" y2="220" stroke="#EEDDE5" stroke-width="1"></line>
+        <circle cx="637" cy="220" r="7" fill="#9D174D" stroke="#831843" stroke-width="1.5"></circle>
+        <text class="p2bR" x="625" y="210" text-anchor="end">Wrong · 0.167 · bias +0.0259</text>
+        <text class="p2bM" x="650" y="224">still 0.026 away at n = 900</text>
+
+        <!-- axis -->
+        <line x1="60" y1="250" x2="840" y2="250" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="p2bM" x="60" y="268" text-anchor="middle">0.13</text>
+        <text class="p2bM" x="216" y="268" text-anchor="middle">0.14</text>
+        <text class="p2bM" x="372" y="268" text-anchor="middle">0.15</text>
+        <text class="p2bM" x="528" y="268" text-anchor="middle">0.16</text>
+        <text class="p2bM" x="684" y="268" text-anchor="middle">0.17</text>
+        <text class="p2bM" x="840" y="268" text-anchor="middle">0.18</text>
+        <text class="p2bB" x="232" y="286" text-anchor="middle">observed 0.141</text>
+
+        <rect x="14" y="296" width="852" height="28" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p2bG" x="28" y="315">At n = 900 a hundred-observation prior still holds weight 0.10. Informed spends it 0.002 from observed; wrong spends it 0.026.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three priors within 0.003 of each other and of the observed rate. The fourth has the same weight and a very different distance.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The Westfield arithmetic<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Residual bias is the posterior mean minus the observed rate, and it is what the prior is still doing after 900 customers have voted. Flat: +0.0008. Weak: -0.0003. Informed: -0.0021. Wrong: +0.0259. The first three are within a few thousandths of zero and of each other; at this volume, a sensible prior of any weight is nearly invisible. The fourth is thirty times larger than any of them, and it has exactly the same weight as the informed prior: 100 / (900 + 100) = 0.10 for the prior, 0.90 for the data.</p>
+        <p>So a prior worth 100 pseudo-observations still moves the answer by 0.026 at n = 900, and the reason is that the weight fell to a tenth while the distance stayed where it was. 0.400 is 0.259 from the observed 0.141, and a tenth of 0.259 is 0.026. Data outvote a prior; they do not wash it out. A hundred votes take a long time to outvote, and on any dataset you will actually have, the prior's tenth or twentieth of the answer is still there, spending itself on whatever it was centred on.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's finance team took the Westfield figure as the safe one, on the grounds that 900 was plenty. Under the informed prior it very nearly was: 0.139 against an observed 0.141. Had the 0.400 belief a rival chain's numbers suggested been used instead, the flagship estimate would have carried 0.026 of that belief into the chain-wide budget, and 900 would still have sounded like plenty.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Which prior, then?<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Tonight scores priors; it does not settle which to choose. Whether a prior should encode belief, stay out of the way so the data speak, or regularise gently toward plausible values and be checked by what it predicts is a live disagreement in the field, and leader session 5 takes it up as the argument it is, with Gelman, Simpson and Betancourt's resolution. Nothing here decides it.</p>
+        <p>What the two tables do settle is what any choice has to answer for. Before a prior goes into a model, its pseudo-count should be stated next to n, so the data weight is a number in the room. Its centre should be stated next to where the data land, so the distance is visible. And the case in front of you should be compared to the cases the prior was built from, because Northgate is what happens when it is not. Session 6 shows the prior that answers all three by construction: one learned from the other eleven outlets, whose weight the data set themselves.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Loop the four priors over two outlets</h2>
+      <span class="tag build">20 min build-along</span>
+    </div>
+    <p class="lede">Still <code class="mono">scipy.stats.beta</code> and nothing else. The whole exercise is one nested loop: for each outlet, for each prior, add the counts and read off the mean, the two quantiles, and whether the truth is inside. Print it as a table and compare every row to the ones above.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <p><strong>Set the bench up.</strong> Four priors as (a, b) pairs, two outlets as (n, y, truth), and the 89 percent equal-tailed quantiles from session 1.</p>
+          <div class="prompt-box good">
+            <span class="label">bench.py</span>
+<pre>from scipy.stats import beta
+
+PRIORS = {
+    "flat":     (1, 1),      # mean 0.500,   2 pseudo-obs
+    "weak":     (2, 14),     # mean 0.125,  16 pseudo-obs
+    "informed": (12, 88),    # mean 0.120, 100 pseudo-obs
+    "wrong":    (40, 60),    # mean 0.400, 100 pseudo-obs
+}
+OUTLETS = {
+    "Northgate": (18, 1, 0.192),      # n, redeemed, true rate
+    "Westfield": (900, 127, 0.150),
+}
+LO, HI = 0.055, 0.945        # 89 percent equal-tailed, the ArviZ 1 default</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Northgate under all four.</strong> Add the counts, print the posterior mean and the interval, and test whether 0.192 lies inside it. Four rows, one True.</p>
+          <div class="prompt-box good">
+            <span class="label">northgate_four.py</span>
+<pre>n, y, truth = OUTLETS["Northgate"]
+for name, (a, b) in PRIORS.items():
+    post = beta(a + y, b + n - y)
+    lo, hi = post.ppf(LO), post.ppf(HI)
+    print(f"{name:9s} pseudo={a + b:3d}  mean={post.mean():.3f}  "
+          f"89%={lo:.3f} to {hi:.3f}  contains={lo &lt;= truth &lt;= hi}")
+
+# flat      pseudo=  2  mean=0.100  89%=0.020 to 0.222  contains=True
+# weak      pseudo= 16  mean=0.088  89%=0.026 to 0.175  contains=False
+# informed  pseudo=100  mean=0.110  89%=0.068 to 0.159  contains=False
+# wrong     pseudo=100  mean=0.347  89%=0.279 to 0.419  contains=False</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Put the data weight beside each row.</strong> n / (n + a + b). This is the number that explains the table: the two hundred-observation priors gave Northgate's own customers 0.15 of the answer.</p>
+          <div class="prompt-box good">
+            <span class="label">weights.py</span>
+<pre>for name, (a, b) in PRIORS.items():
+    print(f"{name:9s} data weight at Northgate = {n / (n + a + b):.2f}")
+
+# flat      data weight at Northgate = 0.90
+# weak      data weight at Northgate = 0.53
+# informed  data weight at Northgate = 0.15
+# wrong     data weight at Northgate = 0.15</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Westfield under all four.</strong> Same loop, 900 vouchers. Print the posterior mean, the residual bias against the observed 0.141, and the data weight. Read the wrong row twice.</p>
+          <div class="prompt-box good">
+            <span class="label">westfield_four.py</span>
+<pre>n, y, truth = OUTLETS["Westfield"]
+observed = y / n                                  # 0.141
+for name, (a, b) in PRIORS.items():
+    post = beta(a + y, b + n - y)
+    print(f"{name:9s} mean={post.mean():.3f}  "
+          f"bias={post.mean() - observed:+.4f}  "
+          f"data weight={n / (n + a + b):.3f}")
+
+# flat      mean=0.142  bias=+0.0008  data weight=0.998
+# weak      mean=0.141  bias=-0.0003  data weight=0.983
+# informed  mean=0.139  bias=-0.0021  data weight=0.900
+# wrong     mean=0.167  bias=+0.0259  data weight=0.900</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Check the distance rule by hand.</strong> The wrong prior's bias should be its weight times its distance from the observed rate. It is, to the fourth decimal.</p>
+          <div class="prompt-box good">
+            <span class="label">distance.py</span>
+<pre>a, b = PRIORS["wrong"]
+w_prior  = (a + b) / (n + a + b)                  # 100 / 1000 = 0.100
+distance = a / (a + b) - observed                 # 0.400 - 0.141 = 0.259
+print(f"weight x distance = {w_prior * distance:+.4f}")    # +0.0259</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Write the two sentences.</strong> One for each outlet, in the form session 9 will insist on. "At Northgate, under a Beta(12, 88) prior worth 100 pseudo-observations, the 89 percent equal-tailed interval is 0.068 to 0.159; the data weight is 0.15." "At Westfield the same prior gives 0.139 against an observed 0.141; a Beta(40, 60) prior of the same weight gives 0.167." Both sentences name the prior's weight. Neither hides behind n.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Change one thing at a time.</strong> The loop holds the data fixed and varies the prior. Session 6 does the opposite: it holds a family of priors fixed and lets twelve outlets' data choose the one weight, kappa, that fits them all. Keep tonight's loop; you will run it again there with the learned prior as a fifth row.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">The informed prior Beta(12, 88) gave Northgate an interval of 0.068 to 0.159 against a truth of 0.192. Which statement describes what happened?</p>
+      <button class="qopt" type="button">A · The prior was badly chosen; 0.120 is not a reasonable centre for a Halloway outlet</button>
+      <button class="qopt" type="button">B · The prior was worth 100 pseudo-observations against 18 real ones, so the data carried weight 0.15, and Northgate's truth sat outside what the prior allowed for</button>
+      <button class="qopt" type="button">C · Eighteen observations are too few for any Bayesian estimate to be meaningful</button>
+      <p class="qwhy">0.120 is close to the chain-wide rate; the prior encoded a true fact about the chain. The failure was weight against a case unlike the population the prior came from. The flat prior's interval, from the same eighteen observations, did contain the truth, so C is wrong on the evidence.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">At Westfield, n = 900, the informed and wrong priors both carry data weight 0.90. Their residual biases are -0.0021 and +0.0259. Why the thirty-fold difference?</p>
+      <button class="qopt" type="button">A · Because the wrong prior has more pseudo-observations than the informed one</button>
+      <button class="qopt" type="button">B · Because 900 observations are enough to wash out the informed prior but not the wrong one</button>
+      <button class="qopt" type="button">C · Because both priors hold one vote in ten, and the informed prior's centre is 0.021 from the observed rate while the wrong prior's is 0.259 from it; same weight, different distance</button>
+      <p class="qwhy">Both are Beta priors with a + b = 100, so their weights are identical. Bias is weight times distance: 0.10 x 0.259 = 0.0259. Volume shrinks the weight for both equally and does nothing to either distance.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">A colleague reads the Northgate table and concludes that flat priors are the safe choice. What does the table actually support?</p>
+      <button class="qopt" type="button">A · That the flat prior's interval, 0.020 to 0.222, contained the truth but is too wide to support any decision; the table scores priors, it does not crown one, and session 6 shows a prior learned from the other outlets doing better than any of the four</button>
+      <button class="qopt" type="button">B · That flat priors always contain the truth because they make no assumptions</button>
+      <button class="qopt" type="button">C · That the weak prior is the best compromise, since it missed by the least</button>
+      <p class="qwhy">The flat prior is two pseudo-observations at 0.500, which is an assumption, and its interval spans closure-worthy and best-in-chain rates at once. The weak prior missed by 0.017; the informed by 0.033. Missing by less is not containing. The question of which kind of prior to choose is leader session 5's, and it is not settled here.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 3</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Run tonight's loop on Old Quay: 31 vouchers, 1 redeemed, observed 0.032, true rate 0.090. Report the four posterior means, the four intervals, which contain 0.090, and the data weight on each row. Then write one sentence on whether Old Quay looks like Northgate or like Westfield, and why. Session 3 stops relying on the Beta formula and builds the same posterior from a grid and then from samples, so that when there is no closed form you can still get the curve.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Bench A: four priors at Northgate, scored against the truth</span>
+        <span class="note">Flat 0.100 with 0.020 to 0.222 contains 0.192; weak 0.088, informed 0.110 and wrong 0.347 all miss. Exact conjugate posteriors, 89 percent equal-tailed intervals.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The informed prior confidently wrong</span>
+        <span class="note">100 pseudo-observations against 18; data weight 18 / (18 + 100) = 0.15; interval 0.068 to 0.159 against a truth of 0.192. The measured cost of a prior.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Bench A at Westfield: outvoted, not washed out</span>
+        <span class="note">n = 900. Residual bias flat +0.0008, weak -0.0003, informed -0.0021, wrong +0.0259. Weight 0.10 times distance 0.259.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">How a prior should be chosen</span>
+        <span class="note">Leader session 5, taught as the unsettled argument it is: subjective, reference and weakly-informative positions, with Gelman, Simpson and Betancourt's resolution. Named here, not taught.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The prior learned from the other outlets</span>
+        <span class="note">Session 6. Partial pooling sets the prior's weight from the twelve outlets' data rather than by assertion; tonight's loop gains a fifth row there.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and frequentist estimation</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> b6 and b7 own estimation and confidence intervals; nothing here re-derives them.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 2 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The Northgate table</b><span>Flat contains 0.192 at 0.020 to 0.222. Weak, informed and wrong miss. Only one of four, and it is the wide one.</span></div>
+      <div class="cheat-item"><b>Data weight n / (n + a + b)</b><span>0.90 flat, 0.53 weak, 0.15 informed and wrong, all at Northgate. Print it beside every row.</span></div>
+      <div class="cheat-item"><b>Confidently wrong</b><span>Informed: 0.068 to 0.159 against 0.192. A hundred pseudo-observations built from the chain, applied to the outlet unlike it.</span></div>
+      <div class="cheat-item"><b>Bias is weight times distance</b><span>At Westfield the wrong prior holds 0.10 of the answer and sits 0.259 away: +0.0259.</span></div>
+      <div class="cheat-item"><b>Outvoted, not washed out</b><span>n = 900 shrank a hundred-observation prior to one vote in ten. It shrank its distance by nothing.</span></div>
+      <div class="cheat-item"><b>Same weight, different damage</b><span>Informed and wrong both carry 0.90 data weight at Westfield. Biases -0.0021 and +0.0259.</span></div>
+      <div class="cheat-item"><b>Narrow is not right</b><span>The tallest curve on the figure puts almost nothing at the truth. Ask what bought the narrowness.</span></div>
+      <div class="cheat-item"><b>Not decided tonight</b><span>Which kind of prior to choose is leader session 5's argument. The prior learned from the other outlets is session 6.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 2 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p1-beta-binomial-by-hand.html">← Practitioner session 1 · Beta-Binomial by hand</a>
+      <a href="p3-the-posterior-is-a-distribution.html">Practitioner session 3 · The posterior is a distribution →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

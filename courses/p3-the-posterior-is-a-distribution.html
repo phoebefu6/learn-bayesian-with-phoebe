@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 3 of 10. From a closed-form Beta to a set of draws. Grid approximation first, then 20,000 samples, and every summary read off as a quantile. Northgate's flat-prior posterior has mean 0.100 and an 89 percent equal-tailed interval from 0.020 to 0.222, and the page says why 89 percent equal-tailed is the default now.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="The posterior is a distribution - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 3 of 10. The posterior is the answer; the mean is a summary of it. Grid, then draws, then quantiles.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p3-the-posterior-is-a-distribution.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The posterior is a distribution - learn bayesian with phoebe">
+<meta name="twitter:description" content="Mean 0.100, 89 percent equal-tailed 0.020 to 0.222, from a grid and from 20,000 draws. Why the tooling default moved to 89 percent equal-tailed.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 3 · The posterior is a distribution - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 3 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 3 of 10</div>
+    <h1>The posterior is a <span class="accent">distribution</span></h1>
+    <p class="sub">Sessions 1 and 2 gave you a Beta(2, 18) for Northgate and asked you to read its mean. Tonight the closed form is set aside on purpose. First the posterior is built the slow way, by evaluating prior times likelihood on a grid of candidate rates and normalising, so you can see that it is nothing more than counting the ways each rate could have produced one redemption in eighteen. Then it is built the way every later session will build it: as 20,000 draws, from which the mean and the 5.5 and 94.5 percent quantiles are read off. The exact answer and the sampled one agree, mean 0.100 and an 89 percent interval from 0.020 to 0.222, and from here on every number is a quantile of a set of draws.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who will run PyMC from session 5</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-24 · Grid, then draws, then quantiles</span>
+      <span class="a3" style="flex:4">24-40 · Build-along: numpy and scipy</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Counting ways</h2>
+    </div>
+    <p class="lede">A posterior is a list of candidate answers with a plausibility attached to each. For Northgate the candidates are redemption rates between 0 and 1, and the plausibility of each is how many ways that rate could have produced the data, weighted by how much you believed it beforehand. Statistical Rethinking's second lecture, "Garden of Forking Data", builds the whole idea from that count. Tonight starts there because once you have seen a posterior as a count on a grid, sampling from it stops being mysterious: a draw is just a rate picked in proportion to its count.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> Two ways to build the same posterior, a grid and a set of 20,000 draws, and the check that they agree with the exact Beta to the decimals reported: mean 0.100, interval 0.020 to 0.222. The habit of reading every summary as a quantile of the draws. And the one piece of tooling history that will save you from misreporting a number: ArviZ 1 moved its default interval to 89 percent equal-tailed, and a notebook that upgraded without noticing changed its answers while its prose stayed the same.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The garden of forking data, on a grid<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Lay out candidate rates on a grid: 0.00, 0.05, 0.10, and so on up to 1.00. For each candidate, ask two things. How plausible was this rate before the data, which is the prior evaluated at that point. And how many ways could this rate have produced one redemption in eighteen vouchers, which is the likelihood evaluated at that point. Multiply the two. The candidate at 0.00 gets nothing, because a rate of zero cannot produce a redemption at all. The candidate at 0.05 gets a great deal, because one in eighteen is roughly what a rate of 0.05 does. The candidate at 0.50 gets almost nothing, because nine redemptions were expected and one arrived.</p>
+        <p>Divide every product by the sum of all of them so the column adds to one, and the column is the posterior. Read the mean off it as a weighted average of the grid points. With a flat prior and a fine enough grid the mean lands at 0.100, which is exactly what Beta(2, 18) says, and it should: the grid is computing the same object the algebra computes, one point at a time, without knowing the algebra exists.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst had used the conjugate formula for a year without being able to say what a posterior was. The grid, done once in a notebook for Northgate, was the first time she saw the thing itself: a column of plausibilities, tallest near 0.05, still meaningfully tall at 0.15, close to nothing above 0.30. "The posterior is that column" turned out to be the sentence that made session 4 make sense.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Grid approximation.</strong> Evaluate prior times likelihood at a finite set of candidate rates, normalise so they sum to one, read the posterior off. Exact in the limit of a fine grid; the teaching tool, not the production tool.</li>
+          <li><strong>Normalise.</strong> Divide every product by their total. Nothing about the shape changes; the column now sums to one so its entries are probabilities.</li>
+          <li><strong>Draw.</strong> One candidate rate picked at random in proportion to its posterior plausibility. 20,000 of them is the working set for every number in these sessions.</li>
+          <li><strong>Quantile.</strong> The value below which a stated fraction of the draws fall. The 5.5 percent quantile of Northgate's draws is 0.020; the 94.5 percent quantile is 0.222.</li>
+          <li><strong>Equal-tailed interval.</strong> Cut the same fraction from each end. For 89 percent that is 5.5 percent below and 5.5 percent above. ArviZ calls it <code class="mono">"eti"</code>.</li>
+          <li><strong>Highest density interval, HDI.</strong> The narrowest region holding the stated fraction. On a skewed posterior it sits in a different place from the equal-tailed one.</li>
+          <li><strong>stats.ci_prob, stats.ci_kind.</strong> The two ArviZ 1 rcParams that decide what a summary reports by default: 0.89 and <code class="mono">"eti"</code>. Both changed at the 1.0 release.</li>
+          <li><strong>Credible interval.</strong> The Bayesian interval, the one that carries the plain sentence: there is an 89 percent probability the rate is in here. The frequentist version is a different sentence, and <strong>learn-statistics-with-phoebe</strong> owns it.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers grid approximation</span>
+      <h2>Prior times likelihood, one candidate at a time</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">Nothing tonight needs the Beta formula. A grid of candidate rates, the prior at each, the likelihood of one in eighteen at each, the product normalised: that is the posterior, and making the grid finer makes it smoother without changing what it is. The mean read off a fine grid is 0.100 to three decimals, the same as the exact Beta(2, 18). The picture below is the whole method.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels. Left: a coarse grid of 21 candidate redemption rates from 0.00 to 0.50 shown as bars, each bar the normalised product of a flat prior and the likelihood of one redemption in eighteen. The bar at 0.05 is tallest, 0.10 is next, and bars are near zero above 0.35. Right: the same computation on a grid of 1001 rates, drawn as a smooth curve rising steeply to a peak near 0.05 and falling in a long right tail; a dashed line marks the posterior mean at 0.100. A green band beneath reads: the grid and the exact Beta(2, 18) give the same mean, 0.100.">
+        <style>
+          .p3aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p3aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p3aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p3aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p3aN { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .p3aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p3aH" x="14" y="22">Northgate, one redemption in eighteen, flat prior. The posterior as a count on a grid.</text>
+
+        <!-- left panel: coarse grid -->
+        <rect x="14" y="36" width="416" height="252" rx="9" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p3aL" x="28" y="56">21 candidate rates, prior x likelihood at each, normalised</text>
+        <line x1="40" y1="270" x2="410" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <rect x="43.8" y="269.4" width="26" height="0.6" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="77.4" y="90.0" width="26" height="180.0" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="111.0" y="126.4" width="26" height="143.6" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="144.6" y="188.5" width="26" height="81.5" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="178.2" y="231.2" width="26" height="38.8" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="211.8" y="253.8" width="26" height="16.2" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="245.4" y="264.0" width="26" height="6.0" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="279.0" y="268.0" width="26" height="2.0" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="312.6" y="269.4" width="26" height="0.6" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="346.2" y="269.4" width="26" height="0.6" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <rect x="379.8" y="269.4" width="26" height="0.6" rx="2" fill="#F9A8D4" stroke="#9D174D" stroke-width="1"></rect>
+        <text class="p3aM" x="56.8" y="284" text-anchor="middle">0.00</text>
+        <text class="p3aM" x="124" y="284" text-anchor="middle">0.10</text>
+        <text class="p3aM" x="191.2" y="284" text-anchor="middle">0.20</text>
+        <text class="p3aM" x="258.4" y="284" text-anchor="middle">0.30</text>
+        <text class="p3aM" x="325.6" y="284" text-anchor="middle">0.40</text>
+        <text class="p3aM" x="392.8" y="284" text-anchor="middle">0.50</text>
+        <text class="p3aM" x="150" y="84">a rate of 0.00 cannot produce a redemption:</text>
+        <text class="p3aM" x="150" y="100">its bar is zero</text>
+        <text class="p3aM" x="228" y="140">above 0.35 the count is</text>
+        <text class="p3aM" x="228" y="156">close to nothing</text>
+
+        <!-- right panel: fine grid as a curve -->
+        <rect x="450" y="36" width="416" height="252" rx="9" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p3aL" x="464" y="56">1001 candidate rates: the same count, now a curve</text>
+        <line x1="476" y1="270" x2="846" y2="270" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <polyline fill="#FBCFE8" stroke="none" points="476.0,270.0 483.4,197.6 490.8,148.2 498.2,116.5 505.6,98.4 513.0,90.5 520.4,90.1 527.8,95.0 535.2,103.6 542.6,114.5 550.0,126.8 557.4,139.7 564.8,152.7 572.2,165.4 579.6,177.4 587.0,188.7 594.4,199.1 601.8,208.5 609.2,217.0 616.6,224.6 624.0,231.3 631.4,237.2 638.8,242.3 646.2,246.8 653.6,250.6 661.0,253.9 668.4,256.6 675.8,259.0 683.2,261.0 690.6,262.6 698.0,264.0 705.4,265.2 712.8,266.1 720.2,266.9 727.6,267.5 735.0,268.0 742.4,268.4 749.8,268.8 757.2,269.0 764.6,269.2 772.0,269.4 779.4,269.6 786.8,269.7 794.2,269.7 801.6,269.8 809.0,269.9 816.4,269.9 823.8,269.9 831.2,269.9 838.6,270.0 846.0,270.0"></polyline>
+        <polyline fill="none" stroke="#9D174D" stroke-width="2" points="476.0,270.0 483.4,197.6 490.8,148.2 498.2,116.5 505.6,98.4 513.0,90.5 520.4,90.1 527.8,95.0 535.2,103.6 542.6,114.5 550.0,126.8 557.4,139.7 564.8,152.7 572.2,165.4 579.6,177.4 587.0,188.7 594.4,199.1 601.8,208.5 609.2,217.0 616.6,224.6 624.0,231.3 631.4,237.2 638.8,242.3 646.2,246.8 653.6,250.6 661.0,253.9 668.4,256.6 675.8,259.0 683.2,261.0 690.6,262.6 698.0,264.0 705.4,265.2 712.8,266.1 720.2,266.9 727.6,267.5 735.0,268.0 742.4,268.4 749.8,268.8 757.2,269.0 764.6,269.2 772.0,269.4 779.4,269.6 786.8,269.7 794.2,269.7 801.6,269.8 809.0,269.9 816.4,269.9 823.8,269.9 831.2,269.9 838.6,270.0 846.0,270.0"></polyline>
+        <line x1="550" y1="80" x2="550" y2="270" stroke="#831843" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="p3aN" x="558" y="86">mean 0.100</text>
+        <text class="p3aM" x="558" y="102">the weighted average of the grid</text>
+        <text class="p3aM" x="620" y="200">the long right tail is the</text>
+        <text class="p3aM" x="620" y="216">uncertainty n = 18 leaves</text>
+        <text class="p3aM" x="476" y="284" text-anchor="middle">0.00</text>
+        <text class="p3aM" x="550" y="284" text-anchor="middle">0.10</text>
+        <text class="p3aM" x="624" y="284" text-anchor="middle">0.20</text>
+        <text class="p3aM" x="698" y="284" text-anchor="middle">0.30</text>
+        <text class="p3aM" x="772" y="284" text-anchor="middle">0.40</text>
+        <text class="p3aM" x="846" y="284" text-anchor="middle">0.50</text>
+
+        <rect x="14" y="300" width="852" height="32" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p3aG" x="28" y="321">The grid and the exact Beta(2, 18) give the same mean, 0.100. Same object, built by counting instead of algebra.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the bars are the posterior. Make the grid finer and they become the curve; the mean does not move.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Evaluate, multiply, normalise, read<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Four moves and no formula. Evaluate the prior at every grid point; with Beta(1, 1) that is the same value everywhere, which is what "flat" means. Evaluate the likelihood at every grid point: the rate to the power of the redemptions, times one minus the rate to the power of the non-redemptions, so for Northgate rate to the one times one minus rate to the seventeen. Multiply the two columns. Divide by the total so the column sums to one.</p>
+        <p>Every summary is now a calculation on that column. The mean is each grid rate times its posterior plausibility, summed. A probability that the rate exceeds some value is the plausibility summed over the grid points above it. An interval is found by walking up the column until 5.5 percent of the mass has been passed, then again until 94.5 percent has. On a fine grid the mean is 0.100. The exact Beta says 0.100. The grid did not know it was computing a Beta.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why the grid is a teaching tool and not the tool<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The grid works beautifully for one parameter and stops working almost immediately after. Add a second parameter and every candidate for the first has to be paired with every candidate for the second, so the number of cells is the grid size multiplied by itself. Add a third and it is multiplied again. The hierarchical model in session 6 has a parameter per outlet plus two more for how the outlets relate, and no grid fine enough to be useful fits in memory.</p>
+        <p>That is the reason session 4 exists. Markov chain Monte Carlo produces draws from a posterior without ever evaluating it everywhere, and the draws are read exactly the way tonight's are: mean, quantiles, probabilities above a threshold. Learn to read draws tonight, on a posterior whose exact answer you can check, and session 4 only has to teach you how the draws are made and how to tell when the maker has failed.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers sampling and the 89 percent equal-tailed interval</span>
+      <h2>Every summary is a quantile</h2>
+      <span class="tag concept">11 min live</span>
+    </div>
+    <p class="lede">Take 20,000 draws from Beta(2, 18). Their mean is 0.100. Sort them and the 5.5 percent quantile is 0.020 and the 94.5 percent quantile is 0.222. That is the 89 percent equal-tailed interval, and it matches the exact Beta to the decimals reported. The interval is not the only way to hold 89 percent of a posterior, though, and on a skewed curve like Northgate's the two standard ways land in visibly different places. Both are shown below; one is taught.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Northgate's flat-prior posterior, Beta(2, 18), drawn as a right-skewed curve over redemption rates from 0.00 to 0.50 with a dashed line at the mean of 0.100. The two tails outside 0.020 and 0.222 are shaded, each holding 5.5 percent of the posterior. Beneath the axis two bands show two 89 percent intervals: the equal-tailed interval from 0.020 to 0.222 in raspberry, and the highest density interval in green, which starts closer to zero and ends lower because the curve is skewed. A note says the equal-tailed one is what these pages report and what ArviZ 1 reports by default.">
+        <style>
+          .p3bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p3bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p3bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p3bN { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .p3bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p3bK { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+        </style>
+        <text class="p3bH" x="14" y="22">Two ways to hold 89 percent of the same posterior. They are not the same interval.</text>
+        <text class="p3bM" x="14" y="42">Shaded tails: 5.5 percent of the posterior below 0.020, 5.5 percent above 0.222.</text>
+
+        <line x1="60" y1="230" x2="820" y2="230" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <polygon fill="#F9A8D4" stroke="none" points="60,230 60.0,230.0 67.6,192.8 75.2,161.6 82.8,135.9 90.4,115.0 90.4,230"></polygon>
+        <polygon fill="#F9A8D4" stroke="none" points="397.4,230 402.0,206.1 409.6,208.1 417.2,209.9 424.8,211.7 432.4,213.3 440.0,214.8 447.6,216.1 455.2,217.4 462.8,218.5 470.4,219.6 478.0,220.6 485.6,221.5 493.2,222.3 500.8,223.0 508.4,223.7 516.0,224.3 523.6,224.9 531.2,225.4 538.8,225.9 546.4,226.3 554.0,226.7 561.6,227.0 569.2,227.4 576.8,227.6 584.4,227.9 592.0,228.1 599.6,228.3 607.2,228.5 614.8,228.7 622.4,228.8 630.0,229.0 637.6,229.1 645.2,229.2 652.8,229.3 660.4,229.4 668.0,229.5 675.6,229.5 683.2,229.6 690.8,229.6 698.4,229.7 706.0,229.7 713.6,229.8 721.2,229.8 728.8,229.8 736.4,229.8 744.0,229.9 751.6,229.9 759.2,229.9 766.8,229.9 774.4,229.9 782.0,229.9 789.6,229.9 797.2,230.0 804.8,230.0 812.4,230.0 820.0,230.0 820,230"></polygon>
+        <polyline fill="none" stroke="#9D174D" stroke-width="2" points="60.0,230.0 67.6,192.8 75.2,161.6 82.8,135.9 90.4,115.0 98.0,98.2 105.6,85.1 113.2,75.1 120.8,68.0 128.4,63.2 136.0,60.5 143.6,59.5 151.2,60.1 158.8,61.9 166.4,64.7 174.0,68.4 181.6,72.8 189.2,77.8 196.8,83.1 204.4,88.8 212.0,94.8 219.6,100.8 227.2,107.0 234.8,113.1 242.4,119.3 250.0,125.3 257.6,131.2 265.2,137.0 272.8,142.6 280.4,148.0 288.0,153.2 295.6,158.2 303.2,163.0 310.8,167.6 318.4,172.0 326.0,176.1 333.6,180.0 341.2,183.7 348.8,187.1 356.4,190.4 364.0,193.5 371.6,196.4 379.2,199.0 386.8,201.5 394.4,203.9 402.0,206.1 409.6,208.1 417.2,209.9 424.8,211.7 432.4,213.3 440.0,214.8 447.6,216.1 455.2,217.4 462.8,218.5 470.4,219.6 478.0,220.6 485.6,221.5 493.2,222.3 500.8,223.0 508.4,223.7 516.0,224.3 523.6,224.9 531.2,225.4 538.8,225.9 546.4,226.3 554.0,226.7 561.6,227.0 569.2,227.4 576.8,227.6 584.4,227.9 592.0,228.1 599.6,228.3 607.2,228.5 614.8,228.7 622.4,228.8 630.0,229.0 637.6,229.1 645.2,229.2 652.8,229.3 660.4,229.4 668.0,229.5 675.6,229.5 683.2,229.6 690.8,229.6 698.4,229.7 706.0,229.7 713.6,229.8 721.2,229.8 728.8,229.8 736.4,229.8 744.0,229.9 751.6,229.9 759.2,229.9 766.8,229.9 774.4,229.9 782.0,229.9 789.6,229.9 797.2,230.0 804.8,230.0 812.4,230.0 820.0,230.0"></polyline>
+        <line x1="212" y1="66" x2="212" y2="230" stroke="#831843" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="p3bN" x="220" y="74">mean 0.100</text>
+        <text class="p3bM" x="220" y="90">pulled right of the peak by the tail</text>
+        <text class="p3bM" x="480" y="176">right tail: 5.5 percent above 0.222</text>
+        <text class="p3bM" x="60" y="248" text-anchor="middle">0.00</text>
+        <text class="p3bM" x="212" y="248" text-anchor="middle">0.10</text>
+        <text class="p3bM" x="364" y="248" text-anchor="middle">0.20</text>
+        <text class="p3bM" x="516" y="248" text-anchor="middle">0.30</text>
+        <text class="p3bM" x="668" y="248" text-anchor="middle">0.40</text>
+        <text class="p3bM" x="820" y="248" text-anchor="middle">0.50</text>
+
+        <rect x="90.4" y="258" width="307" height="12" rx="6" fill="#9D174D"></rect>
+        <text class="p3bN" x="410" y="268">equal-tailed 89: 0.020 to 0.222, taught and reported here</text>
+        <rect x="69.3" y="284" width="275.8" height="12" rx="6" fill="#15803D"></rect>
+        <text class="p3bG" x="358" y="294">HDI 89: the narrowest region holding 89 percent; lower and shorter</text>
+
+        <text class="p3bK" x="14" y="326">Every page says which one it uses. Here: equal-tailed, the ArviZ 1 default. Quote an interval without its kind and a reader will guess.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - same posterior, same 89 percent, two intervals. The kind has to travel with the number.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>From draws to numbers: the mean and two quantiles<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A draw from the posterior is a candidate rate picked in proportion to its plausibility, so a large pile of draws is the posterior in a form that any summary can be read from by sorting and counting. The mean is the average of the pile. The 5.5 percent quantile is the value that 5.5 percent of draws fall below; the 94.5 percent quantile is the value that 94.5 percent fall below. Between them sit 89 percent of the draws, and that is the interval reported on every page here: 89 percent, equal-tailed, from 20,000 draws.</p>
+        <p>For Northgate under the flat prior the pile gives mean 0.100 and quantiles 0.020 and 0.222. The exact Beta(2, 18) gives the same numbers to the decimals shown, which is the check that matters tonight: sampling a posterior you can write down agrees with the algebra, so sampling a posterior you cannot write down, which is every posterior from session 6 onward, is not a leap of faith. Westfield under the flat prior, 127 redemptions in 900, has a posterior mean of 0.142 by the same route.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst reported Northgate to the regional manager as "mean 0.100, 89 percent interval 0.020 to 0.222, equal-tailed, from 20,000 draws". The manager only used the first number. Six weeks later, when Northgate's true rate turned out to be near the top of that interval, the sentence was still in the deck, and it had said all along that 0.192 was inside what the data allowed.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why 89 and why equal-tailed: the default moved, and it matters<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>ArviZ 1 ships two settings that decide what every summary reports when you do not say otherwise. <code class="mono">stats.ci_prob</code> is 0.89, where it used to be 0.94. <code class="mono">stats.ci_kind</code> is <code class="mono">"eti"</code>, equal-tailed, where it used to be the highest density interval. The migration guide gives the reason for the level in one sentence: "Using 0.89 produces intervals with lower variability, leading to more stable summaries." Nothing about 89 is sacred; it is a default chosen for stability across runs, and the argument it makes is a quiet one that intervals are summaries of draws and should not wobble between reruns more than they have to.</p>
+        <p>The change of kind is the one that bites. Equal-tailed cuts 5.5 percent from each end. HDI finds the narrowest region holding 89 percent, which on Northgate's right-skewed posterior starts closer to zero and ends lower, as the figure shows. A third party, the CoursIA repository in issue #15592, documented two notebooks whose intervals silently became equal-tailed on upgrade while the prose beside them still said HDI. The numbers changed; the words did not; nobody was told. So the rule here is simple. Both kinds exist and you should be able to name both. The equal-tailed one is taught and reported on every page, and every page says so, because the kind has to travel with the number or the number is not fully stated.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The posterior is the answer; the mean is a summary of it<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Nothing you report is the posterior. The mean is one number pulled from it, chosen because it is easy to say. The interval is two numbers pulled from it, chosen because they carry the width the mean throws away. When somebody asks for "the number", the honest reply is that the answer is a distribution and here is the summary that fits the decision they are making; for a budget the mean, for a risk the lower quantile, for a promise the interval.</p>
+        <p>The sentence that carries the interval into a meeting is: "there is an 89 percent probability the rate is between 0.020 and 0.222". That is a statement about this posterior under this prior and this model, and it is exactly what it sounds like, which is the reason it is worth having. Whether 89 percent statements like it turn out right 89 percent of the time across many forecasts is a different question, a measurement rather than a derivation, and <strong>learn-decision-intelligence-with-phoebe</strong> owns it. Tonight's job is to produce the sentence correctly, kind and level attached. Session 9 is about saying it to the people who act on it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Grid it, then draw it</h2>
+      <span class="tag build">16 min build-along</span>
+    </div>
+    <p class="lede">Python, numpy and scipy, nothing else. Build Northgate's posterior on a grid and read its mean, then draw 20,000 samples from the exact Beta(2, 18) and read the same mean and the two quantiles. The two routes agree, and from session 4 onward only the second one will be available.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <p><strong>Grid approximation for Northgate.</strong> One redemption in eighteen, flat prior. The likelihood is the binomial kernel with its constant dropped; the constant would vanish in the normalising step anyway.</p>
+          <div class="prompt-box">
+            <span class="label">grid_northgate.py</span>
+<pre>import numpy as np
+
+# Northgate: 1 redemption in 18 vouchers, flat Beta(1, 1) prior
+y, n = 1, 18
+grid = np.linspace(0, 1, 1001)
+prior = np.ones_like(grid)                      # Beta(1, 1): the same everywhere
+likelihood = grid**y * (1 - grid)**(n - y)      # ways each rate produces 1 in 18
+posterior = prior * likelihood
+posterior = posterior / posterior.sum()         # normalise: the column sums to 1
+
+mean = (grid * posterior).sum()                 # weighted average of the grid
+print(round(mean, 3))                           # 0.100</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Draws from the exact posterior.</strong> Beta(1 + 1, 1 + 17) is Beta(2, 18). Take 20,000 draws and read the mean and the 5.5 and 94.5 percent quantiles. The bench's figures are 0.020 and 0.222; a different seed can move the last digit by one, which is the "lower variability" the ArviZ default is about.</p>
+          <div class="prompt-box">
+            <span class="label">draws_northgate.py</span>
+<pre>import numpy as np
+from scipy.stats import beta
+
+posterior = beta(2, 18)                         # flat prior + 1 in 18
+draws = posterior.rvs(20000)
+
+lo, hi = np.quantile(draws, [0.055, 0.945])     # 89 percent, equal-tailed
+print(round(draws.mean(), 3))                   # 0.100
+print(round(lo, 3), round(hi, 3))               # 0.020  0.222</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Check the draws against the algebra.</strong> The exact quantiles come straight from the distribution object. They should match the sampled ones to the decimals reported; if they do not, the draw count is too small, not the method.</p>
+          <div class="prompt-box">
+            <span class="label">check_exact.py</span>
+<pre>exact_lo, exact_hi = posterior.ppf([0.055, 0.945])
+print(round(posterior.mean(), 3))               # 0.100
+print(round(exact_lo, 3), round(exact_hi, 3))   # 0.020  0.222</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Westfield by the same route.</strong> 127 redemptions in 900 under the flat prior is Beta(128, 774). The mean is 0.142. Note how much less the draws spread: the interval that was 0.2 wide at Northgate is a sliver here, and that difference is the whole of session 2's argument.</p>
+          <div class="prompt-box">
+            <span class="label">draws_westfield.py</span>
+<pre>westfield = beta(1 + 127, 1 + 900 - 127)        # Beta(128, 774)
+w = westfield.rvs(20000)
+print(round(w.mean(), 3))                       # 0.142</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the sentence, kind and level attached.</strong> "Northgate, flat prior: mean 0.100, 89 percent equal-tailed interval 0.020 to 0.222, from 20,000 draws." Every later session reports in exactly this form, and the two words after the percentage are not optional.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Set the kind explicitly even when it matches the default.</strong> A notebook that relies on <code class="mono">stats.ci_kind</code> being <code class="mono">"eti"</code> is a notebook whose intervals will change the next time the default does, and the prose will not know. Quantiles at 0.055 and 0.945, written out, cannot be upgraded out from under you.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">A colleague computes Northgate's posterior on a grid of 1001 rates and gets a mean of 0.100, then says grid approximation must be a different method from the Beta(2, 18) they learned in session 1. What is true?</p>
+      <button class="qopt" type="button">A · The grid is an approximation and happened to land close; the Beta is the real posterior</button>
+      <button class="qopt" type="button">B · They are the same posterior built two ways: the grid evaluates prior times likelihood at each rate and normalises, which is what the Beta algebra does in closed form</button>
+      <button class="qopt" type="button">C · The grid is more accurate because it makes no distributional assumption</button>
+      <p class="qwhy">Prior times likelihood, normalised, is the posterior by definition. The Beta is what that product happens to be for a Beta prior and a binomial likelihood; the grid computes the same product point by point without knowing the name. The mean agrees at 0.100 because they are one object.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">You upgrade a notebook to ArviZ 1 and its summary intervals change, though the code did not. The prose beside them still says "94 percent HDI". What happened, and what should the prose now say?</p>
+      <button class="qopt" type="button">A · A sampling bug; rerun with a fixed seed and the old numbers return</button>
+      <button class="qopt" type="button">B · The interval widened to 95 percent; change the prose to match</button>
+      <button class="qopt" type="button">C · The defaults moved: stats.ci_prob to 0.89 and stats.ci_kind to equal-tailed. The prose must say "89 percent equal-tailed", or the code must set the kind and level it means</button>
+      <p class="qwhy">This is the documented CoursIA case: intervals silently became equal-tailed on upgrade while the text still said HDI. The fix is to state kind and level with every number, and to write the quantiles out rather than lean on a default that can move.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">On Northgate's right-skewed posterior the 89 percent equal-tailed interval is 0.020 to 0.222. Where does the 89 percent HDI sit relative to it, and which is reported here?</p>
+      <button class="qopt" type="button">A · The HDI starts closer to zero and ends lower, because it is the narrowest region holding 89 percent on a curve that leans left; the equal-tailed one is reported, and the page says so</button>
+      <button class="qopt" type="button">B · They coincide on any posterior; the names are two conventions for the same interval</button>
+      <button class="qopt" type="button">C · The HDI is always wider, so it is the safer one to report</button>
+      <p class="qwhy">Equal-tailed cuts 5.5 percent from each end regardless of shape. HDI chases the highest part of the curve, which on a skewed posterior shifts the whole interval toward the peak and makes it shorter. Same 89 percent, different interval, so the kind has to travel with the number.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 4</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Run tonight's grid for Northgate under each of session 2's other three priors, Beta(2, 14), Beta(12, 88) and Beta(40, 60), and read the mean and the 5.5 and 94.5 percent quantiles off each grid. Check them against the Northgate table from session 2. Then look at the shape of the grid column under Beta(12, 88) and ask yourself where the truth of 0.192 sits on it. Session 4 replaces the grid with a sampler; bring the habit of reading quantiles, because that is the part that does not change.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Grid approximation and the posterior as counting</span>
+        <span class="note">Statistical Rethinking lecture 2, "Garden of Forking Data". Prior times likelihood on a grid of rates, normalised; the mean read off it, 0.100 for Northgate, matching the exact Beta(2, 18).</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Sampling a posterior and summarising by quantile</span>
+        <span class="note">20,000 draws; mean 0.100, 5.5 and 94.5 percent quantiles 0.020 and 0.222 for Northgate under the flat prior; Westfield flat mean 0.142. Exact and sampled agree.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The ArviZ 1 interval default and why it moved</span>
+        <span class="note">stats.ci_prob 0.89, was 0.94; stats.ci_kind "eti", was HDI. The migration guide's stability reason, and the CoursIA issue #15592 case of intervals that changed while the prose did not.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Drawing from a posterior with no closed form</span>
+        <span class="note">Session 4. Markov chain Monte Carlo and its diagnostics; tonight's draws come from a Beta you could have written down, which is the point.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Saying the interval to the people who act on it</span>
+        <span class="note">Session 9. Tonight produces the sentence with kind and level attached; session 9 is about which summary fits which decision.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether a stated 89 percent is honest over many forecasts</span>
+        <span class="note">Not covered by design. Measuring calibration is <strong>learn-decision-intelligence-with-phoebe</strong>'s territory; this track produces the Bayesian sentence and hands the audit of it there.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and the frequentist sentence</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference; here the credible interval is contrasted with it in one sentence and never re-derived.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 3 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Grid: evaluate, multiply, normalise, read</b><span>Prior x likelihood at each candidate rate, divided by the total. That column is the posterior.</span></div>
+      <div class="cheat-item"><b>Same object, two routes</b><span>The grid mean and the exact Beta(2, 18) mean are both 0.100. The grid never knew the name.</span></div>
+      <div class="cheat-item"><b>A draw is a rate picked by plausibility</b><span>20,000 of them is the working posterior. Every summary is sorting and counting.</span></div>
+      <div class="cheat-item"><b>Northgate, flat: 0.100, 0.020 to 0.222</b><span>Mean and the 5.5 and 94.5 percent quantiles. Exact and sampled agree. Westfield flat: 0.142.</span></div>
+      <div class="cheat-item"><b>89 percent equal-tailed</b><span>stats.ci_prob 0.89, stats.ci_kind "eti" in ArviZ 1. Chosen for lower variability across runs.</span></div>
+      <div class="cheat-item"><b>ETI is not HDI</b><span>Equal-tailed cuts 5.5 from each end; HDI is the narrowest region. On a skewed curve they differ. Name the kind.</span></div>
+      <div class="cheat-item"><b>The silent upgrade</b><span>Intervals became equal-tailed while the prose still said HDI. Write the quantiles out.</span></div>
+      <div class="cheat-item"><b>The posterior is the answer</b><span>The mean is a summary of it. "An 89 percent probability the rate is between 0.020 and 0.222."</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 3 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p2-four-priors.html">← Practitioner session 2 · Four priors</a>
+      <a href="p4-mcmc-and-its-diagnostics.html">Practitioner session 4 · MCMC and its diagnostics →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 4 of 10. Why sample when the Beta is exact, what a chain is, why several chains, and the three diagnostics that tell you a sampler has lied: R-hat, effective sample size, divergences. ArviZ 1 calls, plot_trace_rank, the DataTree container, and a PyMC 6.3 fit of the Westfield rate landing near 0.142.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="MCMC and its diagnostics - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 4 of 10. A passing diagnostic says the sampler explored this model's posterior. It says nothing about whether the model is right.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p4-mcmc-and-its-diagnostics.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MCMC and its diagnostics - learn bayesian with phoebe">
+<meta name="twitter:description" content="R-hat, ESS, divergences. plot_trace_rank, not plot_trace. DataTree, not InferenceData. PyMC 6.3 with nutpie, 400 tuning steps.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 4 · MCMC and its diagnostics - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 4 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 4 of 10</div>
+    <h1>MCMC and its <span class="accent">diagnostics</span></h1>
+    <p class="sub">Session 3 drew 20,000 samples from a posterior you could have written down. Tonight is about the posteriors you cannot. Conjugacy runs out the moment a model has two parameters that interact, and the hierarchical model in session 6 is the first one you will meet. Markov chain Monte Carlo produces draws from such a posterior anyway, by walking through it, and the draws are read exactly as session 3 read them. The price is that a walk can go wrong, silently, and produce a pile of numbers that looks like a posterior and is not. So tonight teaches the sampler and, in the same breath, the three diagnostics that catch it lying: R-hat, effective sample size, divergences. The tools are PyMC 6.3 and ArviZ 1 as they are this September, and the names have changed enough that most of what you will find online is wrong.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who will read a sampler's output and sign it</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-24 · Chains, and how they lie</span>
+      <span class="a3" style="flex:4">24-40 · Build-along: the Westfield fit</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Why sample when the Beta is exact</h2>
+    </div>
+    <p class="lede">Because the Beta stops being available. A Beta prior and a binomial likelihood give a Beta posterior, and that is the only reason sessions 1 to 3 could write the answer down. Put a second parameter in the model that interacts with the first, and the product of prior and likelihood is no longer a distribution with a name. It is still a perfectly good posterior; you simply cannot read its mean off a formula. Statistical Rethinking's eighth lecture, "MCMC", is the source for what follows: a sampler is a way to get draws from that nameless posterior, and once you have draws, session 3 already taught you everything else.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A working picture of what a chain is and why you run several. Three diagnostics and what each one catches: R-hat for chains that disagree, effective sample size for draws that are not as many as they look, divergences for geometry the sampler could not follow. The ArviZ 1 names, since the old ones are gone: <code class="mono">plot_trace_rank</code>, <code class="mono">az.rhat</code>, <code class="mono">az.ess</code>, a <code class="mono">DataTree</code> in place of <code class="mono">InferenceData</code>. And the sentence that stops a green diagnostic from being over-read: it says the sampler explored this model's posterior, and nothing about whether the model is right.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Conjugacy runs out; the walk begins<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 6 will put all twelve Halloway outlets in one model: a rate per outlet, and above them two more parameters that say where the outlets cluster and how tightly. Each outlet's rate depends on those two, and those two depend on every outlet's rate. That mutual dependence is what "interact" means, and it is the end of the closed form. There is no grid fine enough either; session 3 already explained why the grid dies with the second parameter.</p>
+        <p>Markov chain Monte Carlo sidesteps the whole problem. Instead of evaluating the posterior everywhere, it starts somewhere, proposes a step, and accepts or rejects it by comparing the posterior's height at the two points, which only needs the unnormalised product of prior and likelihood, the thing you can always compute. Run that for long enough and the places the walk visits are distributed as the posterior. The walk's record is a chain, and a chain is a set of draws. Read it as session 3 read its draws: mean, quantiles, probabilities above a threshold.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst first ran a sampler on the single Westfield rate, where the Beta answer was already known: 0.142 under the flat prior. The sampler gave a mean near 0.142. That was not wasted time. It was the only fit she would ever run where a wrong answer could be recognised on sight, and it is the fit tonight's build-along repeats for the same reason.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Chain.</strong> One walk through the posterior, recorded step by step. Each step depends only on the one before it, which is the Markov part. The record is a set of draws.</li>
+          <li><strong>Warm-up, tuning.</strong> The first stretch of a chain, spent finding the posterior and adjusting the step size. Discarded. Under nutpie in PyMC 6 the default is 400 steps; under PyMC's own NUTS it is 1000.</li>
+          <li><strong>NUTS, nutpie.</strong> NUTS is the sampler family PyMC uses. nutpie is a separate implementation of it, and when it is installed PyMC 6 uses it by default. <code class="mono">pip install pymc[nutpie]</code>.</li>
+          <li><strong>R-hat.</strong> Do the chains agree with each other? A ratio that is 1 when they do and grows as they do not.</li>
+          <li><strong>Effective sample size, ESS.</strong> How many independent draws the chain is really worth. Consecutive steps of a walk are correlated, so a chain of many draws can carry the information of far fewer.</li>
+          <li><strong>Divergence.</strong> A step the sampler had to abandon because the posterior's geometry was too sharp to follow. Each one is a place the sampler could not go.</li>
+          <li><strong>DataTree.</strong> The container a fit comes back in: an <code class="mono">xarray.DataTree</code> with a group per kind of output. The posterior is <code class="mono">dt["posterior"].dataset</code>. <code class="mono">InferenceData</code> no longer exists.</li>
+          <li><strong>Rank plot.</strong> <code class="mono">plot_trace_rank</code>. Every draw across all chains is ranked, and each chain's ranks are histogrammed. Flat means mixed; sloped means a chain is living in one part of the posterior.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers chains, warm-up and why several</span>
+      <h2>What a chain is, and why one is never enough</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">A single chain cannot tell you it is stuck. From the inside, a walk confined to one corner of the posterior looks exactly like a walk that has found the whole thing: the draws vary, the mean settles, nothing complains. The only way to know is to start several walks from different places and see whether they end up describing the same distribution. That comparison is what R-hat measures, and the figure shows the case it was built for.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four MCMC chains drawn as jagged traces across 300 draws. A shaded region on the left marks the warm-up steps that are discarded. Three chains, in raspberry, plum and pink, wander around the same level from the start. A fourth chain in dark red starts far above the others and drifts down slowly, still separated from the other three well past the end of warm-up before finally joining them. A band beneath reads: R-hat compares the chains to each other; it is 1 when they agree and grows as they disagree. This picture does not pass.">
+        <style>
+          .p4aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p4aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p4aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p4aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p4aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .p4aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p4aH" x="14" y="22">Four chains, one posterior. Three found it during warm-up. One is still on its way.</text>
+
+        <rect x="120" y="40" width="240" height="196" fill="#FDF2F8" stroke="none"></rect>
+        <text class="p4aM" x="128" y="212">warm-up / tuning: discarded</text>
+        <text class="p4aM" x="128" y="228">400 steps under nutpie, 1000 under PyMC's NUTS</text>
+        <line x1="360" y1="40" x2="360" y2="236" stroke="#E4CBD6" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <text class="p4aL" x="368" y="56">kept draws begin</text>
+
+        <text class="p4aM" x="14" y="150">rate</text>
+        <line x1="120" y1="236" x2="840" y2="236" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="p4aM" x="480" y="254" text-anchor="middle">draw number, left to right</text>
+
+        <polyline fill="none" stroke="#9D174D" stroke-width="1.4" points="120.0,139.0 122.4,142.8 124.8,143.0 127.2,147.6 129.6,155.3 132.0,156.9 134.4,162.1 136.8,157.4 139.2,144.5 141.6,150.2 144.0,154.9 146.4,149.4 148.8,146.9 151.2,147.2 153.6,155.3 156.0,153.7 158.4,147.0 160.8,158.4 163.2,159.0 165.6,170.5 168.0,173.2 170.4,179.3 172.8,170.9 175.2,173.3 177.6,163.1 180.0,157.3 182.4,156.2 184.8,173.4 187.2,169.4 189.6,163.0 192.0,157.5 194.4,166.7 196.8,164.5 199.2,167.0 201.6,167.3 204.0,153.1 206.4,158.2 208.8,155.6 211.2,146.8 213.6,152.4 216.0,152.4 218.4,150.7 220.8,150.0 223.2,159.4 225.6,155.5 228.0,143.1 230.4,157.5 232.8,148.2 235.2,147.9 237.6,153.6 240.0,136.9 242.4,135.6 244.8,149.9 247.2,149.4 249.6,145.1 252.0,148.3 254.4,143.6 256.8,146.4 259.2,142.5 261.6,134.1 264.0,144.8 266.4,145.1 268.8,150.4 271.2,149.3 273.6,158.7 276.0,160.1 278.4,158.1 280.8,148.3 283.2,140.1 285.6,153.8 288.0,158.6 290.4,150.6 292.8,165.7 295.2,163.8 297.6,159.7 300.0,146.6 302.4,142.5 304.8,147.6 307.2,151.3 309.6,152.8 312.0,140.1 314.4,146.8 316.8,150.3 319.2,147.5 321.6,149.3 324.0,151.1 326.4,159.3 328.8,156.1 331.2,157.4 333.6,145.8 336.0,142.3 338.4,145.2 340.8,141.7 343.2,147.2 345.6,140.1 348.0,143.6 350.4,141.3 352.8,154.3 355.2,150.1 357.6,163.1 360.0,174.2 362.4,168.1 364.8,168.7 367.2,160.9 369.6,139.8 372.0,149.8 374.4,154.7 376.8,151.4 379.2,147.1 381.6,149.5 384.0,151.3 386.4,145.4 388.8,143.0 391.2,153.4 393.6,152.8 396.0,151.6 398.4,159.1 400.8,153.9 403.2,159.2 405.6,148.5 408.0,147.5 410.4,147.7 412.8,153.1 415.2,152.9 417.6,167.3 420.0,169.9 422.4,160.2 424.8,173.0 427.2,158.4 429.6,168.9 432.0,156.5 434.4,160.7 436.8,151.0 439.2,149.6 441.6,161.6 444.0,147.9 446.4,137.5 448.8,142.4 451.2,147.2 453.6,149.4 456.0,157.1 458.4,146.2 460.8,151.7 463.2,151.5 465.6,157.1 468.0,159.4 470.4,166.0 472.8,150.7 475.2,151.6 477.6,143.6 480.0,145.8 482.4,152.6 484.8,154.2 487.2,157.0 489.6,154.5 492.0,155.8 494.4,156.1 496.8,164.6 499.2,165.7 501.6,147.5 504.0,153.5 506.4,160.4 508.8,154.2 511.2,141.9 513.6,155.9 516.0,155.4 518.4,158.4 520.8,169.0 523.2,156.7 525.6,154.5 528.0,152.4 530.4,157.4 532.8,151.3 535.2,155.0 537.6,154.3 540.0,161.4 542.4,166.7 544.8,150.6 547.2,154.3 549.6,150.5 552.0,150.6 554.4,153.8 556.8,156.4 559.2,149.3 561.6,151.9 564.0,152.4 566.4,151.4 568.8,141.8 571.2,139.5 573.6,140.2 576.0,148.0 578.4,159.3 580.8,148.7 583.2,141.7 585.6,145.7 588.0,143.0 590.4,139.5 592.8,136.7 595.2,134.3 597.6,143.3 600.0,134.0 602.4,149.2 604.8,142.8 607.2,141.5 609.6,137.8 612.0,127.6 614.4,124.0 616.8,141.9 619.2,157.7 621.6,148.7 624.0,157.0 626.4,154.6 628.8,146.6 631.2,160.4 633.6,173.0 636.0,163.0 638.4,158.1 640.8,157.1 643.2,154.3 645.6,159.5 648.0,167.8 650.4,162.9 652.8,165.8 655.2,172.9 657.6,161.0 660.0,157.6 662.4,151.8 664.8,158.8 667.2,160.8 669.6,164.7 672.0,166.4 674.4,159.1 676.8,162.0 679.2,155.0 681.6,150.7 684.0,134.8 686.4,150.9 688.8,143.7 691.2,146.6 693.6,147.9 696.0,159.8 698.4,159.9 700.8,150.7 703.2,151.1 705.6,150.1 708.0,152.3 710.4,142.6 712.8,145.4 715.2,163.9 717.6,164.4 720.0,174.5 722.4,191.0 724.8,180.7 727.2,159.7 729.6,155.9 732.0,162.9 734.4,165.6 736.8,151.4 739.2,149.7 741.6,149.5 744.0,150.1 746.4,149.7 748.8,143.6 751.2,141.6 753.6,142.9 756.0,153.4 758.4,148.3 760.8,154.1 763.2,144.3 765.6,156.1 768.0,155.0 770.4,153.3 772.8,162.3 775.2,144.8 777.6,135.4 780.0,144.0 782.4,140.2 784.8,140.7 787.2,164.1 789.6,157.2 792.0,155.2 794.4,152.7 796.8,160.1 799.2,158.6 801.6,157.0 804.0,145.4 806.4,144.4 808.8,146.4 811.2,135.9 813.6,145.1 816.0,149.8 818.4,163.9 820.8,146.9 823.2,140.6 825.6,136.8 828.0,136.3 830.4,140.2 832.8,142.0 835.2,146.7 837.6,149.4"></polyline>
+        <polyline fill="none" stroke="#831843" stroke-width="1.4" points="120.0,163.2 122.4,158.2 124.8,143.7 127.2,141.6 129.6,145.0 132.0,151.2 134.4,155.7 136.8,141.3 139.2,140.5 141.6,143.3 144.0,148.3 146.4,157.4 148.8,155.3 151.2,146.7 153.6,150.9 156.0,152.3 158.4,153.2 160.8,151.3 163.2,163.1 165.6,160.3 168.0,163.3 170.4,151.8 172.8,157.1 175.2,150.2 177.6,138.4 180.0,144.9 182.4,151.3 184.8,149.4 187.2,149.6 189.6,157.4 192.0,151.3 194.4,135.3 196.8,142.4 199.2,146.6 201.6,155.9 204.0,151.4 206.4,160.5 208.8,165.3 211.2,150.1 213.6,157.0 216.0,146.3 218.4,135.8 220.8,138.8 223.2,138.5 225.6,127.5 228.0,136.9 230.4,146.0 232.8,157.8 235.2,154.8 237.6,141.7 240.0,137.2 242.4,149.0 244.8,155.9 247.2,157.7 249.6,152.8 252.0,153.4 254.4,150.5 256.8,148.1 259.2,151.0 261.6,151.0 264.0,149.1 266.4,150.0 268.8,146.1 271.2,133.1 273.6,134.4 276.0,139.5 278.4,156.1 280.8,151.0 283.2,165.6 285.6,171.0 288.0,157.1 290.4,149.2 292.8,150.6 295.2,163.6 297.6,161.7 300.0,162.8 302.4,153.4 304.8,134.8 307.2,138.5 309.6,148.5 312.0,158.0 314.4,155.7 316.8,155.0 319.2,162.1 321.6,157.0 324.0,163.4 326.4,150.2 328.8,141.9 331.2,136.4 333.6,144.8 336.0,142.7 338.4,146.2 340.8,150.6 343.2,153.0 345.6,161.9 348.0,168.9 350.4,156.2 352.8,155.5 355.2,151.9 357.6,143.5 360.0,159.1 362.4,162.0 364.8,156.4 367.2,151.2 369.6,153.7 372.0,144.5 374.4,144.8 376.8,155.9 379.2,161.0 381.6,151.0 384.0,147.1 386.4,162.7 388.8,147.9 391.2,144.0 393.6,135.8 396.0,143.7 398.4,148.2 400.8,157.5 403.2,135.3 405.6,141.8 408.0,132.5 410.4,143.6 412.8,144.6 415.2,159.3 417.6,159.0 420.0,148.3 422.4,158.5 424.8,147.3 427.2,145.6 429.6,155.2 432.0,157.2 434.4,158.2 436.8,155.7 439.2,157.9 441.6,161.5 444.0,159.8 446.4,164.3 448.8,169.2 451.2,162.9 453.6,151.6 456.0,162.8 458.4,158.3 460.8,160.4 463.2,164.3 465.6,152.7 468.0,155.8 470.4,142.2 472.8,150.9 475.2,147.6 477.6,150.2 480.0,155.9 482.4,149.3 484.8,150.8 487.2,145.9 489.6,147.7 492.0,156.8 494.4,155.2 496.8,153.0 499.2,144.6 501.6,153.4 504.0,152.5 506.4,164.9 508.8,154.7 511.2,161.4 513.6,171.3 516.0,164.3 518.4,150.8 520.8,162.2 523.2,166.3 525.6,166.3 528.0,169.3 530.4,159.6 532.8,162.5 535.2,163.7 537.6,154.4 540.0,158.7 542.4,152.3 544.8,159.0 547.2,165.2 549.6,174.0 552.0,151.3 554.4,153.3 556.8,150.3 559.2,150.4 561.6,149.0 564.0,149.0 566.4,134.6 568.8,148.0 571.2,160.7 573.6,164.8 576.0,169.9 578.4,157.2 580.8,148.3 583.2,156.3 585.6,164.8 588.0,162.4 590.4,147.3 592.8,170.0 595.2,158.9 597.6,164.1 600.0,151.1 602.4,159.0 604.8,158.1 607.2,166.8 609.6,168.5 612.0,151.3 614.4,144.6 616.8,149.6 619.2,156.4 621.6,168.7 624.0,165.2 626.4,160.1 628.8,157.2 631.2,155.4 633.6,162.2 636.0,158.4 638.4,155.8 640.8,143.8 643.2,131.6 645.6,139.1 648.0,148.8 650.4,149.7 652.8,154.5 655.2,158.6 657.6,156.1 660.0,162.0 662.4,153.1 664.8,152.8 667.2,149.9 669.6,151.4 672.0,156.5 674.4,161.5 676.8,159.3 679.2,160.3 681.6,154.9 684.0,153.2 686.4,162.6 688.8,157.7 691.2,165.3 693.6,164.7 696.0,161.8 698.4,173.7 700.8,164.7 703.2,158.4 705.6,156.7 708.0,157.6 710.4,157.8 712.8,162.6 715.2,160.3 717.6,160.9 720.0,156.4 722.4,163.4 724.8,156.9 727.2,153.4 729.6,153.3 732.0,155.5 734.4,149.3 736.8,162.4 739.2,154.5 741.6,151.1 744.0,148.5 746.4,146.1 748.8,152.5 751.2,153.6 753.6,147.4 756.0,145.0 758.4,145.2 760.8,158.5 763.2,151.4 765.6,141.9 768.0,137.0 770.4,139.7 772.8,155.3 775.2,146.2 777.6,148.7 780.0,168.6 782.4,159.2 784.8,167.5 787.2,171.3 789.6,168.8 792.0,152.4 794.4,154.4 796.8,150.8 799.2,137.0 801.6,129.3 804.0,137.3 806.4,143.6 808.8,155.6 811.2,159.0 813.6,152.6 816.0,148.6 818.4,148.2 820.8,141.2 823.2,150.2 825.6,150.6 828.0,144.7 830.4,142.1 832.8,136.6 835.2,138.2 837.6,144.7"></polyline>
+        <polyline fill="none" stroke="#F9A8D4" stroke-width="1.4" points="120.0,145.6 122.4,144.4 124.8,154.0 127.2,165.3 129.6,155.4 132.0,154.0 134.4,150.2 136.8,163.2 139.2,161.4 141.6,162.0 144.0,164.5 146.4,176.8 148.8,170.0 151.2,156.1 153.6,151.0 156.0,155.3 158.4,153.6 160.8,146.5 163.2,169.0 165.6,163.3 168.0,154.5 170.4,147.6 172.8,135.4 175.2,131.8 177.6,135.7 180.0,138.4 182.4,136.4 184.8,145.3 187.2,147.3 189.6,141.2 192.0,129.2 194.4,137.7 196.8,142.4 199.2,143.5 201.6,135.5 204.0,140.8 206.4,132.7 208.8,146.2 211.2,149.0 213.6,150.8 216.0,144.5 218.4,138.4 220.8,154.1 223.2,159.7 225.6,153.7 228.0,157.5 230.4,166.6 232.8,152.8 235.2,148.0 237.6,144.9 240.0,150.4 242.4,142.3 244.8,146.8 247.2,139.5 249.6,150.2 252.0,156.7 254.4,152.8 256.8,157.2 259.2,149.5 261.6,147.7 264.0,155.6 266.4,153.1 268.8,154.7 271.2,146.0 273.6,152.3 276.0,154.9 278.4,143.8 280.8,128.8 283.2,120.8 285.6,130.5 288.0,135.7 290.4,128.9 292.8,137.2 295.2,149.2 297.6,148.6 300.0,145.6 302.4,153.5 304.8,165.0 307.2,170.8 309.6,158.4 312.0,161.3 314.4,158.4 316.8,153.8 319.2,147.7 321.6,151.1 324.0,146.9 326.4,154.8 328.8,155.9 331.2,161.7 333.6,148.9 336.0,149.5 338.4,155.4 340.8,156.2 343.2,155.7 345.6,148.3 348.0,161.2 350.4,165.3 352.8,162.8 355.2,138.8 357.6,135.4 360.0,141.4 362.4,138.9 364.8,126.9 367.2,136.8 369.6,144.3 372.0,136.9 374.4,137.7 376.8,136.8 379.2,145.4 381.6,132.2 384.0,125.2 386.4,129.6 388.8,131.4 391.2,153.5 393.6,147.4 396.0,149.8 398.4,146.5 400.8,142.5 403.2,147.7 405.6,161.6 408.0,154.7 410.4,158.7 412.8,158.2 415.2,160.0 417.6,159.1 420.0,173.7 422.4,156.0 424.8,152.0 427.2,142.7 429.6,130.0 432.0,136.8 434.4,155.3 436.8,160.3 439.2,166.0 441.6,164.3 444.0,158.7 446.4,171.0 448.8,161.0 451.2,168.8 453.6,159.9 456.0,157.3 458.4,157.2 460.8,155.2 463.2,157.5 465.6,159.6 468.0,169.2 470.4,162.7 472.8,144.1 475.2,130.9 477.6,127.4 480.0,129.9 482.4,142.1 484.8,133.8 487.2,139.9 489.6,144.0 492.0,148.3 494.4,148.2 496.8,152.2 499.2,152.1 501.6,159.7 504.0,159.2 506.4,138.4 508.8,143.0 511.2,147.3 513.6,144.1 516.0,140.7 518.4,152.6 520.8,153.3 523.2,145.0 525.6,144.7 528.0,145.6 530.4,135.2 532.8,145.6 535.2,146.5 537.6,151.7 540.0,139.6 542.4,158.3 544.8,160.6 547.2,160.9 549.6,152.0 552.0,146.6 554.4,137.1 556.8,153.7 559.2,146.6 561.6,150.1 564.0,155.2 566.4,149.2 568.8,156.6 571.2,170.3 573.6,166.0 576.0,171.9 578.4,169.3 580.8,159.7 583.2,153.9 585.6,140.3 588.0,145.2 590.4,158.7 592.8,161.5 595.2,164.5 597.6,168.8 600.0,158.9 602.4,160.7 604.8,172.2 607.2,159.1 609.6,156.8 612.0,151.6 614.4,150.3 616.8,145.3 619.2,146.7 621.6,138.3 624.0,139.1 626.4,139.9 628.8,140.3 631.2,154.9 633.6,154.5 636.0,154.9 638.4,151.6 640.8,161.5 643.2,144.9 645.6,145.9 648.0,156.6 650.4,167.5 652.8,163.5 655.2,159.5 657.6,161.7 660.0,156.9 662.4,159.4 664.8,151.9 667.2,156.8 669.6,154.7 672.0,145.5 674.4,127.3 676.8,143.0 679.2,149.0 681.6,155.8 684.0,147.8 686.4,157.4 688.8,158.5 691.2,155.8 693.6,161.3 696.0,164.7 698.4,163.2 700.8,174.8 703.2,177.2 705.6,170.9 708.0,162.4 710.4,159.5 712.8,169.8 715.2,166.5 717.6,154.6 720.0,148.7 722.4,149.7 724.8,156.7 727.2,149.5 729.6,154.1 732.0,161.7 734.4,163.8 736.8,147.8 739.2,146.9 741.6,139.0 744.0,146.6 746.4,140.5 748.8,148.5 751.2,150.2 753.6,131.0 756.0,131.7 758.4,142.0 760.8,145.4 763.2,144.5 765.6,137.1 768.0,145.4 770.4,160.4 772.8,158.9 775.2,155.7 777.6,152.8 780.0,141.7 782.4,142.2 784.8,138.7 787.2,151.1 789.6,144.0 792.0,130.0 794.4,131.0 796.8,135.7 799.2,139.5 801.6,129.4 804.0,143.8 806.4,146.8 808.8,144.4 811.2,140.6 813.6,147.3 816.0,145.9 818.4,149.4 820.8,148.7 823.2,150.2 825.6,158.9 828.0,156.0 830.4,147.1 832.8,155.6 835.2,155.5 837.6,148.4"></polyline>
+        <polyline fill="none" stroke="#991B1B" stroke-width="1.8" points="120.0,48.8 122.4,63.1 124.8,66.9 127.2,80.1 129.6,75.5 132.0,62.2 134.4,51.9 136.8,59.5 139.2,59.2 141.6,63.7 144.0,68.1 146.4,61.1 148.8,76.6 151.2,72.9 153.6,77.9 156.0,71.4 158.4,74.6 160.8,84.3 163.2,86.1 165.6,84.3 168.0,88.0 170.4,87.9 172.8,95.7 175.2,115.4 177.6,110.5 180.0,107.5 182.4,108.9 184.8,110.8 187.2,105.2 189.6,111.4 192.0,119.2 194.4,122.5 196.8,115.0 199.2,127.8 201.6,119.9 204.0,126.6 206.4,136.5 208.8,127.6 211.2,129.7 213.6,140.9 216.0,144.2 218.4,137.4 220.8,129.0 223.2,133.5 225.6,131.4 228.0,127.0 230.4,133.4 232.8,131.6 235.2,133.0 237.6,138.1 240.0,142.6 242.4,142.6 244.8,142.8 247.2,147.6 249.6,151.0 252.0,142.4 254.4,141.2 256.8,134.9 259.2,126.5 261.6,123.4 264.0,107.5 266.4,116.4 268.8,112.2 271.2,116.9 273.6,104.6 276.0,94.3 278.4,112.6 280.8,122.3 283.2,118.9 285.6,114.7 288.0,111.1 290.4,114.0 292.8,112.7 295.2,109.9 297.6,112.9 300.0,107.2 302.4,127.2 304.8,123.7 307.2,133.2 309.6,126.8 312.0,130.0 314.4,138.0 316.8,135.9 319.2,143.7 321.6,151.1 324.0,163.1 326.4,162.5 328.8,158.0 331.2,149.6 333.6,150.7 336.0,142.6 338.4,142.9 340.8,144.1 343.2,140.0 345.6,132.5 348.0,136.1 350.4,138.8 352.8,140.8 355.2,140.7 357.6,148.2 360.0,140.4 362.4,144.0 364.8,140.8 367.2,147.7 369.6,145.1 372.0,142.4 374.4,146.1 376.8,130.7 379.2,129.0 381.6,116.6 384.0,111.2 386.4,118.7 388.8,123.5 391.2,121.7 393.6,122.9 396.0,124.2 398.4,127.9 400.8,143.2 403.2,145.3 405.6,162.7 408.0,159.1 410.4,164.1 412.8,168.8 415.2,169.3 417.6,166.1 420.0,176.1 422.4,188.0 424.8,194.0 427.2,207.0 429.6,211.1 432.0,195.2 434.4,200.6 436.8,192.5 439.2,200.5 441.6,195.2 444.0,195.0 446.4,192.7 448.8,185.8 451.2,170.1 453.6,167.4 456.0,165.4 458.4,172.0 460.8,166.2 463.2,167.1 465.6,159.7 468.0,159.4 470.4,145.4 472.8,161.0 475.2,162.6 477.6,155.1 480.0,157.5 482.4,163.1 484.8,164.4 487.2,174.1 489.6,171.8 492.0,151.7 494.4,142.8 496.8,151.7 499.2,158.4 501.6,161.0 504.0,152.6 506.4,158.7 508.8,163.5 511.2,155.9 513.6,148.9 516.0,151.8 518.4,160.3 520.8,171.7 523.2,175.7 525.6,191.4 528.0,183.1 530.4,186.0 532.8,180.1 535.2,163.9 537.6,154.1 540.0,162.7 542.4,155.2 544.8,146.0 547.2,152.0 549.6,159.2 552.0,159.5 554.4,171.3 556.8,158.7 559.2,176.7 561.6,183.6 564.0,183.6 566.4,183.4 568.8,180.1 571.2,176.2 573.6,176.3 576.0,165.9 578.4,181.5 580.8,179.6 583.2,183.3 585.6,180.3 588.0,176.8 590.4,182.2 592.8,185.2 595.2,177.0 597.6,172.7 600.0,176.5 602.4,159.2 604.8,140.9 607.2,152.7 609.6,150.2 612.0,130.9 614.4,126.0 616.8,125.7 619.2,128.8 621.6,134.2 624.0,141.4 626.4,148.6 628.8,143.4 631.2,148.8 633.6,152.6 636.0,160.9 638.4,157.5 640.8,161.8 643.2,159.0 645.6,147.8 648.0,145.8 650.4,143.4 652.8,143.0 655.2,145.0 657.6,147.7 660.0,150.9 662.4,144.7 664.8,154.9 667.2,142.9 669.6,145.1 672.0,152.6 674.4,155.4 676.8,158.8 679.2,154.5 681.6,158.4 684.0,146.7 686.4,153.9 688.8,170.0 691.2,168.6 693.6,177.6 696.0,168.2 698.4,153.7 700.8,147.4 703.2,158.6 705.6,161.5 708.0,143.8 710.4,143.5 712.8,145.7 715.2,139.1 717.6,124.0 720.0,123.1 722.4,131.5 724.8,135.2 727.2,135.6 729.6,145.4 732.0,155.2 734.4,152.9 736.8,159.2 739.2,156.5 741.6,153.5 744.0,134.2 746.4,146.3 748.8,148.5 751.2,150.3 753.6,146.8 756.0,139.9 758.4,147.2 760.8,154.5 763.2,165.6 765.6,167.2 768.0,157.1 770.4,154.3 772.8,160.6 775.2,159.7 777.6,156.1 780.0,150.1 782.4,154.6 784.8,154.9 787.2,167.2 789.6,170.1 792.0,150.6 794.4,167.2 796.8,163.8 799.2,157.3 801.6,157.6 804.0,161.2 806.4,157.7 808.8,155.1 811.2,153.9 813.6,167.0 816.0,162.2 818.4,164.5 820.8,163.6 823.2,157.1 825.6,149.7 828.0,142.9 830.4,149.2 832.8,142.4 835.2,136.0 837.6,132.1"></polyline>
+        <text class="p4aR" x="368" y="104">chain 4 started far away and is still separated after warm-up</text>
+
+        <rect x="120" y="266" width="10" height="10" fill="#9D174D"></rect>
+        <text class="p4aM" x="136" y="275">chain 1</text>
+        <rect x="200" y="266" width="10" height="10" fill="#831843"></rect>
+        <text class="p4aM" x="216" y="275">chain 2</text>
+        <rect x="280" y="266" width="10" height="10" fill="#F9A8D4"></rect>
+        <text class="p4aM" x="296" y="275">chain 3</text>
+        <rect x="360" y="266" width="10" height="10" fill="#991B1B"></rect>
+        <text class="p4aM" x="376" y="275">chain 4, the one R-hat is for</text>
+
+        <rect x="14" y="292" width="852" height="38" rx="8" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="p4aR" x="28" y="309">R-hat compares the chains to each other: 1 when they agree, larger as they disagree. This picture does not pass.</text>
+        <text class="p4aB" x="28" y="324">From inside chain 4 alone nothing looks wrong. That is why one chain is never enough.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three chains agree from the first kept draw; the fourth is still arriving. Only the comparison reveals it.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Warm-up, tuning, and what nutpie changed<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A chain's first stretch is spent getting from wherever it started to the region where the posterior lives, and adjusting its step size so that it moves through that region efficiently. Those steps are not draws from the posterior and are thrown away; the word for them is warm-up, or tuning. PyMC 6 with nutpie installed makes nutpie the default NUTS sampler and tunes for 400 steps by default, against 1000 under PyMC's own NUTS. Install with <code class="mono">pip install pymc[nutpie]</code>. PyMC 6 needs Python 3.12 or later, and it is built on PyTensor 3.0 with numba as the default backend.</p>
+        <p>The figure's fourth chain is the case warm-up exists for, and the case it does not always fix. It started far from the posterior, and 400 steps was not enough for it to arrive. Kept draws from a chain that has not arrived are not draws from the posterior; they will pull the mean toward wherever the chain has been, and nothing in that chain's own record will say so.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why several chains, and what R-hat compares<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Run four chains from four different starting points. If they have all found the posterior, each chain's draws will spread over the same region, and the spread between the chains' means will be small compared with the spread within each chain. If one is stuck, or still travelling, the between-chain spread will be large relative to the within-chain spread. R-hat is that comparison as a single number: 1 when the chains agree, larger as they disagree.</p>
+        <p>The value of the idea is that it needs nothing from you. You do not have to know where the posterior is, or what it looks like, to notice that four walks meant to describe the same thing are describing different things. What R-hat cannot do is tell you that four chains which agree with each other have found the whole posterior rather than the same part of it, which is why it is one of three diagnostics and not the only one.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers R-hat, ESS, divergences and the rank plot</span>
+      <h2>Three ways a sampler lies, and the plot that shows mixing</h2>
+      <span class="tag concept">11 min live</span>
+    </div>
+    <p class="lede">A chain can disagree with the others, which R-hat catches. A chain can agree while moving so sluggishly that a thousand draws carry the information of a few dozen, which effective sample size catches. And a sampler can hit a region of the posterior whose geometry it cannot follow and abandon steps there, which shows up as divergences. The plot to read for the first two is the rank plot, <code class="mono">plot_trace_rank</code>, and the figure shows what healthy and unhealthy look like on it.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two panels of rank histograms, four chains each. Left, healthy: every chain's histogram of ranks is roughly flat across twenty bins, meaning each chain's draws are spread evenly through the pooled draws. Right, unhealthy: chain 1's histogram slopes down from tall bars at low ranks to short bars at high ranks, and chain 4's slopes the other way, meaning chain 1 lives in the low part of the posterior and chain 4 in the high part. Chains 2 and 3 are flat. A band beneath reads: flat rows mix; sloped rows do not; read plot_trace_rank, since plot_trace is gone.">
+        <style>
+          .p4bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p4bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p4bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p4bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p4bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p4bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+        <text class="p4bH" x="14" y="22">The rank plot. Rank every draw across all chains, then histogram each chain's ranks.</text>
+
+        <!-- left: healthy -->
+        <rect x="14" y="36" width="416" height="224" rx="9" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p4bG" x="28" y="56">Healthy: every chain's ranks are spread evenly</text>
+        <text class="p4bM" x="28" y="101">chain 1</text>
+        <rect x="80.0" y="77.9" width="13" height="26.1" fill="#15803D"></rect><rect x="96.5" y="91.7" width="13" height="12.3" fill="#15803D"></rect><rect x="113.0" y="82.7" width="13" height="21.3" fill="#15803D"></rect><rect x="129.5" y="85.7" width="13" height="18.3" fill="#15803D"></rect><rect x="146.0" y="85.4" width="13" height="18.6" fill="#15803D"></rect><rect x="162.5" y="84.6" width="13" height="19.4" fill="#15803D"></rect><rect x="179.0" y="90.1" width="13" height="13.9" fill="#15803D"></rect><rect x="195.5" y="84.7" width="13" height="19.3" fill="#15803D"></rect><rect x="212.0" y="86.6" width="13" height="17.4" fill="#15803D"></rect><rect x="228.5" y="76.0" width="13" height="28.0" fill="#15803D"></rect><rect x="245.0" y="83.3" width="13" height="20.7" fill="#15803D"></rect><rect x="261.5" y="85.1" width="13" height="18.9" fill="#15803D"></rect><rect x="278.0" y="84.8" width="13" height="19.2" fill="#15803D"></rect><rect x="294.5" y="86.0" width="13" height="18.0" fill="#15803D"></rect><rect x="311.0" y="87.2" width="13" height="16.8" fill="#15803D"></rect><rect x="327.5" y="85.2" width="13" height="18.8" fill="#15803D"></rect><rect x="344.0" y="82.6" width="13" height="21.4" fill="#15803D"></rect><rect x="360.5" y="84.7" width="13" height="19.3" fill="#15803D"></rect><rect x="377.0" y="81.1" width="13" height="22.9" fill="#15803D"></rect><rect x="393.5" y="84.6" width="13" height="19.4" fill="#15803D"></rect>
+        <text class="p4bM" x="28" y="145">chain 2</text>
+        <rect x="80.0" y="127.9" width="13" height="20.1" fill="#15803D"></rect><rect x="96.5" y="123.4" width="13" height="24.6" fill="#15803D"></rect><rect x="113.0" y="126.4" width="13" height="21.6" fill="#15803D"></rect><rect x="129.5" y="129.5" width="13" height="18.5" fill="#15803D"></rect><rect x="146.0" y="128.5" width="13" height="19.5" fill="#15803D"></rect><rect x="162.5" y="126.4" width="13" height="21.6" fill="#15803D"></rect><rect x="179.0" y="122.2" width="13" height="25.8" fill="#15803D"></rect><rect x="195.5" y="128.8" width="13" height="19.2" fill="#15803D"></rect><rect x="212.0" y="128.7" width="13" height="19.3" fill="#15803D"></rect><rect x="228.5" y="125.0" width="13" height="23.0" fill="#15803D"></rect><rect x="245.0" y="130.7" width="13" height="17.3" fill="#15803D"></rect><rect x="261.5" y="128.9" width="13" height="19.1" fill="#15803D"></rect><rect x="278.0" y="125.4" width="13" height="22.6" fill="#15803D"></rect><rect x="294.5" y="126.3" width="13" height="21.7" fill="#15803D"></rect><rect x="311.0" y="127.7" width="13" height="20.3" fill="#15803D"></rect><rect x="327.5" y="126.0" width="13" height="22.0" fill="#15803D"></rect><rect x="344.0" y="136.0" width="13" height="12.0" fill="#15803D"></rect><rect x="360.5" y="124.9" width="13" height="23.1" fill="#15803D"></rect><rect x="377.0" y="130.9" width="13" height="17.1" fill="#15803D"></rect><rect x="393.5" y="133.0" width="13" height="15.0" fill="#15803D"></rect>
+        <text class="p4bM" x="28" y="189">chain 3</text>
+        <rect x="80.0" y="171.2" width="13" height="20.8" fill="#15803D"></rect><rect x="96.5" y="169.9" width="13" height="22.1" fill="#15803D"></rect><rect x="113.0" y="173.3" width="13" height="18.7" fill="#15803D"></rect><rect x="129.5" y="175.2" width="13" height="16.8" fill="#15803D"></rect><rect x="146.0" y="171.9" width="13" height="20.1" fill="#15803D"></rect><rect x="162.5" y="172.2" width="13" height="19.8" fill="#15803D"></rect><rect x="179.0" y="167.8" width="13" height="24.2" fill="#15803D"></rect><rect x="195.5" y="169.8" width="13" height="22.2" fill="#15803D"></rect><rect x="212.0" y="171.4" width="13" height="20.6" fill="#15803D"></rect><rect x="228.5" y="168.7" width="13" height="23.3" fill="#15803D"></rect><rect x="245.0" y="172.6" width="13" height="19.4" fill="#15803D"></rect><rect x="261.5" y="174.8" width="13" height="17.2" fill="#15803D"></rect><rect x="278.0" y="170.2" width="13" height="21.8" fill="#15803D"></rect><rect x="294.5" y="170.3" width="13" height="21.7" fill="#15803D"></rect><rect x="311.0" y="172.6" width="13" height="19.4" fill="#15803D"></rect><rect x="327.5" y="174.3" width="13" height="17.7" fill="#15803D"></rect><rect x="344.0" y="171.3" width="13" height="20.7" fill="#15803D"></rect><rect x="360.5" y="179.5" width="13" height="12.5" fill="#15803D"></rect><rect x="377.0" y="169.9" width="13" height="22.1" fill="#15803D"></rect><rect x="393.5" y="170.5" width="13" height="21.5" fill="#15803D"></rect>
+        <text class="p4bM" x="28" y="233">chain 4</text>
+        <rect x="80.0" y="220.9" width="13" height="15.1" fill="#15803D"></rect><rect x="96.5" y="215.8" width="13" height="20.2" fill="#15803D"></rect><rect x="113.0" y="218.9" width="13" height="17.1" fill="#15803D"></rect><rect x="129.5" y="213.7" width="13" height="22.3" fill="#15803D"></rect><rect x="146.0" y="222.1" width="13" height="13.9" fill="#15803D"></rect><rect x="162.5" y="218.7" width="13" height="17.3" fill="#15803D"></rect><rect x="179.0" y="213.9" width="13" height="22.1" fill="#15803D"></rect><rect x="195.5" y="212.5" width="13" height="23.5" fill="#15803D"></rect><rect x="212.0" y="222.5" width="13" height="13.5" fill="#15803D"></rect><rect x="228.5" y="217.5" width="13" height="18.5" fill="#15803D"></rect><rect x="245.0" y="215.0" width="13" height="21.0" fill="#15803D"></rect><rect x="261.5" y="217.8" width="13" height="18.2" fill="#15803D"></rect><rect x="278.0" y="211.2" width="13" height="24.8" fill="#15803D"></rect><rect x="294.5" y="219.6" width="13" height="16.4" fill="#15803D"></rect><rect x="311.0" y="214.9" width="13" height="21.1" fill="#15803D"></rect><rect x="327.5" y="219.1" width="13" height="16.9" fill="#15803D"></rect><rect x="344.0" y="211.8" width="13" height="24.2" fill="#15803D"></rect><rect x="360.5" y="216.1" width="13" height="19.9" fill="#15803D"></rect><rect x="377.0" y="217.1" width="13" height="18.9" fill="#15803D"></rect><rect x="393.5" y="221.2" width="13" height="14.8" fill="#15803D"></rect>
+        <text class="p4bM" x="80" y="252">low ranks</text>
+        <text class="p4bM" x="406" y="252" text-anchor="end">high ranks</text>
+
+        <!-- right: unhealthy -->
+        <rect x="450" y="36" width="416" height="224" rx="9" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="p4bR" x="464" y="56">Unhealthy: two chains live in different parts of the posterior</text>
+        <text class="p4bM" x="464" y="101">chain 1</text>
+        <rect x="516.0" y="72.0" width="13" height="32.0" fill="#991B1B"></rect><rect x="532.5" y="74.1" width="13" height="29.9" fill="#991B1B"></rect><rect x="549.0" y="75.4" width="13" height="28.6" fill="#991B1B"></rect><rect x="565.5" y="76.1" width="13" height="27.9" fill="#991B1B"></rect><rect x="582.0" y="78.5" width="13" height="25.5" fill="#991B1B"></rect><rect x="598.5" y="81.3" width="13" height="22.7" fill="#991B1B"></rect><rect x="615.0" y="82.8" width="13" height="21.2" fill="#991B1B"></rect><rect x="631.5" y="84.0" width="13" height="20.0" fill="#991B1B"></rect><rect x="648.0" y="82.1" width="13" height="21.9" fill="#991B1B"></rect><rect x="664.5" y="87.6" width="13" height="16.4" fill="#991B1B"></rect><rect x="681.0" y="87.5" width="13" height="16.5" fill="#991B1B"></rect><rect x="697.5" y="88.4" width="13" height="15.6" fill="#991B1B"></rect><rect x="714.0" y="88.8" width="13" height="15.2" fill="#991B1B"></rect><rect x="730.5" y="89.6" width="13" height="14.4" fill="#991B1B"></rect><rect x="747.0" y="93.6" width="13" height="10.4" fill="#991B1B"></rect><rect x="763.5" y="95.5" width="13" height="8.5" fill="#991B1B"></rect><rect x="780.0" y="94.2" width="13" height="9.8" fill="#991B1B"></rect><rect x="796.5" y="93.7" width="13" height="10.3" fill="#991B1B"></rect><rect x="813.0" y="95.6" width="13" height="8.4" fill="#991B1B"></rect><rect x="829.5" y="97.7" width="13" height="6.3" fill="#991B1B"></rect>
+        <text class="p4bM" x="464" y="145">chain 2</text>
+        <rect x="516.0" y="129.0" width="13" height="19.0" fill="#9D174D"></rect><rect x="532.5" y="127.1" width="13" height="20.9" fill="#9D174D"></rect><rect x="549.0" y="128.7" width="13" height="19.3" fill="#9D174D"></rect><rect x="565.5" y="125.5" width="13" height="22.5" fill="#9D174D"></rect><rect x="582.0" y="130.4" width="13" height="17.6" fill="#9D174D"></rect><rect x="598.5" y="127.6" width="13" height="20.4" fill="#9D174D"></rect><rect x="615.0" y="128.3" width="13" height="19.7" fill="#9D174D"></rect><rect x="631.5" y="126.4" width="13" height="21.6" fill="#9D174D"></rect><rect x="648.0" y="127.3" width="13" height="20.7" fill="#9D174D"></rect><rect x="664.5" y="120.3" width="13" height="27.7" fill="#9D174D"></rect><rect x="681.0" y="123.5" width="13" height="24.5" fill="#9D174D"></rect><rect x="697.5" y="123.5" width="13" height="24.5" fill="#9D174D"></rect><rect x="714.0" y="134.1" width="13" height="13.9" fill="#9D174D"></rect><rect x="730.5" y="129.0" width="13" height="19.0" fill="#9D174D"></rect><rect x="747.0" y="129.8" width="13" height="18.2" fill="#9D174D"></rect><rect x="763.5" y="126.4" width="13" height="21.6" fill="#9D174D"></rect><rect x="780.0" y="134.8" width="13" height="13.2" fill="#9D174D"></rect><rect x="796.5" y="124.5" width="13" height="23.5" fill="#9D174D"></rect><rect x="813.0" y="124.8" width="13" height="23.2" fill="#9D174D"></rect><rect x="829.5" y="131.9" width="13" height="16.1" fill="#9D174D"></rect>
+        <text class="p4bM" x="464" y="189">chain 3</text>
+        <rect x="516.0" y="174.9" width="13" height="17.1" fill="#9D174D"></rect><rect x="532.5" y="174.4" width="13" height="17.6" fill="#9D174D"></rect><rect x="549.0" y="171.9" width="13" height="20.1" fill="#9D174D"></rect><rect x="565.5" y="170.1" width="13" height="21.9" fill="#9D174D"></rect><rect x="582.0" y="165.9" width="13" height="26.1" fill="#9D174D"></rect><rect x="598.5" y="172.6" width="13" height="19.4" fill="#9D174D"></rect><rect x="615.0" y="169.7" width="13" height="22.3" fill="#9D174D"></rect><rect x="631.5" y="171.5" width="13" height="20.5" fill="#9D174D"></rect><rect x="648.0" y="166.7" width="13" height="25.3" fill="#9D174D"></rect><rect x="664.5" y="169.8" width="13" height="22.2" fill="#9D174D"></rect><rect x="681.0" y="167.9" width="13" height="24.1" fill="#9D174D"></rect><rect x="697.5" y="175.2" width="13" height="16.8" fill="#9D174D"></rect><rect x="714.0" y="172.6" width="13" height="19.4" fill="#9D174D"></rect><rect x="730.5" y="174.4" width="13" height="17.6" fill="#9D174D"></rect><rect x="747.0" y="167.5" width="13" height="24.5" fill="#9D174D"></rect><rect x="763.5" y="170.0" width="13" height="22.0" fill="#9D174D"></rect><rect x="780.0" y="172.9" width="13" height="19.1" fill="#9D174D"></rect><rect x="796.5" y="173.4" width="13" height="18.6" fill="#9D174D"></rect><rect x="813.0" y="170.5" width="13" height="21.5" fill="#9D174D"></rect><rect x="829.5" y="174.1" width="13" height="17.9" fill="#9D174D"></rect>
+        <text class="p4bM" x="464" y="233">chain 4</text>
+        <rect x="516.0" y="231.4" width="13" height="4.6" fill="#991B1B"></rect><rect x="532.5" y="228.0" width="13" height="8.0" fill="#991B1B"></rect><rect x="549.0" y="223.8" width="13" height="12.2" fill="#991B1B"></rect><rect x="565.5" y="226.6" width="13" height="9.4" fill="#991B1B"></rect><rect x="582.0" y="225.8" width="13" height="10.2" fill="#991B1B"></rect><rect x="598.5" y="225.4" width="13" height="10.6" fill="#991B1B"></rect><rect x="615.0" y="224.4" width="13" height="11.6" fill="#991B1B"></rect><rect x="631.5" y="220.4" width="13" height="15.6" fill="#991B1B"></rect><rect x="648.0" y="218.6" width="13" height="17.4" fill="#991B1B"></rect><rect x="664.5" y="218.6" width="13" height="17.4" fill="#991B1B"></rect><rect x="681.0" y="216.9" width="13" height="19.1" fill="#991B1B"></rect><rect x="697.5" y="215.9" width="13" height="20.1" fill="#991B1B"></rect><rect x="714.0" y="214.6" width="13" height="21.4" fill="#991B1B"></rect><rect x="730.5" y="215.9" width="13" height="20.1" fill="#991B1B"></rect><rect x="747.0" y="213.0" width="13" height="23.0" fill="#991B1B"></rect><rect x="763.5" y="210.9" width="13" height="25.1" fill="#991B1B"></rect><rect x="780.0" y="211.0" width="13" height="25.0" fill="#991B1B"></rect><rect x="796.5" y="209.2" width="13" height="26.8" fill="#991B1B"></rect><rect x="813.0" y="208.5" width="13" height="27.5" fill="#991B1B"></rect><rect x="829.5" y="206.5" width="13" height="29.5" fill="#991B1B"></rect>
+        <text class="p4bM" x="516" y="252">low ranks</text>
+        <text class="p4bM" x="842" y="252" text-anchor="end">high ranks</text>
+
+        <rect x="14" y="272" width="852" height="38" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p4bL" x="28" y="289">Flat rows mix. Sloped rows do not. In ArviZ 1 this is plot_trace_rank; the old plot_trace is gone, split into plot_trace_dist and plot_trace_rank.</text>
+        <text class="p4bM" x="28" y="304">Chain 1 on the right owns the low ranks and chain 4 the high ones: they are describing different parts of the same posterior.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the rank plot turns "do the chains mix" into a shape you can see at a glance. Flat is good.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Three diagnostics, three failures, the ArviZ 1 calls<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>R-hat</strong> asks whether the chains agree. <code class="mono">az.rhat(dt)</code>. It catches the figure in Part 1: a chain still travelling, or stuck in one region while the others are elsewhere. <strong>Effective sample size</strong> asks how many independent draws the chains are really worth. <code class="mono">az.ess(dt, sample_dims=["chain", "draw"])</code>, or the xarray accessor <code class="mono">dt.azstats.ess()</code> after <code class="mono">import arviz_stats</code>. A chain moves in small correlated steps, so consecutive draws repeat information; ESS is the count after that repetition is discounted, and it is the number to compare with the 20,000 draws session 3 used, not the raw length of the chain. <strong>Divergences</strong> are steps the sampler abandoned because the posterior's geometry was too sharp to follow. Each one marks a place the sampler could not go, and a posterior it could not fully visit is a posterior it is not fully reporting.</p>
+        <p>The plots have new names. <code class="mono">plot_trace</code> no longer exists; it split into <code class="mono">plot_trace_dist</code>, which shows each parameter's distribution per chain, and <code class="mono">plot_trace_rank</code>, which shows the rank histograms in the figure. The rank plot is the one to read for mixing. Every ArviZ 1 plot returns a <code class="mono">PlotCollection</code> rather than axes. ArviZ itself is now three libraries under one namespace, arviz-base for data, arviz-stats for diagnostics, arviz-plots for plotting, all reached through <code class="mono">import arviz as az</code>.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The container: a DataTree, not an InferenceData<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>What <code class="mono">pm.sample()</code> hands back is an <code class="mono">xarray.DataTree</code>: a tree of groups, one per kind of output, each group an xarray Dataset. The posterior draws are at <code class="mono">dt["posterior"].dataset</code>, with dimensions <code class="mono">chain</code> and <code class="mono">draw</code>, which is why <code class="mono">az.ess</code> takes <code class="mono">sample_dims=["chain", "draw"]</code>. <code class="mono">arviz.InferenceData</code> no longer exists; anything you read that returns one is describing a version that is gone.</p>
+        <p>Old files still open. <code class="mono">az.from_netcdf</code> now wraps <code class="mono">open_datatree</code>, so a netCDF or zarr file saved from an earlier fit loads into the new container without conversion. The groups are reached the same way.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What a passing diagnostic proves, and what it does not<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>R-hat near 1, a healthy effective sample size, no divergences: that says the sampler explored the posterior of this model. The draws are a faithful picture of what this prior and this likelihood, taken together, imply about the rate. It is a statement about the computation, and it is the statement you need before you trust a single number that comes out of it.</p>
+        <p>It says nothing about whether the model is right. A binomial likelihood with a flat prior on a single rate can be sampled perfectly and still be the wrong model for a chain of twelve outlets that differ; the diagnostics will be green and the estimate for Northgate will still be far from 0.192. Checking the model against the data it is meant to describe is a different job, with different tools, and session 8 owns it. Tonight's rule is to keep the two questions apart: did the sampler work, and is the model any good. A green diagnostic answers the first. Nothing in tonight's toolkit answers the second.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Sample the Westfield rate and read the diagnostics</h2>
+      <span class="tag build">16 min build-along</span>
+    </div>
+    <p class="lede">The single Westfield rate: Beta(1, 1) prior, binomial likelihood, 127 redemptions in 900. Session 3 gave the exact answer, a posterior mean of 0.142. Tonight the same model goes through PyMC 6.3 and a sampler, so that the one time a wrong answer would be obvious is the time you learn to read the diagnostics. Session 5 builds on this file.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <p><strong>Install.</strong> PyMC 6 needs Python 3.12 or later. The nutpie extra makes nutpie the default NUTS sampler.</p>
+          <div class="prompt-box">
+            <span class="label">shell</span>
+<pre>pip install pymc[nutpie]</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Write the model and sample.</strong> One rate, a flat prior, the observed count. <code class="mono">pm.sample()</code> with no arguments uses the defaults: nutpie NUTS, 400 tuning steps, several chains. It returns a DataTree.</p>
+          <div class="prompt-box">
+            <span class="label">westfield_mcmc.py</span>
+<pre>import pymc as pm
+import arviz as az
+
+# Westfield: 127 redemptions in 900 vouchers, flat Beta(1, 1) prior
+with pm.Model() as westfield:
+    rate = pm.Beta("rate", alpha=1, beta=1)
+    redeemed = pm.Binomial("redeemed", n=900, p=rate, observed=127)
+    dt = pm.sample()                    # nutpie NUTS by default; returns a DataTree
+
+print(dt["posterior"].dataset)          # the posterior group: dims chain, draw</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Read the three diagnostics.</strong> R-hat for agreement between chains, ESS for how many independent draws you really have. Divergences, if any, are reported by the sampler as it runs.</p>
+          <div class="prompt-box">
+            <span class="label">diagnostics.py</span>
+<pre>print(az.rhat(dt))                                  # chains agree: 1
+print(az.ess(dt, sample_dims=["chain", "draw"]))    # independent draws, discounted
+
+# the same ESS through the xarray accessor
+import arviz_stats
+print(dt.azstats.ess())</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Look at the rank plot.</strong> Flat rows per chain mean the chains mix. The call returns a <code class="mono">PlotCollection</code>, not axes.</p>
+          <div class="prompt-box">
+            <span class="label">rank_plot.py</span>
+<pre>az.plot_trace_rank(dt)                  # flat = mixed; the old plot_trace is gone</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Summarise, and check against the algebra.</strong> The mean should land near 0.142, the exact flat-prior answer from session 3. The interval <code class="mono">az.summary</code> reports is the ArviZ 1 default, 89 percent equal-tailed, and the page you paste it into must say so.</p>
+          <div class="prompt-box">
+            <span class="label">summary.py</span>
+<pre>print(az.summary(dt))                   # mean near 0.142; 89 percent equal-tailed interval</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the diagnostic sentence beside the estimate.</strong> "Four chains, nutpie NUTS, 400 tuning steps; R-hat 1, no divergences, rank plot flat; mean near 0.142." Then the second sentence, every time: "the diagnostics say the sampler explored this model's posterior; whether the model is right is session 8's question."</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>If anything you find online says <code class="mono">pymc3</code>, <code class="mono">InferenceData</code>, <code class="mono">hdi_prob</code> or <code class="mono">plot_trace</code>, it is describing a version that no longer exists.</strong> <code class="mono">pymc3</code> is a dead import. <code class="mono">hdi_prob</code> was renamed <code class="mono">prob</code>. McElreath's own 2024 course page still lists "Python with PyMC3"; the ideas are current, that line is not.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">A colleague runs one long chain on the session 6 hierarchical model, the mean settles, and they call it converged. What is missing?</p>
+      <button class="qopt" type="button">A · Nothing; a settled mean is what convergence means</button>
+      <button class="qopt" type="button">B · More draws; one chain is fine if it is long enough</button>
+      <button class="qopt" type="button">C · Other chains to compare against. A chain confined to one region of the posterior settles just as convincingly as one that found the whole thing; R-hat needs several chains from different starts to tell them apart</button>
+      <p class="qwhy">From inside a single chain a stuck walk and a healthy one look alike. R-hat compares between-chain spread with within-chain spread, which is only possible with several chains. That is why the default runs more than one.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">R-hat is 1, ESS is healthy, there are no divergences, and the rank plot is flat. What have you established?</p>
+      <button class="qopt" type="button">A · That the sampler explored the posterior of this model. Whether the model is right for the data is a separate question that session 8 owns</button>
+      <button class="qopt" type="button">B · That the model fits the data well enough to report</button>
+      <button class="qopt" type="button">C · That the estimate is within 0.01 of the truth</button>
+      <p class="qwhy">Diagnostics are about the computation. A single-rate model can sample perfectly and still be the wrong model for twelve differing outlets. Keep "did the sampler work" and "is the model any good" as two questions with two toolkits.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">A tutorial you found calls <code class="mono">az.plot_trace(idata)</code> and describes the result as an <code class="mono">InferenceData</code>. Under PyMC 6.3 and ArviZ 1, what do you write instead?</p>
+      <button class="qopt" type="button">A · The same code; the names still work as aliases</button>
+      <button class="qopt" type="button">B · <code class="mono">az.plot_trace_rank(dt)</code> on the <code class="mono">DataTree</code> that <code class="mono">pm.sample()</code> returns, reaching the draws as <code class="mono">dt["posterior"].dataset</code></button>
+      <button class="qopt" type="button">C · <code class="mono">az.plot_posterior(idata)</code>, which replaced <code class="mono">plot_trace</code></button>
+      <p class="qwhy"><code class="mono">plot_trace</code> is gone, split into <code class="mono">plot_trace_dist</code> and <code class="mono">plot_trace_rank</code>. <code class="mono">InferenceData</code> no longer exists; the container is an <code class="mono">xarray.DataTree</code>. <code class="mono">plot_posterior</code> itself became <code class="mono">plot_dist</code>.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 5</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Run tonight's Westfield file again for Northgate: 1 redemption in 18, same flat prior. Read R-hat, ESS and the rank plot, then compare <code class="mono">az.summary</code> against session 3's exact figures, mean 0.100 and the 89 percent equal-tailed interval 0.020 to 0.222. Write one line under each diagnostic saying what it does and does not tell you about the fit. Session 5 takes this same file and builds the first proper PyMC model on it end to end; bring the file and the lines.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Markov chain Monte Carlo as sampling a posterior with no closed form</span>
+        <span class="note">Statistical Rethinking lecture 8, "MCMC". Why conjugacy runs out with two interacting parameters; what a chain is; warm-up; why several chains.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">R-hat, effective sample size, divergences</span>
+        <span class="note">What each catches. az.rhat(dt), az.ess(dt, sample_dims=["chain", "draw"]), dt.azstats.ess() after importing arviz_stats. plot_trace_rank for mixing.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">PyMC 6.3 and ArviZ 1 as they are in September 2026</span>
+        <span class="note">nutpie as default NUTS with 400 tuning steps against 1000; pip install pymc[nutpie]; Python 3.12 or later; the DataTree container; InferenceData and plot_trace gone; az.from_netcdf wrapping open_datatree.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The first full PyMC model, end to end</span>
+        <span class="note">Session 5. Tonight's Westfield fit is the scaffold; session 5 builds the model properly and reads az.summary in full.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Whether the model is right</span>
+        <span class="note">Session 8. Prior and posterior predictive checks. Tonight's diagnostics establish that the sampler worked and nothing more.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The first posterior that needs a sampler</span>
+        <span class="note">Session 6. The hierarchical model over twelve outlets, the first model here with parameters that interact.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and hypothesis tests</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 4 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Why sample</b><span>Conjugacy ends with two interacting parameters. MCMC draws from a posterior you cannot write down.</span></div>
+      <div class="cheat-item"><b>A chain is a walk</b><span>Each step depends only on the last. Its record is a set of draws; read them as session 3 did.</span></div>
+      <div class="cheat-item"><b>Warm-up is discarded</b><span>400 steps under nutpie, 1000 under PyMC's own NUTS. pip install pymc[nutpie].</span></div>
+      <div class="cheat-item"><b>Several chains, or nothing</b><span>One chain cannot tell you it is stuck. R-hat compares them: 1 when they agree.</span></div>
+      <div class="cheat-item"><b>ESS, not chain length</b><span>Correlated steps repeat information. az.ess(dt, sample_dims=["chain", "draw"]).</span></div>
+      <div class="cheat-item"><b>Divergences are places not visited</b><span>Geometry the sampler could not follow. A posterior not fully visited is not fully reported.</span></div>
+      <div class="cheat-item"><b>plot_trace_rank, DataTree</b><span>plot_trace is gone; InferenceData is gone. dt["posterior"].dataset holds the draws.</span></div>
+      <div class="cheat-item"><b>Green means the sampler worked</b><span>Not that the model is right. That is session 8's question, asked with different tools.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 4 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p3-the-posterior-is-a-distribution.html">← Practitioner session 3 · The posterior is a distribution</a>
+      <a href="p5-pymc-the-first-model.html">Practitioner session 5 · PyMC, the first model →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

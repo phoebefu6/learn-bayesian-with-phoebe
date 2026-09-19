@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Leader session 5 of 6. The argument about priors the field has not settled, taught as an argument: the subjective, reference and weakly informative positions each at full strength, Gelman, Simpson and Betancourt's proposed resolution, and the Northgate table read three ways. No winner is declared.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="The prior argument - learn bayesian with phoebe">
+<meta property="og:description" content="Leader session 5 of 6. Three honest positions on how to choose a prior, one bench they all read differently, and the ground they share.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/a5-the-prior-argument.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The prior argument - learn bayesian with phoebe">
+<meta name="twitter:description" content="Subjective, reference, weakly informative. Each position at its strongest, each reading Northgate its own way, and the practice all three accept.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Leader session 5 · The prior argument - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Leader session 5 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Leader session 5 of 6</div>
+    <h1>The prior <span class="accent">argument</span></h1>
+    <p class="sub">Put three careful Bayesian statisticians in a room with Northgate's eighteen vouchers and ask them what the prior should be. The first says the prior is what head office actually believes, about 0.12, and writing down anything else is a pretence. The second says start flat, let eighteen customers speak for themselves, and add belief only when you can defend it. The third says rule out the absurd, put weight on the plausible, and before anybody sees data, simulate from the prior to check it does not predict nonsense. All three are honest. All three can point at the Northgate table from session 1 and say it proves their point. The field has argued about this for a long time and has not settled it, and tonight does not pretend to. It teaches the argument as an argument, so that when it happens in your meeting you recognise the three positions, hear each at full strength, and know the one practice all three accept.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Advanced</span>
+      <span class="chip audience">Whoever signs off a number from small data</span>
+      <span class="chip audience">Product, finance and analytics leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-20 · Three positions, one bench</span>
+      <span class="a3" style="flex:4">20-40 · Build-along: hold the argument</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where session 5 sits</h2>
+    </div>
+    <p class="lede">Six sessions, 45 minutes each, no code. Session 1 priced a prior in pseudo-observations and showed what it costs when it is wrong. Session 3 showed a prior learned from the other eleven outlets doing far better than one asserted from head office. Session 4 read a posterior for a decision. Tonight goes back to the beginning of the analysis and asks the question every one of those sessions deferred: how should the prior be chosen at all. There are three serious answers, they disagree, and the disagreement is live in the field's own journals. Session 6 turns whatever position you take into a written commission. The example is still <strong>Halloway Bakeries</strong>, and the bench is still Northgate: eighteen vouchers, one redeemed, a true rate of 0.192.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> The three positions on choosing a prior, each stated as its own best advocate would state it, so that you can recognise which one is speaking in a meeting. The 2017 paper by Gelman, Simpson and Betancourt that names the tension precisely and offers a resolution some accept and others do not. The Northgate table read three ways, so you see that the same numbers support all three readings. And the practical ground every position shares: state the prior as pseudo-observations, say where it came from, and simulate from it before seeing data. That last one is the thing to require. The rest is the thing to understand.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Three honest people, one prior, no agreement<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The <strong>subjective</strong> position says the prior is a statement of belief, and its whole point is that it is yours. Head office believed the rate was about 0.12 and had years of chain-wide data behind the belief. Beta(12, 88) wrote that belief down as a hundred pseudo-observations. To write down something weaker because it looks more neutral would be to hide a belief you hold, and hiding a belief is a worse sin than holding a wrong one, because a stated belief can be argued with and a hidden one cannot.</p>
+        <p>The <strong>reference</strong> position, sometimes called "let the data speak", says the prior's job is to get out of the way. A flat or nearly flat prior encodes as little as possible, so whatever the posterior says came from the data and not from the analyst. Beta(1, 1) is two pseudo-observations. At Northgate it produced an 89 percent equal-tailed interval from 0.020 to 0.222, and it was the only asserted prior on the bench that contained the truth.</p>
+        <p>The <strong>weakly informative</strong> position says both of the others are answering the wrong question. A prior should rule out the absurd, put its weight on the plausible, and be checked before any data arrive by simulating from it: draw rates from the prior, draw eighteen customers at each rate, and look at the redemptions the prior alone predicts. If it predicts fifteen redemptions in eighteen with any regularity, it is a bad prior for a voucher, and you have learned that at no cost. The prior is a regulariser, and regularisers are tested, not believed.</p>
+        <p>Every one of those paragraphs was written to be as strong as its advocate would make it, and none of them is wrong. That is the situation. Nothing tonight will resolve it, and anybody who tells you it is resolved is telling you which camp they are in.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Subjective prior.</strong> A prior chosen to encode what the analyst or the organisation actually believes, stated as such. Beta(12, 88) at Halloway.</li>
+          <li><strong>Reference prior.</strong> A flat or near-flat default chosen to encode as little as possible, so the data dominate. Beta(1, 1) is the flat one, and it is still two pseudo-observations.</li>
+          <li><strong>Weakly informative prior.</strong> A prior that puts weight on plausible values and almost none on absurd ones, chosen to regularise rather than to assert, and checked by prior prediction.</li>
+          <li><strong>Prior predictive check.</strong> Simulating data from the prior alone, before seeing any real data, to see whether the prior predicts anything absurd. The practitioner track runs one in session p8; tonight you only need to know to ask for it.</li>
+          <li><strong>Pseudo-observations.</strong> Session 1's currency. For a Beta(a, b) prior, a + b. The number all three positions agree should be stated.</li>
+          <li><strong>Likelihood.</strong> The model of how the data arise from the rate. Gelman, Simpson and Betancourt's argument is about whether a prior may be chosen with reference to it.</li>
+          <li><strong>Learned prior.</strong> Session 3's prior, estimated from the other eleven outlets: mean 0.135, worth 116 pseudo-observations. Each position claims it.</li>
+          <li><strong>89 percent interval.</strong> As throughout: the 5.5 and 94.5 percent points of the posterior, equal-tailed. Every interval tonight is this kind and says so.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the three positions at full strength</span>
+      <h2>Three positions, each with a claim and a concession</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">An argument taught fairly gives each side its best case and its honest weakness. The figure does both for the three positions, and the cards below take up the paper that explains why the disagreement is not going away: the prior, it turns out, cannot be discussed on its own.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three columns, one per position on choosing a prior, each with what it claims and what it concedes. Subjective: the prior is a statement of belief and anything else is pretence; head office believed about 0.12 so Beta(12, 88) was honest and missed honestly; it concedes that a precise wrong belief, 0.068 to 0.159 against a truth of 0.192, is the most expensive kind. Reference, or let the data speak: start flat so no conclusion is smuggled in; Beta(1, 1) gave 0.020 to 0.222 and was the only asserted prior to contain the truth; it concedes the interval was uselessly wide and that flat is still two pseudo-observations centred on 0.500. Weakly informative: put weight on plausible values, none on absurd ones, and simulate from the prior before seeing data; it concedes that plausible is a judgement and that the check needs a model of how the data arise. No column is marked as the winner.">
+        <style>
+          .a5aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a5aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a5aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a5aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a5aW { font: 700 11px Inter, sans-serif; fill: #fff; }
+        </style>
+        <text class="a5aH" x="14" y="22">Three positions on choosing a prior. Each at full strength, each with what it concedes. No winner.</text>
+
+        <!-- column 1: subjective -->
+        <rect x="14" y="40" width="276" height="28" rx="8" fill="#9D174D"></rect>
+        <text class="a5aW" x="26" y="59">1 · Subjective</text>
+        <text class="a5aM" x="14" y="86">the prior encodes what you believe</text>
+        <text class="a5aL" x="14" y="106">Claims</text>
+        <rect x="14" y="112" width="276" height="138" rx="8" fill="#FDF2F8"></rect>
+        <text class="a5aB" x="26" y="132">A prior is a statement of belief.</text>
+        <text class="a5aB" x="26" y="148">Writing down anything else is</text>
+        <text class="a5aB" x="26" y="164">pretending to a neutrality you do</text>
+        <text class="a5aB" x="26" y="180">not have, and pretending is worse</text>
+        <text class="a5aB" x="26" y="196">than being wrong in the open.</text>
+        <text class="a5aB" x="26" y="216">Head office did believe about 0.12,</text>
+        <text class="a5aB" x="26" y="232">so Beta(12, 88) was the honest prior.</text>
+        <text class="a5aL" x="14" y="272">Concedes</text>
+        <rect x="14" y="278" width="276" height="106" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a5aB" x="26" y="298">A belief can be wrong, and a</text>
+        <text class="a5aB" x="26" y="314">precise wrong belief is the most</text>
+        <text class="a5aB" x="26" y="330">expensive kind: 0.068 to 0.159</text>
+        <text class="a5aB" x="26" y="346">against a truth of 0.192, and it</text>
+        <text class="a5aB" x="26" y="362">read like knowledge.</text>
+
+        <!-- column 2: reference -->
+        <rect x="302" y="40" width="276" height="28" rx="8" fill="#9D174D"></rect>
+        <text class="a5aW" x="314" y="59">2 · Reference</text>
+        <text class="a5aM" x="302" y="86">let the data speak</text>
+        <text class="a5aL" x="302" y="106">Claims</text>
+        <rect x="302" y="112" width="276" height="138" rx="8" fill="#FDF2F8"></rect>
+        <text class="a5aB" x="314" y="132">Start flat or nearly so. A prior</text>
+        <text class="a5aB" x="314" y="148">that encodes little cannot smuggle</text>
+        <text class="a5aB" x="314" y="164">in a conclusion, and the data then</text>
+        <text class="a5aB" x="314" y="180">say what they say.</text>
+        <text class="a5aB" x="314" y="200">Beta(1, 1) gave 0.020 to 0.222 at</text>
+        <text class="a5aB" x="314" y="216">Northgate: the only asserted prior</text>
+        <text class="a5aB" x="314" y="232">on the bench to contain the truth.</text>
+        <text class="a5aL" x="302" y="272">Concedes</text>
+        <rect x="302" y="278" width="276" height="106" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a5aB" x="314" y="298">Contained it uselessly. A range</text>
+        <text class="a5aB" x="314" y="314">0.202 wide supports no decision,</text>
+        <text class="a5aB" x="314" y="330">and flat is still two</text>
+        <text class="a5aB" x="314" y="346">pseudo-observations centred on</text>
+        <text class="a5aB" x="314" y="362">0.500, which nobody believes.</text>
+
+        <!-- column 3: weakly informative -->
+        <rect x="590" y="40" width="276" height="28" rx="8" fill="#9D174D"></rect>
+        <text class="a5aW" x="602" y="59">3 · Weakly informative</text>
+        <text class="a5aM" x="590" y="86">rule out the absurd, then check</text>
+        <text class="a5aL" x="590" y="106">Claims</text>
+        <rect x="590" y="112" width="276" height="138" rx="8" fill="#FDF2F8"></rect>
+        <text class="a5aB" x="602" y="132">Put weight on plausible values</text>
+        <text class="a5aB" x="602" y="148">and almost none on absurd ones.</text>
+        <text class="a5aB" x="602" y="164">Then simulate from the prior</text>
+        <text class="a5aB" x="602" y="180">before seeing data and look at</text>
+        <text class="a5aB" x="602" y="196">what it predicts. If the picture</text>
+        <text class="a5aB" x="602" y="212">is absurd, the prior is wrong, and</text>
+        <text class="a5aB" x="602" y="228">you found out for free.</text>
+        <text class="a5aL" x="590" y="272">Concedes</text>
+        <rect x="590" y="278" width="276" height="106" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="a5aB" x="602" y="298">"Plausible" is a judgement, and</text>
+        <text class="a5aB" x="602" y="314">the check needs a model of how</text>
+        <text class="a5aB" x="602" y="330">the data arise, which is the very</text>
+        <text class="a5aB" x="602" y="346">thing the purist says a prior</text>
+        <text class="a5aB" x="602" y="362">should not depend on.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three columns of equal weight, on purpose. Each claim is true and each concession is real.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Why the argument does not close: the prior cannot be discussed alone<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Gelman, Simpson and Betancourt (2017), "The prior can generally only be understood in the context of the likelihood", put the tension in one sentence: "a model encoding true prior information should be chosen without reference to the model of the measurement process, but almost all common prior modeling techniques are implicitly motivated by a reference likelihood." Unpack it. The pure subjective view says your belief about the redemption rate should not depend on how you are going to measure it; a belief is a belief. Yet in practice almost every way people actually choose a prior, including "weakly informative", is shaped by what the measurement can tell them. The third position's own prior predictive check needs a model of eighteen customers to run at all. The first position's purity and the third position's practice pull in opposite directions, and the paper says so.</p>
+        <p>Their proposed resolution is to place "the choice of prior into the context of the entire Bayesian analysis, from inference to prediction to model evaluation." A prior is judged by what the whole analysis does, not by whether it is a faithful photograph of a belief. Some in the field accept that and treat it as the settled modern view. Others do not: a subjectivist can reply that a prior tuned to make the analysis behave is no longer a prior in the original sense, and a reference-prior advocate can reply that the same move lets an analyst tune toward a conclusion and call it evaluation. Both replies are made, and neither has been withdrawn. <strong>The resolution is a position in the argument, not the end of it</strong>, and it is presented here as exactly that.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>How to tell which camp is speaking<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>You will rarely hear the labels. You will hear the tells. "We already know roughly what the rate is" is the subjective camp, and the right response is session 1's question: how many observations is that knowledge worth, and where did they come from. "Let's not bias it, just use a flat prior" is the reference camp, and the right response is to ask how wide the resulting interval will be at this sample size and whether anyone can act on that width. "Let's rule out anything above 0.5 and see what the prior predicts" is the weakly informative camp, and the right response is to ask what "plausible" was based on and to see the prior's simulated predictions before agreeing to them.</p>
+        <p>None of those responses takes a side. Each of them asks the speaker to state their position in a form the other two camps can inspect, and that is the most a leader who is not going to adjudicate the argument can usefully do. It is also, as the next part shows, exactly the ground all three camps already share.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the Northgate table read three ways, and the shared ground</span>
+      <h2>One table, three readings, one shared practice</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">Session 1 put four asserted priors on Northgate and session 3 added the prior learned from the other eleven outlets. Three of those rows are enough to run the argument. The flat prior gave an 89 percent equal-tailed interval from 0.020 to 0.222 and contained the truth uselessly. The informed prior gave 0.068 to 0.159 and missed. The learned partial-pooling prior, mean 0.135 and worth 116 pseudo-observations, gave 0.124 and halved Northgate's error. Every camp reads that table as vindication, and every camp is partly right.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Top: three Northgate results drawn against a vertical line at the true rate of 0.192, on a scale from 0 to 0.30. The flat prior's 89 percent equal-tailed interval runs 0.020 to 0.222 and contains the truth. The informed prior's runs 0.068 to 0.159 and misses. The learned partial-pooling prior gives a point estimate of 0.124, closer than either posterior mean but still under the truth. Bottom: three columns showing how each camp reads the same table. The subjectivist says the informed prior missed because the belief was wrong about Northgate, not because believing was wrong, and the learned prior is also a belief with its source written down. The reference camp says only the flat prior contained the truth, wide is what honest looks like at n = 18, and the learned prior came from data, not from anyone's head. The regulariser says the learned prior halved the error from 0.136 to 0.068 and its pseudo-count of 116 is on the table, but 116 is not weak and Northgate is still under-estimated, so check it before trusting it.">
+        <style>
+          .a5bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .a5bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .a5bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .a5bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .a5bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .a5bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+          .a5bW { font: 700 11px Inter, sans-serif; fill: #fff; }
+        </style>
+        <text class="a5bH" x="14" y="22">Northgate, n = 18, truth 0.192. Three rows from the bench, and three camps reading them.</text>
+
+        <!-- axis: rate 0 to 0.30 maps to x 200..840 -->
+        <line x1="200" y1="160" x2="840" y2="160" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="a5bM" x="200" y="178" text-anchor="middle">0.00</text>
+        <text class="a5bM" x="413" y="178" text-anchor="middle">0.10</text>
+        <text class="a5bM" x="627" y="178" text-anchor="middle">0.20</text>
+        <text class="a5bM" x="840" y="178" text-anchor="middle">0.30</text>
+
+        <!-- truth 0.192 -> x = 200 + 0.192 * 2133.3 = 610 -->
+        <line x1="610" y1="40" x2="610" y2="160" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="a5bG" x="616" y="52">truth 0.192</text>
+
+        <!-- row 1: flat [0.020, 0.222] -> x 243..674 ; mean 0.100 -> 413 -->
+        <text class="a5bL" x="14" y="70">Flat · Beta(1, 1)</text>
+        <text class="a5bM" x="14" y="84">2 pseudo-obs · 0.020 to 0.222</text>
+        <rect x="243" y="60" width="431" height="14" rx="7" fill="#FBCFE8"></rect>
+        <circle cx="413" cy="67" r="5" fill="#9D174D"></circle>
+        <text class="a5bG" x="684" y="71">contains it, 0.202 wide</text>
+
+        <!-- row 2: informed [0.067, 0.159] -> x 343..539 ; mean 0.110 -> 435 -->
+        <text class="a5bL" x="14" y="104">Informed · Beta(12, 88)</text>
+        <text class="a5bM" x="14" y="118">100 pseudo-obs · 0.068 to 0.159</text>
+        <rect x="343" y="94" width="196" height="14" rx="7" fill="#F9A8D4"></rect>
+        <circle cx="435" cy="101" r="5" fill="#831843"></circle>
+        <text class="a5bR" x="549" y="105">misses by 0.033</text>
+
+        <!-- row 3: learned partial pooling, point 0.124 -> 465 -->
+        <text class="a5bL" x="14" y="138">Learned · mu 0.135, kappa 116</text>
+        <text class="a5bM" x="14" y="152">116 pseudo-obs · estimate 0.124</text>
+        <circle cx="465" cy="135" r="6" fill="#15803D"></circle>
+        <text class="a5bR" x="478" y="139">0.124: error halved, still under</text>
+
+        <!-- three readings -->
+        <rect x="14" y="200" width="276" height="26" rx="8" fill="#831843"></rect>
+        <text class="a5bW" x="26" y="218">The subjectivist reads it</text>
+        <text class="a5bB" x="14" y="248">The informed prior missed because</text>
+        <text class="a5bB" x="14" y="264">the belief was wrong about</text>
+        <text class="a5bB" x="14" y="280">Northgate, not because believing</text>
+        <text class="a5bB" x="14" y="296">was wrong. The learned prior is</text>
+        <text class="a5bB" x="14" y="312">also a belief, about the chain,</text>
+        <text class="a5bB" x="14" y="328">with its source written down.</text>
+        <text class="a5bL" x="14" y="352">Fix the belief. Keep the honesty.</text>
+
+        <rect x="302" y="200" width="276" height="26" rx="8" fill="#831843"></rect>
+        <text class="a5bW" x="314" y="218">The reference camp reads it</text>
+        <text class="a5bB" x="302" y="248">Only the flat prior contained the</text>
+        <text class="a5bB" x="302" y="264">truth, and wide is what honest</text>
+        <text class="a5bB" x="302" y="280">looks like at n = 18. The learned</text>
+        <text class="a5bB" x="302" y="296">prior came from data, the other</text>
+        <text class="a5bB" x="302" y="312">eleven outlets, not from anyone's</text>
+        <text class="a5bB" x="302" y="328">head.</text>
+        <text class="a5bL" x="302" y="352">That is the data speaking, twice.</text>
+
+        <rect x="590" y="200" width="276" height="26" rx="8" fill="#831843"></rect>
+        <text class="a5bW" x="602" y="218">The regulariser reads it</text>
+        <text class="a5bB" x="590" y="248">The learned prior halved the error,</text>
+        <text class="a5bB" x="590" y="264">0.136 to 0.068, and its pseudo-count,</text>
+        <text class="a5bB" x="590" y="280">116, is on the table. But 116 is</text>
+        <text class="a5bB" x="590" y="296">not weak, and Northgate is still</text>
+        <text class="a5bB" x="590" y="312">under at 0.124 against 0.192.</text>
+        <text class="a5bL" x="590" y="352">Check it before trusting it.</text>
+
+        <rect x="14" y="374" width="852" height="34" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="a5bL" x="28" y="396">All three accept: state the pseudo-count, say where it came from, simulate from it before seeing data.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same three rows, and each camp leaves the room convinced. The green strip at the bottom is the part they leave agreeing on.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>How each camp reads Northgate<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The subjectivist looks at the informed prior's miss and says: the belief was wrong about Northgate, not the act of believing. Head office believed the chain rate applied to every outlet and it did not apply to this one. The remedy is a better belief, and the learned prior is exactly that, a belief about the chain with its source, the other eleven outlets, written down where anyone can challenge it. The reference camp looks at the flat prior's 0.020 to 0.222, the one interval that contained the truth, and says: that width is what honesty looks like at eighteen observations, and the learned prior is not a rival to the data, it is more data, from the outlets next door. The regulariser looks at the learned prior's 0.124, half the error of no pooling, and says: this is what a prior chosen for how the whole analysis behaves looks like, and its pseudo-count of 116 is on the table to be checked. Then, being a regulariser, adds the caveat: 116 is not weak, and Northgate is still under-estimated.</p>
+        <p>Notice that all three readings are consistent with the numbers. That is what an unsettled argument looks like from the inside: the evidence is shared and the disagreement is about what it means. A leader's job is not to end it. It is to make sure whichever camp is in the room has stated its prior in a form the other two could inspect.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's two analysts disagreed about the Northgate prior for a week. One wanted the head-office belief, one wanted flat. The finance director ended the meeting by declining to choose and asking each for three things: the prior's pseudo-count, its source, and what it predicted for eighteen vouchers before anyone looked. The head-office prior turned out to predict, before data, almost no chance of a rate above 0.18. Neither analyst was declared right. The prediction did the arguing.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The shared ground, which is also tonight's takeaway<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three things every position accepts, and therefore three things you can require without taking a side. <strong>State the prior as pseudo-observations.</strong> Beta(12, 88) is a hundred; the learned prior is 116; flat is two. A camp that refuses to give the number is not in the argument. <strong>Say where it came from.</strong> Head office's history, the other eleven outlets, a deliberate choice to encode nothing. The source is what the other camps will inspect. <strong>Simulate from it before seeing data.</strong> Draw rates from the prior, draw eighteen customers at each, look at what it predicts. If the picture is absurd, every camp agrees the prior is wrong, and you have found out before the data could hide it. The practitioner track runs that check in session p8; a leader only needs to ask to see it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What the argument is not about<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Two positions you will never hear a serious person take, and should not credit if a meeting drifts toward them. Nobody argues for a prior that puts zero weight on plausible values. The wrong prior from session 1, Beta(40, 60), was on the bench to show a cost, not because anyone recommends it; a prior that cannot reach the truth at all is a mistake in every camp. And nobody argues that a prior can rescue a bad measurement. If the eighteen vouchers were miscounted, or the redemptions were logged against the wrong outlet, no choice of prior repairs that, and the subjectivist, the reference advocate and the regulariser will all say so in the same breath.</p>
+        <p>The argument is narrower than it sounds. It is about how much to encode, from where, and whether the encoding may be judged by how the analysis behaves. Keep it there. A meeting that has wandered into "priors are cheating" or "with a good prior the data barely matter" has left the actual argument and joined a worse one.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Hold the argument in your own room</h2>
+      <span class="tag build">20 min build-along</span>
+    </div>
+    <p class="lede">No laptop. Take the small-data number you priced in session 1 and the belief you found behind it. Tonight you run the three-way argument about that belief on paper, as each camp would, and finish with the three requirements all of them accept. The aim is not to pick a camp. It is to be able to say which one your team is in, and to have asked for the things the other two would demand.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Write the prior as pseudo-observations and a source.</strong> "About 0.12, worth a hundred observations, from the chain-wide history." If the pseudo-count or the source is missing, stop and get them. Nothing below works on a prior nobody can state.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Make the subjective case for it.</strong> One sentence: "This is what we actually believe, and here is why." Then the concession: "and if this case is unlike the source, the belief is precisely wrong." Name the reason it might be unlike the source, if you can think of one.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Make the reference case against it.</strong> "Start from almost nothing and let the sample speak." Then the concession: at your sample size, how wide would the resulting interval be, and would either end lead to a different action? If it would not, the width is a problem the camp has to answer for.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Make the weakly informative case.</strong> "Rule out the absurd, keep the plausible, and check." Write down what counts as absurd for your rate and where that judgement came from. Then the concession: the check will need a model of how your data arise, and that model is a choice too.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Ask for the prior's predictions before data.</strong> "If we believed only this prior, what would we expect to see in a sample of this size?" You are asking for a picture of simulated outcomes, and the question is only whether anything in it looks absurd. Every camp will agree to run it, and every camp will agree on what absurd looks like.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Record the position without declaring it right.</strong> "We are using a [subjective / reference / weakly informative] prior worth [count] observations from [source]. Simulated before data, it predicts [range], which we judged plausible. The other positions would object that [objection], and we accept that risk because [reason]." That paragraph is what session 6 will ask you to commission.</p></div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The question that changes the meeting.</strong> "What does this prior predict before we look at any data?" It is the one question all three camps accept, it needs no technical vocabulary to ask, and it has ended more arguments about priors than any theorem, because a prior that predicts the absurd loses its advocate on the spot.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">Gelman, Simpson and Betancourt (2017) write that a prior encoding true belief "should be chosen without reference to the model of the measurement process, but almost all common prior modeling techniques are implicitly motivated by a reference likelihood." What is the tension they are naming?</p>
+      <button class="qopt" type="button">A · That flat priors are always better than informed ones because they make no reference to the likelihood</button>
+      <button class="qopt" type="button">B · That the pure view says a belief should not depend on how you will measure, while in practice almost every way of choosing a prior does depend on it</button>
+      <button class="qopt" type="button">C · That priors should be chosen after seeing the data so that they match the likelihood</button>
+      <p class="qwhy">The subjective ideal is a prior that is a belief about the rate, full stop. The practice, including prior predictive checks, needs a model of the measurement to work at all. Their proposed resolution, judging the prior in the context of the whole analysis, is one position in the argument; some accept it and some do not. Nothing in the paper says to choose priors after seeing data.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">At Northgate the flat prior gave 0.020 to 0.222 and contained the truth, the informed prior gave 0.068 to 0.159 and missed, and the learned prior gave 0.124 and halved the error. Which position does the table settle in favour of?</p>
+      <button class="qopt" type="button">A · The reference position, because only the flat prior contained the truth</button>
+      <button class="qopt" type="button">B · The weakly informative position, because the learned prior had the smallest error</button>
+      <button class="qopt" type="button">C · None. Each camp reads the same three rows as support, consistently with the numbers, and the disagreement is about what they mean</button>
+      <p class="qwhy">The subjectivist sees a wrong belief, not a wrong method, and claims the learned prior as a better-sourced belief. The reference camp sees the only honest interval and calls the learned prior more data. The regulariser sees a checked, regularising prior with a stated pseudo-count and adds that 116 is not weak. All three are consistent with the table. That is what unsettled looks like.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">You have to sign off an analysis without adjudicating the prior argument. What can you require that every position accepts?</p>
+      <button class="qopt" type="button">A · The prior stated as pseudo-observations, its source named, and a simulation from it before seeing data to check it predicts nothing absurd</button>
+      <button class="qopt" type="button">B · A flat prior, so that no position can object to smuggled-in belief</button>
+      <button class="qopt" type="button">C · A prior worth at least as many pseudo-observations as the sample, so that the analysis is stable</button>
+      <p class="qwhy">Those three requirements are the shared ground. A flat prior is itself one camp's choice, and it is still two pseudo-observations centred on 0.500; requiring it takes a side. A prior at least as heavy as the sample is what Beta(12, 88) was at Northgate, and it missed. Neither B nor C is neutral; A is.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 6</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Take the paragraph you wrote in step 6 of the build-along and finish it for one live estimate in your area: the prior as a pseudo-count, its source, the position it represents, what it predicts before data, and the objection the other two camps would raise. Then add the two things session 4 gave you: the interval kind and level you expect to see, which is 89 percent equal-tailed unless somebody has a reason, and the decision rule with its threshold. Bring the page. Session 6 turns it into the written commission you hand an analyst, so that a Bayesian answer arrives in a form you can check rather than a form you have to trust.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The three positions on choosing a prior</span>
+        <span class="note">Subjective, reference and weakly informative, each stated at full strength with its concession. Taught as a live disagreement; no position declared the winner.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Gelman, Simpson and Betancourt (2017)</span>
+        <span class="note">"The prior can generally only be understood in the context of the likelihood." The tension quoted from the abstract; the resolution, placing the prior in the context of the entire analysis, presented as a position some accept and others do not.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The Northgate bench read three ways</span>
+        <span class="note">Flat 0.020 to 0.222, informed 0.068 to 0.159, learned prior 0.124 against a truth of 0.192. Each camp's reading is consistent with the numbers.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The shared ground</span>
+        <span class="note">State the prior as pseudo-observations, say where it came from, simulate from it before seeing data. The three requirements a leader can impose without taking a side.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Running a prior predictive check</span>
+        <span class="note">Named as the check to ask for; the practitioner track runs it in session p8. Tonight you learn to require it, not to perform it.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Writing the commission</span>
+        <span class="note">Session 6. The position, pseudo-count, source, prediction, interval kind and level, and decision rule, in a form an analyst can be held to.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Frequentist inference and the case against priors altogether</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference; tonight's argument is among Bayesians about how to choose a prior, not about whether to have one.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 5 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Three positions, no winner</b><span>Subjective: encode belief. Reference: let the data speak. Weakly informative: rule out the absurd, then check. The field has not settled it.</span></div>
+      <div class="cheat-item"><b>The subjectivist's tell</b><span>"We already know roughly what it is." Ask how many observations that knowledge is worth and where they came from.</span></div>
+      <div class="cheat-item"><b>The reference camp's tell</b><span>"Let's not bias it, use flat." Ask how wide the interval will be at this n and whether anyone can act on it.</span></div>
+      <div class="cheat-item"><b>The regulariser's tell</b><span>"Rule out anything above 0.5 and check." Ask what plausible was based on and see the simulated predictions first.</span></div>
+      <div class="cheat-item"><b>Gelman, Simpson, Betancourt 2017</b><span>The prior cannot be understood apart from the likelihood. Their fix, judge it in the whole analysis, is a position, not a verdict.</span></div>
+      <div class="cheat-item"><b>Northgate, three ways</b><span>Flat 0.020 to 0.222 contains, informed 0.068 to 0.159 misses, learned 0.124 halves the error. Every camp claims it.</span></div>
+      <div class="cheat-item"><b>The shared ground</b><span>Pseudo-count, source, simulate before data. Require all three and you have taken no side.</span></div>
+      <div class="cheat-item"><b>What it is not about</b><span>Nobody argues for zero weight on plausible values. Nobody argues a prior can rescue a bad measurement.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Leader session 5 of 6 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="a4-reading-a-posterior.html">← Leader session 4 · Reading a posterior</a>
+      <a href="a6-commissioning-a-bayesian-answer.html">Leader session 6 · Commissioning a Bayesian answer →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

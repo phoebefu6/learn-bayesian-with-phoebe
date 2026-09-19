@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 9 of 10. Turning a posterior into a paragraph an executive can act on: the estimate, the interval with its level and kind, the probability of the thing they care about, and the stake if wrong. Northgate at 0.100 with an 89 percent equal-tailed interval of 0.020 to 0.222; Westfield's B at a 97.5 percent probability of being better, expected cost 0.0005, wrong 2 times in 200.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Saying it to executives - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 9 of 10. A four-part sentence that does not lie in either direction: it neither hides the width nor hides the stake.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p9-saying-it-to-executives.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Saying it to executives - learn bayesian with phoebe">
+<meta name="twitter:description" content="Estimate, interval with level and kind, probability, stake. Say all four, say the wrong-stop rate in the same paragraph, and never say significant.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 9 · Saying it to executives - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 9 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 9 of 10</div>
+    <h1>Saying it to <span class="accent">executives</span></h1>
+    <p class="sub">Eight sessions produced a posterior. Nobody upstairs will ever see it. What they see is a paragraph, and the paragraph is where most Bayesian work quietly turns back into a point estimate with a confident adjective. Tonight is the paragraph: four parts, in a fixed order, each one a number the analysis actually supports. The estimate. The interval, with its level and its kind said out loud. The probability of the thing they care about. And what is at stake if it is wrong. Northgate's eighteen vouchers and Westfield's A/B test are the two worked cases, because one of them has almost no data and the other has a decision riding on it, and the same sentence has to carry both without lying in either direction.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who writes the number that goes upstairs</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-24 · The sentence and the paragraph</span>
+      <span class="a3" style="flex:4">24-40 · Build-along: format it in Python</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>What the sentence is for</h2>
+    </div>
+    <p class="lede">A posterior is a distribution, and an executive is going to act on one number. The sentence is the bridge, and it can fail in two directions. It can hide the width, so that 0.100 from eighteen vouchers reads like 0.142 from nine hundred. Or it can hide the stake, so that a 97.5 percent probability sounds like a decision when it is only half of one. Leader session 6 is the mirror of tonight: it says what a leader should ask for in writing. Tonight is how the practitioner writes it so that nothing has to be asked.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A four-part sentence you can fill from any posterior: estimate, interval with level and kind, probability, stake. The Northgate version, "0.100, an 89 percent probability between 0.020 and 0.222, equal-tailed, and eighteen vouchers cannot pin it tighter." The Westfield version, "a 97.5 percent probability B is better, an expected cost of 0.0005 if wrong, and 2 wrong stops in 200 replays." A list of five things the sentence must never do. And a Python function that formats all of it from a Beta posterior or a DataTree, so the paragraph is generated from the same numbers it describes.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Four parts, one breath<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Here is Northgate under the flat prior, session 2's first row, said the way it should be said. "The best estimate of Northgate's redemption rate is 0.100. There is an 89 percent probability it lies between 0.020 and 0.222 (equal-tailed). Eighteen vouchers cannot pin it tighter than that." Three sentences, four jobs. The estimate is the posterior mean, not the observed 0.056, because the observed rate is one redemption in eighteen and the posterior mean is what that evidence supports once the two pseudo-observations of the flat prior are counted. The interval carries its level, 89 percent, and its kind, equal-tailed, because either word missing makes the range unreproducible. The stake is the last sentence: the width is the news, and the reader is told so rather than left to notice.</p>
+        <p>The fourth part, the probability of the thing they care about, is absent at Northgate on purpose. No decision hangs on Northgate alone tonight, so there is no "the thing they care about" to put a probability on. When there is one, as at Westfield, it goes in as its own sentence with its own stake. A sentence that includes a probability nobody asked for is padding; a sentence that omits the one they did ask for is the real failure, and it is the more common of the two.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's regional manager received Northgate as "0.100" in a table of twelve outlets, each with three decimals and no widths. Kingsway sat at 0.209, Northgate at 0.100, and the table looked like a league. The interval that would have stopped the closure review, 0.020 to 0.222, was in the analyst's notebook the whole time. The paragraph never carried it upstairs, and a paragraph that does not carry the width is a point estimate wearing a Bayesian badge.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The four parts, named<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>The estimate.</strong> The posterior mean, stated as "the best estimate" and never alone. Northgate 0.100 under the flat prior; 0.124 under partial pooling from session 6. Which one you report depends on the prior line below, and the reader is told which.</li>
+          <li><strong>The interval, with its level and its kind.</strong> "There is an 89 percent probability it lies between 0.020 and 0.222 (equal-tailed)." The level is 89 because that is what ArviZ 1 reports by default; the kind is equal-tailed because that is how ArviZ 1 cuts it, at the 5.5 and 94.5 percent quantiles. Both words, every time.</li>
+          <li><strong>The probability of the thing they care about.</strong> Only when a decision hangs on the number. At Westfield it is P(B &gt; A) = 0.975 at n = 100 per arm. It is never the interval restated; it is the probability of the action being right.</li>
+          <li><strong>The stake if wrong.</strong> At Westfield, the expected cost of choosing B is 0.0005 in redemption rate. At Northgate, where there is no decision, the stake is what the data cannot do: eighteen vouchers cannot pin the rate tighter than 0.020 to 0.222. A probability without a stake is not a decision, session 7's whole point, and the sentence inherits it.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the four-part sentence and what it can promise</span>
+      <h2>The sentence, with Northgate slotted in</h2>
+      <span class="tag concept">11 min live</span>
+    </div>
+    <p class="lede">The template is fixed so that the reader can learn to hear a missing part. The figure shows the four slots, the wording that fills each one, and Northgate's values in the right-hand column. The third slot is filled from Westfield because Northgate has no decision attached, and the figure says so rather than inventing one.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The four-part sentence as a four-row form with Northgate's values slotted in. Row 1, the estimate: the best estimate of Northgate's redemption rate is 0.100, the posterior mean under the flat prior, not the observed 0.056. Row 2, the interval with level and kind: there is an 89 percent probability it lies between 0.020 and 0.222, equal-tailed, the 5.5 and 94.5 percent quantiles. Row 3, the probability they care about: only when a decision hangs on the number; Northgate has none, so the row is filled from Westfield, where there is a 97.5 percent probability B is better at n equals 100 per arm. Row 4, the stake: eighteen vouchers cannot pin it tighter than that; at Westfield the expected cost of being wrong is 0.0005 in redemption rate. A footer reads: pooled in session 6, Northgate is 0.124, still under the truth of 0.192; the sentence promises the interval, never the truth.">
+        <style>
+          .p9aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p9aT { font: 800 11px Inter, sans-serif; fill: #FFFFFF; }
+          .p9aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p9aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p9aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p9aN { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .p9aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p9aH" x="14" y="22">The four-part sentence. Northgate, n = 18, flat prior Beta(1, 1), worth 2 pseudo-observations.</text>
+
+        <!-- header row -->
+        <rect x="14" y="38" width="852" height="24" rx="6" fill="#831843"></rect>
+        <text class="p9aT" x="26" y="55">Part</text>
+        <text class="p9aT" x="170" y="55">The template</text>
+        <text class="p9aT" x="530" y="55">Northgate, slotted in</text>
+
+        <!-- row 1: estimate -->
+        <rect x="14" y="70" width="852" height="66" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p9aL" x="26" y="92">1 · The estimate</text>
+        <text class="p9aB" x="170" y="92">"The best estimate of [the rate] is [mean]."</text>
+        <text class="p9aM" x="170" y="110">The posterior mean. Never the observed rate alone.</text>
+        <text class="p9aM" x="170" y="126">Northgate observed 0.056; the flat posterior says 0.100.</text>
+        <text class="p9aN" x="530" y="92">0.100</text>
+        <text class="p9aB" x="530" y="110">The best estimate of Northgate's</text>
+        <text class="p9aB" x="530" y="126">redemption rate is 0.100.</text>
+
+        <!-- row 2: interval -->
+        <rect x="14" y="144" width="852" height="66" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p9aL" x="26" y="166">2 · The interval</text>
+        <text class="p9aM" x="26" y="182">level and kind</text>
+        <text class="p9aB" x="170" y="166">"There is an [level] percent probability it lies</text>
+        <text class="p9aB" x="170" y="182">between [lo] and [hi] ([kind])."</text>
+        <text class="p9aM" x="170" y="198">The 5.5 and 94.5 percent quantiles, the ArviZ 1 default.</text>
+        <text class="p9aN" x="530" y="166">89 percent · 0.020 to 0.222 · equal-tailed</text>
+        <text class="p9aB" x="530" y="182">There is an 89 percent probability it lies</text>
+        <text class="p9aB" x="530" y="198">between 0.020 and 0.222 (equal-tailed).</text>
+
+        <!-- row 3: probability -->
+        <rect x="14" y="218" width="852" height="66" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p9aL" x="26" y="240">3 · The probability</text>
+        <text class="p9aM" x="26" y="256">they care about</text>
+        <text class="p9aB" x="170" y="240">"There is a [p] percent probability that [B is better]."</text>
+        <text class="p9aM" x="170" y="258">Only when a decision hangs on the number.</text>
+        <text class="p9aM" x="170" y="274">Northgate has none tonight; Westfield does.</text>
+        <text class="p9aN" x="530" y="240">from Westfield, Bench C, n = 100 per arm</text>
+        <text class="p9aB" x="530" y="258">There is a 97.5 percent probability</text>
+        <text class="p9aB" x="530" y="274">that B is better than A.</text>
+
+        <!-- row 4: stake -->
+        <rect x="14" y="292" width="852" height="66" rx="8" fill="#FDF9FB" stroke="#E4CBD6"></rect>
+        <text class="p9aL" x="26" y="314">4 · The stake</text>
+        <text class="p9aM" x="26" y="330">if we are wrong</text>
+        <text class="p9aB" x="170" y="314">"If we are wrong, [the cost]" or "[what the data cannot do]."</text>
+        <text class="p9aM" x="170" y="332">A probability without a stake is not a decision.</text>
+        <text class="p9aM" x="170" y="348">Westfield: expected cost 0.0005 in redemption rate.</text>
+        <text class="p9aN" x="530" y="314">Eighteen vouchers cannot pin it</text>
+        <text class="p9aN" x="530" y="332">tighter than that.</text>
+        <text class="p9aM" x="530" y="348">At n = 18 the width is the news. Say so.</text>
+
+        <!-- footer -->
+        <rect x="14" y="366" width="852" height="28" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p9aG" x="28" y="385">Pooled, session 6: Northgate 0.124, still under the truth of 0.192. The sentence promises the interval, never the truth.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - four slots, fixed order. A reader who has seen the form twice can hear which slot is empty.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What the sentence can promise, and what it cannot<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The flat-prior sentence for Northgate is true and nearly useless: 0.020 to 0.222 would support closing the outlet or doubling its budget with equal ease, and the sentence is honest about that in its last line. Session 6 gives a better estimate. Partial pooling across the twelve outlets learned kappa = 116, weights Northgate's own month at 0.13, and puts the outlet at 0.124. The pooled sentence starts differently: "Under partial pooling across Halloway's twelve outlets, the best estimate of Northgate's redemption rate is 0.124, leaning 0.87 on the other eleven." Then its interval, cut the same way, with the same two words. Then the same closing stake, because eighteen vouchers are still eighteen vouchers.</p>
+        <p>Here is what neither sentence can promise. Northgate's true rate is 0.192. The flat interval contains it, the pooled estimate halved the error from 0.136 to 0.068 and is still under it. An 89 percent interval promises that 89 percent of the posterior's mass sits inside the range; it does not promise the truth is there, and a sentence that says "the rate is between 0.020 and 0.222" has dropped the word probability and made a promise the arithmetic never made. Say "there is an 89 percent probability". Whether your 89 percent intervals turn out to contain the truth 89 percent of the time, measured across many such sentences, is a calibration question, and <strong>learn-decision-intelligence-with-phoebe</strong> sessions 02 and 04 own it. The sentence's job is to be the thing that audit can be run on.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why "89 percent equal-tailed" is said out loud<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Until ArviZ 1 the default summary interval was a 94 percent HDI, the narrowest range holding 94 percent of the posterior. ArviZ 1 changed both halves at once: <code class="mono">stats.ci_prob</code> is now 0.89 and <code class="mono">stats.ci_kind</code> is now <code class="mono">"eti"</code>, an equal-tailed interval cut at the 5.5 and 94.5 percent quantiles. The maintainers' stated reason is that 0.89 produces intervals with lower variability and therefore more stable summaries. The argument for the number is theirs to make. The consequence for the sentence is not optional.</p>
+        <p>A third-party repository documented two notebooks whose intervals silently became equal-tailed on upgrade while the prose beside them still said HDI. The code ran, the numbers changed, the words did not. A sentence that says "the interval is 0.020 to 0.222" cannot be reproduced, because a reader does not know whether to cut 89 or 94, equal-tailed or highest-density, and each choice gives a different range from the same posterior. A sentence that says "89 percent, equal-tailed" can be reproduced by anyone with the draws. That is the whole reason both words are in the template, and it is why the keyword in ArviZ 1 is now <code class="mono">prob</code>, set explicitly, rather than a default trusted.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Credible against confidence, once<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The Northgate interval is a credible interval, and it supports the sentence "there is an 89 percent probability the rate is in here", because the posterior is a distribution over the rate and the interval holds 89 percent of it. A confidence interval is a different object: a statement about the procedure that produced it, across repeated samples, and it does not support that sentence about this rate. Executives hear the Bayesian sentence whichever interval they are shown, which is exactly why the Bayesian one has to be labelled and the other one has to be handed on. The frequentist machinery, what a confidence interval does claim and how it is built, is <strong>learn-statistics-with-phoebe</strong> session b7, and nothing about it is derived here. The contrast is the only thing tonight needs.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the A/B paragraph and the five things it must not do</span>
+      <h2>The paragraph with a decision in it</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">Westfield's A/B test from session 7 is the case where a probability goes upstairs and somebody acts on it. The same result can be written as a paragraph that misleads without a single false number, or as one that can be argued with. The figure puts them side by side, with every misleading move marked.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two executive paragraphs for the same Westfield A/B result at n equals 100 per arm. Left, the misleading version, with its faults marked in red: design B lifted redemption from 0.100 to 0.200, a point estimate with no interval; the result is significant, a word with no Bayesian meaning; the prior washed out, when a prior worth 100 pseudo-observations still moves Westfield by 0.026 at n equals 900; Bayesian testing has no peeking problem, a forbidden claim; recommendation roll out B, with no stake and no error rate. Right, the honest version: at 100 customers per arm A redeemed 0.100 and B 0.200 under flat Beta(1, 1) priors; there is a 97.5 percent probability B is better; if we are wrong the expected cost is 0.0005 in redemption rate; the rule fixed before the data, stop when expected loss falls under 0.001, says stop and choose B; across 200 replays the rule stopped on the wrong arm 2 times in 200. Footer: same data, same 0.975, same decision; one paragraph can be argued with, the other can only be believed.">
+        <style>
+          .p9bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p9bT { font: 800 11px Inter, sans-serif; fill: #FFFFFF; }
+          .p9bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p9bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p9bN { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .p9bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p9bR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+        <text class="p9bH" x="14" y="22">The same result, twice. Westfield A/B, n = 100 per arm, observed A 0.100 and B 0.200, from Bench C.</text>
+
+        <!-- left: misleading -->
+        <rect x="14" y="38" width="418" height="304" rx="9" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <rect x="14" y="38" width="418" height="26" rx="9" fill="#991B1B"></rect>
+        <text class="p9bT" x="28" y="56">Before · the misleading version</text>
+        <text class="p9bR" x="28" y="88">"Design B lifted redemption from 0.100 to 0.200."</text>
+        <text class="p9bM" x="28" y="104">a point estimate with no interval, no level, no kind</text>
+        <text class="p9bR" x="28" y="132">"The result is significant."</text>
+        <text class="p9bM" x="28" y="148">a word with no Bayesian meaning; say the probability</text>
+        <text class="p9bR" x="28" y="176">"The prior washed out at this sample size."</text>
+        <text class="p9bM" x="28" y="192">outvoted, not washed out: a prior worth 100 still</text>
+        <text class="p9bM" x="28" y="208">moves Westfield by 0.026 at n = 900</text>
+        <text class="p9bR" x="28" y="236">"Bayesian testing has no peeking problem,</text>
+        <text class="p9bR" x="28" y="252">so we stopped as soon as it was clear."</text>
+        <text class="p9bM" x="28" y="268">forbidden: the rule controls cost, not frequency</text>
+        <text class="p9bR" x="28" y="296">"Recommendation: roll out B."</text>
+        <text class="p9bM" x="28" y="312">no stake, no error rate, nothing to argue with</text>
+
+        <!-- right: honest -->
+        <rect x="448" y="38" width="418" height="304" rx="9" fill="#F0FDF4" stroke="#15803D"></rect>
+        <rect x="448" y="38" width="418" height="26" rx="9" fill="#15803D"></rect>
+        <text class="p9bT" x="462" y="56">After · the honest version</text>
+        <text class="p9bB" x="462" y="88">"At 100 customers per arm, A redeemed 0.100 and B 0.200,</text>
+        <text class="p9bB" x="462" y="104">under flat Beta(1, 1) priors worth 2 pseudo-observations.</text>
+        <text class="p9bG" x="462" y="132">There is a 97.5 percent probability B is better.</text>
+        <text class="p9bM" x="462" y="148">the probability, of the thing they care about</text>
+        <text class="p9bG" x="462" y="176">If we are wrong, the expected cost is 0.0005</text>
+        <text class="p9bG" x="462" y="192">in redemption rate.</text>
+        <text class="p9bM" x="462" y="208">the stake, in the same sentence as the probability</text>
+        <text class="p9bB" x="462" y="236">The rule, fixed before the data: stop when the expected</text>
+        <text class="p9bB" x="462" y="252">loss falls under 0.001. It says stop and choose B.</text>
+        <text class="p9bG" x="462" y="280">Across 200 replays at this size, the rule stopped</text>
+        <text class="p9bG" x="462" y="296">on the wrong arm 2 times in 200."</text>
+        <text class="p9bM" x="462" y="312">the honesty clause, in the paragraph, not an appendix</text>
+
+        <!-- footer -->
+        <rect x="14" y="354" width="852" height="38" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p9bN" x="28" y="370">Same data, same 0.975, same decision. One paragraph can be argued with; the other can only be believed.</text>
+        <text class="p9bM" x="28" y="386">The honest version is three lines longer. That is the entire cost.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - nothing in the left paragraph is a false number. Every red line is a true number with its meaning removed.</figcaption>
+    
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Probability and stake, in the same sentence<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>At n = 100 per arm, Westfield's test reads A 0.100, B 0.200. P(B &gt; A) is 0.975, the expected loss of choosing B is 0.0005 in redemption rate, and the rule fixed before the experiment, stop when the expected loss of the chosen arm falls below 0.001, says stop and choose B. The executive sentence carries the probability and the stake together: "There is a 97.5 percent probability B is better; if we are wrong, the expected cost is 0.0005 in redemption rate." The semicolon is doing real work. Split into two sentences, the first one gets quoted alone. Session 7 showed why that matters: at n = 50 the probability was already 0.915 and the rule said keep going, because the expected loss was 0.0029, three times the threshold. A probability alone would have stopped fifty customers too early.</p>
+        <p>Then the honesty clause, in the same paragraph and never in an appendix. Across 200 seeded replays of the same experiment, stopping at n = 100 by the same rule, 23 would have stopped and 2 of those 200 would have stopped on the wrong arm. Write it as a count: "Run 200 times, this rule stopped on the wrong arm 2 times in 200." It is a 1 percent wrong-stop rate at that sample size, it is cheap, and it is not free. A reader who gets the 0.975 and the 0.0005 without the 2 in 200 has been told the price of the decision and not the odds of having bought the wrong thing. The reason looking early and often would inflate that count is <strong>learn-experimentation-with-phoebe</strong> session b6's argument. The paragraph's job is to report the measured rate and stop there.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Five things the sentence must never do<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Report a point estimate without its interval.</strong> "Northgate is at 0.100" is the sentence that flagged the outlet for closure. The interval was 0.020 to 0.222 and would have ended the conversation.</li>
+          <li><strong>Report a probability without its stake.</strong> "97.5 percent probability B is better" is half a decision. The other half is 0.0005, and at n = 50 the half you would have quoted was 0.915 with a stake of 0.0029 behind it, which the rule rejected.</li>
+          <li><strong>Say "significant".</strong> The word belongs to a procedure this sentence did not run and would be read as a verdict from it. Say the probability and the stake instead; they are what you have.</li>
+          <li><strong>Say the prior "washed out".</strong> It was outvoted, and a hundred votes take a long time to outvote. The Wrong prior, Beta(40, 60), worth 100 pseudo-observations, still moves Westfield's estimate by 0.026 at n = 900: posterior mean 0.167 against 0.142 under the flat prior. Session 2's number, and the reason the prior disclosure line below exists.</li>
+          <li><strong>Promise there is no peeking problem.</strong> The expected-loss rule controls the cost of a wrong decision, not the frequency of one, and the 2 in 200 is the frequency. State the count and hand the argument to <strong>learn-experimentation-with-phoebe</strong> b6. A paragraph that says "we could stop whenever we liked" has made a claim the bench measured and contradicted.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The prior disclosure line<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Every executive paragraph carries one more line, usually first: which prior, worth how many pseudo-observations, and why. "Flat, Beta(1, 1), worth 2 pseudo-observations, because we had no defensible history for a new outlet." Or "Informed, Beta(12, 88), worth 100 pseudo-observations, from the chain-wide history." Or "Learned by partial pooling across the twelve outlets, kappa 116, which weights Northgate's own month at 0.13." Two numbers and a provenance. The line exists because the estimate depends on it: Northgate reads 0.100, 0.088, 0.110 or 0.347 under session 2's four priors, and an executive who has not been told which is which has been handed a number with a hidden author. The argument about how a prior should be chosen, the three positions and the shared ground of a prior predictive check, is leader session 5's, and the disclosure line is where its conclusion lands in one clause.</p>
+        <p>The line also catches the prior that should never have shipped. The Wrong prior, Beta(40, 60), predicts roughly 40 percent redemption. Halloway has never observed above 0.225 at any outlet. A prior predictive check, session 8, fails it before a single voucher is counted, and a disclosure line that says "Beta(40, 60), worth 100 pseudo-observations" fails it in the reader's head for the same reason. What the line cannot do is tell you whether the intervals it introduces are honest over many forecasts. That measurement, calibration over a track record, is <strong>learn-decision-intelligence-with-phoebe</strong> sessions 02 and 04.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>Generate the paragraph from the posterior</h2>
+      <span class="tag build">16 min build-along</span>
+    </div>
+    <p class="lede">Laptop out. The sentence is a template and the numbers come from the posterior, so the sentence should be produced by code that reads the posterior, not typed from memory beside it. Two functions: one that formats the four-part sentence from a Beta posterior or a DataTree, one that formats the A/B sentence from P(B &gt; A) and the expected loss. Canon numbers are in the comments so the output can be checked.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Pull the mean and the 5.5 and 94.5 percent quantiles.</strong> From a scipy Beta posterior use <code class="mono">ppf</code>, which is exact. From a DataTree, reach the group as <code class="mono">dt["posterior"].dataset</code> and take quantiles over the draws. Never let a default choose the level; the two numbers 0.055 and 0.945 are written in the code so the sentence and the interval cannot drift apart.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Format the sentence with the level and the kind as literals.</strong> "89 percent" and "equal-tailed" are in the f-string, not looked up. If somebody changes the quantiles they have to change the words in the same line, which is the property the third-party notebooks lacked.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Check Northgate.</strong> Beta(2, 18) after one redemption in eighteen under the flat prior. The mean must print 0.100 and the interval 0.020 to 0.222. If it does not, the posterior is wrong, not the sentence.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Format the A/B sentence with the stake in the same string.</strong> P(B &gt; A) and the expected loss of choosing B are Monte Carlo over the two posteriors. The 2 in 200 comes from session 7's replay and is passed in, because a single run cannot produce it. It goes into the same paragraph by construction.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Read the output as an executive would.</strong> Estimate, interval with both words, probability with its stake, the count of wrong stops. If any of the four is missing from the printed paragraph, the function is wrong, and that is the point of generating it.</p></div>
+      </div>
+    </div>
+
+    <div class="prompt-box good"><span class="label">★ Run it now (Python) - the four-part sentence from a posterior</span># The four-part sentence, generated from the posterior it describes.
+# Works on a scipy Beta posterior (sessions 1 to 3) or on the DataTree
+# that pm.sample() returns (session 5). PyMC 6.3.2, ArviZ 1.3.0, Python 3.12 or later.
+import numpy as np
+from scipy import stats
+
+LEVEL = (0.055, 0.945)      # 89 percent, equal-tailed: the ArviZ 1 default (ci_prob 0.89, ci_kind "eti")
+
+def summarise(posterior, var="rate"):
+    """Mean and the 5.5 / 94.5 percent quantiles, exact for a Beta, from draws for a DataTree."""
+    if hasattr(posterior, "ppf"):                          # a scipy Beta: exact quantiles
+        lo, hi = posterior.ppf(LEVEL)
+        return float(posterior.mean()), float(lo), float(hi)
+    draws = posterior["posterior"].dataset[var].values.ravel()   # a DataTree from pm.sample()
+    lo, hi = np.quantile(draws, LEVEL)
+    return float(draws.mean()), float(lo), float(hi)
+
+def sentence(posterior, outlet, stake, var="rate"):
+    mean, lo, hi = summarise(posterior, var)
+    return (
+        f"The best estimate of {outlet}'s redemption rate is {mean:.3f}. "
+        f"There is an 89 percent probability it lies between {lo:.3f} and {hi:.3f} (equal-tailed). "
+        f"{stake}"
+    )
+
+# Northgate under the flat prior: Beta(1 + 1, 1 + 17) = Beta(2, 18)
+northgate = stats.beta(2, 18)
+print(sentence(northgate, "Northgate", "Eighteen vouchers cannot pin it tighter than that."))
+# The best estimate of Northgate's redemption rate is 0.100.
+# There is an 89 percent probability it lies between 0.020 and 0.222 (equal-tailed).
+# Eighteen vouchers cannot pin it tighter than that.
+
+# From session 5's Westfield model the call is the same, with the DataTree in place of the Beta:
+# print(sentence(dt, "Westfield", "Nine hundred vouchers; the width is not the news here."))</div>
+
+    <div class="prompt-box good"><span class="label">★ Run it now (Python) - the A/B sentence with its stake</span># The A/B sentence for Westfield at n = 100 per arm, Bench C.
+# Observed A 10 of 100, B 20 of 100; flat Beta(1, 1) priors; 20,000 paired draws.
+rng = np.random.default_rng(1)
+a = stats.beta(1 + 10, 1 + 90).rvs(20_000, random_state=rng)
+b = stats.beta(1 + 20, 1 + 80).rvs(20_000, random_state=rng)
+
+p_b_better = float(np.mean(b &gt; a))                       # 0.975 on the bench; yours lands within Monte Carlo noise
+loss_if_b  = float(np.mean(np.maximum(a - b, 0.0)))      # 0.0005 on the bench: the stake of choosing B
+loss_if_a  = float(np.mean(np.maximum(b - a, 0.0)))      # 0.0989 on the bench: the stake of choosing A
+
+THRESHOLD = 0.001                                        # fixed before the data, session 7
+decision = "stop and choose B" if loss_if_b &lt; THRESHOLD else "keep going"
+
+def ab_sentence(p, loss, decision, wrong_stops, replays):
+    return (
+        f"There is a {100 * p:.1f} percent probability B is better; "
+        f"if we are wrong, the expected cost is {loss:.4f} in redemption rate. "
+        f"The rule says {decision}. "
+        f"Run {replays} times, this rule stopped on the wrong arm {wrong_stops} times in {replays}."
+    )
+
+# 2 in 200 is the measured wrong-stop rate from session 7's seeded replay at n = 100.
+# A single run cannot produce it, so it is passed in, and it lands in the same paragraph.
+print(ab_sentence(p_b_better, loss_if_b, decision, wrong_stops=2, replays=200))
+# There is a 97.5 percent probability B is better; if we are wrong, the expected cost is
+# 0.0005 in redemption rate. The rule says stop and choose B.
+# Run 200 times, this rule stopped on the wrong arm 2 times in 200.</div>
+
+    <div class="callout tip">
+      <p><strong>If the Northgate line does not print 0.100 and 0.020 to 0.222, stop.</strong> Those three numbers are session 2's first row and they are exact, so a different output is a wrong posterior or a wrong quantile pair, never a rounding matter. The A/B line is Monte Carlo and will sit within noise of 0.975 and 0.0005; if it says 0.915 and 0.0029 you have loaded n = 50, the case where the rule said keep going.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">An analyst writes: "Northgate's redemption rate is 0.100 (0.020 to 0.222)." Which parts of the sentence are missing, and why does the omission matter?</p>
+      <button class="qopt" type="button">A · Nothing is missing; the estimate and the interval are both present</button>
+      <button class="qopt" type="button">B · The interval's level and kind, and the stake; without "89 percent equal-tailed" the range cannot be reproduced, since the ArviZ 1 default moved from 94 percent HDI, and without "eighteen vouchers cannot pin it tighter" the reader is left to notice the width alone</button>
+      <button class="qopt" type="button">C · The probability of a difference; every sentence needs a P(B &gt; A)</button>
+      <p class="qwhy">Two words and one clause. "89 percent" and "equal-tailed" make the range reproducible from the draws; a third party documented notebooks whose intervals changed kind on upgrade while the prose did not. The stake at Northgate is what the data cannot do, and it is said rather than implied. A probability of a difference belongs only where a decision hangs on the number, which is not the case for Northgate alone.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">The executive summary for Westfield reads, in full: "There is a 97.5 percent probability B is better. Recommendation: roll out B." What must be added before it goes upstairs?</p>
+      <button class="qopt" type="button">A · The word "significant", so the reader knows the result is real</button>
+      <button class="qopt" type="button">B · Nothing; 0.975 is above any reasonable bar</button>
+      <button class="qopt" type="button">C · The stake in the same sentence, an expected cost of 0.0005 in redemption rate if wrong, and the honesty clause in the same paragraph: across 200 replays the rule stopped on the wrong arm 2 times in 200</button>
+      <p class="qwhy">A probability without a stake is half a decision; at n = 50 the probability was already 0.915 and the rule said keep going because the loss was 0.0029. The 2 in 200 is the measured frequency of a wrong stop and it goes beside the estimate, never in an appendix. "Significant" names a procedure that was not run.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">A paragraph on Westfield's estimate, n = 900, says "at this sample size the prior washed out". What is wrong with the sentence?</p>
+      <button class="qopt" type="button">A · A prior is outvoted, not washed out: the Wrong prior worth 100 pseudo-observations still moves Westfield's estimate by 0.026 at n = 900, from 0.142 to 0.167, so the paragraph must disclose which prior and how many pseudo-observations</button>
+      <button class="qopt" type="button">B · Nothing; at 900 vouchers any prior is irrelevant</button>
+      <button class="qopt" type="button">C · The sentence should say "converged" instead of "washed out"</button>
+      <p class="qwhy">Session 2's Westfield row: flat 0.142, weak 0.141, informed 0.139, wrong 0.167. A hundred pseudo-observations against nine hundred real ones still carry a tenth of the answer. The disclosure line, which prior, worth how many, and why, is what lets a reader see how much of the estimate is belief.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 10</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Find the last number your team sent upstairs from small data, a pilot conversion, a defect rate on a short run, a new-site rate, and rewrite the paragraph it travelled in. Prior disclosure line first: which prior, worth how many pseudo-observations, why. Then the four parts in order, with "89 percent" and "equal-tailed" as literal words. Then check it against the five things the sentence must never do. If the original said "significant" or "the prior washed out", keep the original next to the rewrite; the pair is worth more than either. Session 10 puts the numbers behind tonight on a live bench, so bring the rewrite and check whether the interval you quoted would have contained Northgate's truth.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The four-part sentence</span>
+        <span class="note">Estimate, interval with level and kind, probability of the thing they care about, stake if wrong. Northgate under the flat prior: 0.100, an 89 percent equal-tailed interval of 0.020 to 0.222, eighteen vouchers cannot pin it tighter; pooled, 0.124 against a truth of 0.192.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Bench C as an executive paragraph</span>
+        <span class="note">Westfield at n = 100 per arm: A 0.100, B 0.200, P(B &gt; A) 0.975, expected loss of choosing B 0.0005, the rule stops; 2 wrong stops in 200 replays, stated in the same paragraph.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The ArviZ 1 interval default, as a reason to say both words</span>
+        <span class="note">stats.ci_prob 0.89 and stats.ci_kind "eti" replaced 94 percent HDI; hdi_prob renamed prob; a third party documented notebooks whose intervals silently changed kind while the prose said HDI.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The prior disclosure line and the five banned moves</span>
+        <span class="note">Which prior, worth how many pseudo-observations, why. The Wrong prior Beta(40, 60) predicts roughly 40 percent against a chain that has never observed above 0.225. No point without interval, no probability without stake, no "significant", no "washed out", no "no peeking problem".</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">How the prior should be chosen</span>
+        <span class="note">Leader session 5 owns the three positions and Gelman, Simpson and Betancourt's resolution. The disclosure line is where that argument lands in one clause.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Whether a stated 89 percent is honest over many forecasts</span>
+        <span class="note">Not covered by design. Calibration measurement is <strong>learn-decision-intelligence-with-phoebe</strong> sessions 02 and 04; tonight produces the sentence that audit runs on.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and what they do claim</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> b7 owns the frequentist interval; tonight states the contrast once and derives neither.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Why peeking inflates the wrong-stop rate</span>
+        <span class="note">Not covered by design. <strong>learn-experimentation-with-phoebe</strong> b6 owns the argument; tonight reports the measured 2 in 200 and hands the rest over.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 9 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Four parts, fixed order</b><span>Estimate. Interval with level and kind. Probability of the thing they care about. Stake if wrong.</span></div>
+      <div class="cheat-item"><b>Northgate, said right</b><span>0.100; an 89 percent probability between 0.020 and 0.222 (equal-tailed); eighteen vouchers cannot pin it tighter.</span></div>
+      <div class="cheat-item"><b>Westfield, said right</b><span>97.5 percent probability B is better; expected cost 0.0005 if wrong; 2 wrong stops in 200, same paragraph.</span></div>
+      <div class="cheat-item"><b>Both words, every time</b><span>"89 percent" and "equal-tailed". The default was 94 percent HDI; notebooks changed kind silently while the prose did not.</span></div>
+      <div class="cheat-item"><b>Probability, then stake</b><span>0.915 at n = 50 was not enough; the loss was 0.0029. One semicolon keeps them together.</span></div>
+      <div class="cheat-item"><b>Never "significant"</b><span>It names a procedure you did not run. Say the probability and the stake you have.</span></div>
+      <div class="cheat-item"><b>Outvoted, not washed out</b><span>A prior worth 100 still moves Westfield by 0.026 at n = 900. Disclose which prior, worth how many, why.</span></div>
+      <div class="cheat-item"><b>Promise the interval, never the truth</b><span>Pooled Northgate is 0.124 against 0.192. Credible, not confidence; the audit of the 89 belongs to decision-intelligence.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 9 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p8-checking-the-model.html">← Practitioner session 8 · Checking the model</a>
+      <a href="p10-the-pooling-bench.html">Practitioner session 10 · The pooling bench →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

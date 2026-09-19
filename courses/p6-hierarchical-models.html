@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 6 of 10. Twelve outlets, three estimators, one known truth. No pooling 0.054, complete pooling 0.031, partial pooling 0.025 root-mean-square error against the true rates. The fit learns mu = 0.135 and kappa = 116 from the data; each outlet's month carries weight n / (n + 116). Six outlets helped, six hurt, and a PyMC 6 hierarchical block that puts a posterior on kappa itself.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Hierarchical models - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 6 of 10. Kappa is the pooling strength, and it is learned, not asserted: 116 on the real data, the grid ceiling when outlets are identical, 3.6 when they are wildly different.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p6-hierarchical-models.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hierarchical models - learn bayesian with phoebe">
+<meta name="twitter:description" content="The empirical-Bayes fit in twenty lines, the RMSE ladder 0.054 / 0.031 / 0.025, and the PyMC 6 block that turns kappa from a number into a posterior.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 6 · Hierarchical models - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 6 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 6 of 10</div>
+    <h1>Hierarchical <span class="accent">models</span></h1>
+    <p class="sub">Session 5 fitted one outlet. Halloway has twelve, running the same voucher in the same month, with footfall from 18 at Northgate to 900 at Westfield, and every one of them has a true redemption rate written into the generator. That makes tonight a rare thing: a pooling method can be scored, not argued. Treat each outlet alone and the twelve estimates miss the truth by 0.054 root-mean-square. Give every outlet the chain rate and the miss is 0.031. Let each outlet be shrunk toward a centre the data choose, by an amount the data choose, and it is 0.025. The amount has a name, kappa, and on the Halloway data it is 116: each outlet's own month carries weight n / (n + 116). Nobody set that. The build-along fits it in twenty lines, then hands the same structure to PyMC 6 so that kappa stops being a number and becomes a posterior.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone estimating a rate across many small units</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-16 · Kappa is read off the data</span>
+      <span class="a3" style="flex:5">16-40 · Build-along: the fit, the ladder, the PyMC block</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where tonight sits</h2>
+    </div>
+    <p class="lede">Session 2 put four priors on Northgate and found that an informed prior worth 100 pseudo-observations was confidently wrong there. Session 5 fitted Westfield in PyMC 6 with a flat prior and got 0.142. Tonight the prior is neither asserted nor flat. Its centre and its pseudo-count are learned from the other eleven outlets, and the same tool that fitted one outlet fits twelve at once with a chain level above them. The source is McElreath's <em>Statistical Rethinking</em>, lectures 12 and 13, "Multilevel Models" and "Multilevel Adventures". Session 7 moves from estimating rates to deciding between two of them. The example is still <strong>Halloway Bakeries</strong>, and the truth is still known, so every rung tonight has a score.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> The empirical-Bayes fit as twenty lines of Python: a grid over the chain centre mu and the pooling strength kappa, the marginal Beta-Binomial likelihood from <span class="mono">scipy.special.betaln</span>, and the maximiser at mu = 0.135, kappa = 116. The ladder it produces, 0.054, 0.031, 0.025, and the same ladder in two other worlds where kappa goes to the grid ceiling and down to 3.6. The per-outlet ledger, six helped and six hurt, with Northgate still 0.068 short of its truth. And a PyMC 6 block with the same structure that returns a posterior over mu and kappa themselves, which is the one thing the twenty lines cannot do.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Three estimators, one score<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three ways to estimate twelve rates. <strong>No pooling:</strong> each outlet's observed rate, y over n, twelve unrelated problems. <strong>Complete pooling:</strong> one rate for all, the grand redemption rate of 0.141, twelve copies of one answer. <strong>Partial pooling:</strong> each outlet shrunk toward a centre learned from all twelve, by an amount that depends on its own volume and on how different the outlets really are. The score is the same for all three: root-mean-square error of the twelve estimates against the twelve true rates, which can be computed because the true rates are in the generator.</p>
+        <p>On the Halloway data the ladder reads 0.054, 0.031, 0.025. The order is what McElreath's lectures 12 and 13 predict and the numbers are what the arithmetic gives. Complete pooling beats no pooling because most small outlets' observed rates are further from their own truths than the chain centre is; partial pooling beats both because it trusts each outlet's month in proportion to how much month there was. Tonight is about how that proportion is found, what it is worth, and what it costs.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The regional pack ranked Halloway's outlets by observed rate and flagged the bottom two. Northgate, one redemption in eighteen, was bottom at 0.056 with a true rate of 0.192, the best in the chain. The partially pooled estimate was 0.124, not the truth but enough to take it off the list. The analyst's argument was not "Northgate is good". It was "an eighteen-voucher month carries weight 0.13, and the other 0.87 is what eleven outlets like it do."</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>mu.</strong> The chain-level centre every outlet is shrunk toward. Learned from the twelve: 0.135.</li>
+          <li><strong>kappa.</strong> The pooling strength, expressed as a pseudo-count in session 2's currency. Learned from the twelve: 116. A Beta(mu kappa, (1 - mu) kappa) prior on each outlet's rate is worth kappa pseudo-observations.</li>
+          <li><strong>Weight.</strong> An outlet's own month carries n / (n + kappa) of its estimate; the centre carries the rest. 0.13 at Northgate, 0.89 at Westfield.</li>
+          <li><strong>Marginal Beta-Binomial likelihood.</strong> The probability of an outlet's observed count given mu and kappa, with the outlet's own rate integrated out. Summed in logs across the twelve, it is the function the grid search maximises.</li>
+          <li><strong>Empirical Bayes.</strong> Fixing mu and kappa at the values that maximise that likelihood, then treating them as known. Fast, exact, and honest about being the simpler method.</li>
+          <li><strong>Hierarchical model.</strong> The fully Bayesian version: a prior on mu and kappa too, and a posterior over them alongside the twelve rates. What the PyMC block adds.</li>
+          <li><strong>Shrinkage.</strong> What partial pooling does to an estimate: pulls it from the observed rate toward mu. Thin outlets a long way, thick ones barely.</li>
+          <li><strong>RMSE.</strong> Root-mean-square error of twelve estimates against twelve true rates. Possible here and almost nowhere else.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the fit, the weights and the per-outlet ledger</span>
+      <h2>Kappa is read off the data</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">Leader session 3 drew the twelve outlets as positions on a rate axis. Tonight the axis is error: each outlet's estimate minus its true rate, so the truth is the centre line and the question for every arrow is whether it moved toward zero or away. Hollow is the observed rate, filled is the shrunk estimate. Six arrows point in, six point out, and the lengths tell you who paid.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 416" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Twelve rows, one per outlet from Northgate at n = 18 to Westfield at n = 900, on an axis of estimate minus true rate from -0.15 to +0.10, with the truth as a vertical line at zero. Each row shows the observed rate's error as a hollow circle, the shrunk estimate's error as a filled circle, and an arrow between them. Six arrows move toward zero, in raspberry: Northgate 0.136 to 0.068, Riverside 0.043 to 0.017, Old Quay 0.058 to 0.023, Hillcrest 0.088 to 0.021, Abbey Green 0.024 to 0.010, Kingsway 0.046 to 0.027. Four arrows move away from zero, in red: Market Row 0.000 to 0.007, Station 0.020 to 0.024, Parkside 0.002 to 0.008, Docklands 0.007 to 0.009. The Arcade and Westfield are unchanged to three decimals and shown with a neutral marker. A band below reads: six errors fell by tenths on thin outlets, six rose by thousandths on thick ones, and Northgate is still 0.068 short.">
+        <defs>
+          <marker id="p6a-help" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9D174D"></path></marker>
+          <marker id="p6a-hurt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#991B1B"></path></marker>
+        </defs>
+        <style>
+          .p6aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p6aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p6aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p6aN { font: 800 11px Inter, sans-serif; fill: #1F1420; }
+          .p6aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+          .p6aR { font: 800 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+        <text class="p6aH" x="14" y="22">Twelve outlets, error against the truth: hollow is observed, filled is shrunk. Truth is the centre line.</text>
+
+        <!-- legend -->
+        <circle cx="262" cy="46" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <text class="p6aM" x="272" y="50">observed</text>
+        <circle cx="350" cy="46" r="4" fill="#9D174D"></circle>
+        <text class="p6aM" x="360" y="50">shrunk, error fell (six)</text>
+        <circle cx="520" cy="46" r="4" fill="#991B1B"></circle>
+        <text class="p6aM" x="530" y="50">shrunk, error rose (six)</text>
+        <circle cx="690" cy="46" r="4" fill="#E4CBD6" stroke="#6B5460" stroke-width="1.5"></circle>
+        <text class="p6aM" x="700" y="50">unchanged</text>
+        <line x1="780" y1="40" x2="780" y2="52" stroke="#15803D" stroke-width="2" stroke-dasharray="3 2"></line>
+        <text class="p6aM" x="790" y="50">truth = 0</text>
+
+        <!-- error -0.15 .. +0.10 maps to x 250..700; zero at 520 -->
+        <line x1="520" y1="58" x2="520" y2="334" stroke="#15803D" stroke-width="2" stroke-dasharray="4 3"></line>
+
+        <!-- Northgate: helped -->
+        <text class="p6aL" x="14" y="78">Northgate · n = 18</text>
+        <line x1="274.5" y1="74" x2="393.1" y2="74" stroke="#9D174D" stroke-width="1.5" marker-end="url(#p6a-help)"></line>
+        <circle cx="274.5" cy="74" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="398.1" cy="74" r="4" fill="#9D174D"></circle>
+        <text class="p6aG" x="716" y="78">0.136 to 0.068</text>
+
+        <!-- Riverside: helped -->
+        <text class="p6aL" x="14" y="100">Riverside · n = 24</text>
+        <line x1="596.9" y1="96" x2="554.5" y2="96" stroke="#9D174D" stroke-width="1.5" marker-end="url(#p6a-help)"></line>
+        <circle cx="596.9" cy="96" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="549.5" cy="96" r="4" fill="#9D174D"></circle>
+        <text class="p6aG" x="716" y="100">0.043 to 0.017</text>
+
+        <!-- Old Quay: helped -->
+        <text class="p6aL" x="14" y="122">Old Quay · n = 31</text>
+        <line x1="416.1" y1="118" x2="556.9" y2="118" stroke="#9D174D" stroke-width="1.5" marker-end="url(#p6a-help)"></line>
+        <circle cx="416.1" cy="118" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="561.9" cy="118" r="4" fill="#9D174D"></circle>
+        <text class="p6aG" x="716" y="122">0.058 to 0.023</text>
+
+        <!-- Hillcrest: helped -->
+        <text class="p6aL" x="14" y="144">Hillcrest · n = 40</text>
+        <line x1="678.4" y1="140" x2="553.0" y2="140" stroke="#9D174D" stroke-width="1.5" marker-end="url(#p6a-help)"></line>
+        <circle cx="678.4" cy="140" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="558.0" cy="140" r="4" fill="#9D174D"></circle>
+        <text class="p6aG" x="716" y="144">0.088 to 0.021</text>
+
+        <!-- Market Row: hurt -->
+        <text class="p6aL" x="14" y="166">Market Row · n = 55</text>
+        <line x1="520.9" y1="162" x2="513.1" y2="162" stroke="#991B1B" stroke-width="1.5" marker-end="url(#p6a-hurt)"></line>
+        <circle cx="520.9" cy="162" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="508.1" cy="162" r="4" fill="#991B1B"></circle>
+        <text class="p6aR" x="716" y="166">0.000 to 0.007</text>
+
+        <!-- Station: hurt -->
+        <text class="p6aL" x="14" y="188">Station · n = 70</text>
+        <line x1="555.3" y1="184" x2="557.5" y2="184" stroke="#991B1B" stroke-width="1.5" marker-end="url(#p6a-hurt)"></line>
+        <circle cx="555.3" cy="184" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="562.5" cy="184" r="4" fill="#991B1B"></circle>
+        <text class="p6aR" x="716" y="188">0.020 to 0.024</text>
+
+        <!-- Abbey Green: helped -->
+        <text class="p6aL" x="14" y="210">Abbey Green · n = 95</text>
+        <line x1="476.3" y1="206" x2="531.9" y2="206" stroke="#9D174D" stroke-width="1.5" marker-end="url(#p6a-help)"></line>
+        <circle cx="476.3" cy="206" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="536.9" cy="206" r="4" fill="#9D174D"></circle>
+        <text class="p6aG" x="716" y="210">0.024 to 0.010</text>
+
+        <!-- Parkside: hurt -->
+        <text class="p6aL" x="14" y="232">Parkside · n = 140</text>
+        <line x1="523.8" y1="228" x2="510.8" y2="228" stroke="#991B1B" stroke-width="1.5" marker-end="url(#p6a-hurt)"></line>
+        <circle cx="523.8" cy="228" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="505.8" cy="228" r="4" fill="#991B1B"></circle>
+        <text class="p6aR" x="716" y="232">0.002 to 0.008</text>
+
+        <!-- Docklands: hurt -->
+        <text class="p6aL" x="14" y="254">Docklands · n = 210</text>
+        <line x1="506.5" y1="250" x2="529.9" y2="250" stroke="#991B1B" stroke-width="1.5" marker-end="url(#p6a-hurt)"></line>
+        <circle cx="506.5" cy="250" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="534.9" cy="250" r="4" fill="#991B1B"></circle>
+        <text class="p6aR" x="716" y="254">0.007 to 0.009</text>
+
+        <!-- Kingsway: helped -->
+        <text class="p6aL" x="14" y="276">Kingsway · n = 320</text>
+        <line x1="603.5" y1="272" x2="562.9" y2="272" stroke="#9D174D" stroke-width="1.5" marker-end="url(#p6a-help)"></line>
+        <circle cx="603.5" cy="272" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="567.9" cy="272" r="4" fill="#9D174D"></circle>
+        <text class="p6aG" x="716" y="276">0.046 to 0.027</text>
+
+        <!-- The Arcade: unchanged -->
+        <text class="p6aL" x="14" y="298">The Arcade · n = 540</text>
+        <circle cx="526.3" cy="294" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="527.4" cy="294" r="4" fill="#E4CBD6" stroke="#6B5460" stroke-width="1.5"></circle>
+        <text class="p6aM" x="716" y="298">unchanged, 3 decimals</text>
+
+        <!-- Westfield: unchanged -->
+        <text class="p6aL" x="14" y="320">Westfield · n = 900</text>
+        <circle cx="504.0" cy="316" r="4" fill="#FFFFFF" stroke="#9D174D" stroke-width="2"></circle>
+        <circle cx="502.7" cy="316" r="4" fill="#E4CBD6" stroke="#6B5460" stroke-width="1.5"></circle>
+        <text class="p6aM" x="716" y="320">unchanged, 3 decimals</text>
+
+        <!-- axis -->
+        <line x1="250" y1="334" x2="700" y2="334" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <text class="p6aM" x="250" y="352" text-anchor="middle">-0.15</text>
+        <text class="p6aM" x="340" y="352" text-anchor="middle">-0.10</text>
+        <text class="p6aM" x="430" y="352" text-anchor="middle">-0.05</text>
+        <text class="p6aG" x="520" y="352" text-anchor="middle">0 = truth</text>
+        <text class="p6aM" x="610" y="352" text-anchor="middle">+0.05</text>
+        <text class="p6aM" x="700" y="352" text-anchor="middle">+0.10</text>
+        <text class="p6aM" x="475" y="370" text-anchor="middle">estimate minus true rate</text>
+
+        <rect x="14" y="380" width="852" height="26" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p6aN" x="28" y="398">Six errors fell by tenths on thin outlets; six rose by thousandths on thick ones. Northgate is still 0.068 short.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the long arrows all point in and all belong to thin outlets. The red arrows are short, and two of the thick outlets did not move at all.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The fit: which mu and kappa make the twelve months most plausible<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Put a Beta(mu kappa, (1 - mu) kappa) prior on every outlet's rate. That is session 2's currency exactly: a prior centred on mu and worth kappa pseudo-observations. Now ask, for a candidate pair (mu, kappa), how probable the twelve observed counts are with each outlet's own rate integrated out. That probability has a closed form, the Beta-Binomial, and its logarithm is two calls to <span class="mono">betaln</span> per outlet. Sum it across the twelve, do that for every pair on a grid, and keep the pair with the highest total. On the Halloway data the winner is <strong>mu = 0.135, kappa = 116</strong>.</p>
+        <p>Everything else follows without a further decision. Each outlet's shrunk estimate is the posterior mean under that prior, which is the observed rate weighted by n / (n + 116) plus the centre weighted by the rest. At Northgate 18 / 134 is 0.13; at Westfield 900 / 1016 is 0.89. Nobody chose 0.13, 0.89 or 116. The grid search chose them by asking which chain-level description made this month's twelve counts most likely, and a different chain, or a different month, would have produced a different kappa. This is what "the method reads the answer off the data" means in practice, and the build-along is where you watch it do so.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The ledger: six helped, six hurt, both halves<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The RMSE fell from 0.054 to 0.025, and averages hide who paid. Outlet by outlet, six errors fell and six rose. The falls are large and land on the thin outlets: Northgate 0.136 to 0.068, Hillcrest 0.088 to 0.021, Old Quay 0.058 to 0.023, Kingsway 0.046 to 0.027, Riverside 0.043 to 0.017, Abbey Green 0.024 to 0.010. The rises are small and land on the well-measured ones: Market Row 0.000 to 0.007, Parkside 0.002 to 0.008, Station 0.020 to 0.024, Docklands 0.007 to 0.009, and The Arcade and Westfield did not change to three decimals. <strong>Shrinkage buys tenths on the outlets that need it and costs thousandths on the ones that do not.</strong></p>
+        <p>Say both halves, always. The asymmetry is not luck; it is the weights. The thick outlets barely moved because the fit trusted their own months, at weights near 0.89, so the centre had little room to pull. The thin ones moved a lot because the fit did not trust theirs, at weights near 0.13, and lent them the chain's experience instead. Market Row is the sharpest case: its observed rate happened to sit on its truth to three decimals, and shrinkage moved it off by 0.007. That is a real cost, and it is the price of a method that cannot know in advance which thin-looking month happened to be right. Northgate, the biggest winner, is still under-estimated at 0.124 against 0.192. The method halved the error. It did not remove it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Kappa in the same currency as the prior<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 2's informed prior was Beta(12, 88): centre 0.120, worth 100 pseudo-observations, chosen from a feeling about the chain's history. Tonight's learned prior has centre 0.135 and is worth 116, similar strength, slightly higher centre. At Northgate the asserted prior gave 0.110 and the learned one gives 0.124. The improvement is real but modest, and it is not the point. The point is provenance: 100 was asserted and 116 was measured, and a measured pseudo-count comes with a reason anyone can check, namely that it is the value under which the twelve observed months are most plausible together.</p>
+        <p>The learned prior still paid session 2's price at Northgate, because Northgate genuinely differs from the chain and 116 pseudo-observations of chain experience pulled it toward the crowd anyway. There is no version of pooling that is free for the unit that truly stands apart. What the data-chosen kappa buys is that the fee is set by how alike the units actually are, and that in a world where they were not alike, it would fall. Part 2 shows it doing exactly that. Whether a prior ought to be learned this way at all is the argument of leader session 5, and it is not settled.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the three worlds and the fully Bayesian version</span>
+      <h2>One method, three worlds, and what PyMC adds</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">A method that pulls every estimate toward the middle should worry you until you have seen it in a world where pulling is wrong. So the same three estimators were run on two more worlds built from the same twelve outlets, one where the true rates are identical and one where they are wildly spread. The grid below reads the ladder across all three, and the last column is the reason the method survives: kappa is different in each world, and the data chose it.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A three by four grid. Rows are worlds; columns are no pooling, complete pooling, partial pooling, and the kappa the fit learned. Real spread: 0.054, 0.031, 0.025 best, kappa 116 with weights n over n plus 116. Outlets truly identical: 0.034, 0.0065, 0.0051 best, kappa at the grid ceiling, pool everything. Outlets wildly different: 0.033, 0.145 catastrophic, 0.030 best, kappa 3.6, barely pool. A band below reads: partial pooling wins or ties in all three worlds; complete pooling is catastrophic when the outlets differ, 0.145.">
+        <style>
+          .p6bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p6bC { font: 800 11px Inter, sans-serif; fill: #831843; }
+          .p6bL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p6bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p6bN { font: 800 13px Inter, sans-serif; fill: #1F1420; }
+          .p6bG { font: 800 13px Inter, sans-serif; fill: #15803D; }
+          .p6bR { font: 800 13px Inter, sans-serif; fill: #991B1B; }
+          .p6bK { font: 800 13px Inter, sans-serif; fill: #831843; }
+          .p6bB { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p6bH" x="14" y="20">Root-mean-square error against the true rates, and the kappa the fit learned in each world.</text>
+
+        <text class="p6bC" x="14" y="52">World</text>
+        <text class="p6bC" x="330" y="52" text-anchor="middle">No pooling</text>
+        <text class="p6bC" x="480" y="52" text-anchor="middle">Complete pooling</text>
+        <text class="p6bC" x="630" y="52" text-anchor="middle">Partial pooling</text>
+        <text class="p6bC" x="789" y="52" text-anchor="middle">Learned kappa</text>
+        <line x1="14" y1="58" x2="866" y2="58" stroke="#E4CBD6" stroke-width="1.5"></line>
+
+        <!-- row 1: real spread -->
+        <text class="p6bL" x="14" y="92">Real spread, the Halloway data</text>
+        <text class="p6bM" x="14" y="110">twelve outlets as generated</text>
+        <rect x="262" y="66" width="136" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bN" x="330" y="102" text-anchor="middle">0.054</text>
+        <rect x="412" y="66" width="136" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bN" x="480" y="102" text-anchor="middle">0.031</text>
+        <rect x="562" y="66" width="136" height="62" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p6bG" x="630" y="96" text-anchor="middle">0.025</text>
+        <text class="p6bM" x="630" y="114" text-anchor="middle">best</text>
+        <rect x="712" y="66" width="154" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bK" x="789" y="96" text-anchor="middle">116</text>
+        <text class="p6bM" x="789" y="114" text-anchor="middle">weights n / (n + 116)</text>
+
+        <!-- row 2: identical -->
+        <text class="p6bL" x="14" y="162">Outlets truly identical</text>
+        <text class="p6bM" x="14" y="180">one true rate for all twelve</text>
+        <rect x="262" y="136" width="136" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bN" x="330" y="172" text-anchor="middle">0.034</text>
+        <rect x="412" y="136" width="136" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bN" x="480" y="172" text-anchor="middle">0.0065</text>
+        <rect x="562" y="136" width="136" height="62" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p6bG" x="630" y="166" text-anchor="middle">0.0051</text>
+        <text class="p6bM" x="630" y="184" text-anchor="middle">best</text>
+        <rect x="712" y="136" width="154" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bK" x="789" y="166" text-anchor="middle">grid ceiling</text>
+        <text class="p6bM" x="789" y="184" text-anchor="middle">pool everything</text>
+
+        <!-- row 3: wild -->
+        <text class="p6bL" x="14" y="232">Outlets wildly different</text>
+        <text class="p6bM" x="14" y="250">true rates spread far apart</text>
+        <rect x="262" y="206" width="136" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bN" x="330" y="242" text-anchor="middle">0.033</text>
+        <rect x="412" y="206" width="136" height="62" rx="8" fill="#FEF2F2" stroke="#991B1B"></rect>
+        <text class="p6bR" x="480" y="236" text-anchor="middle">0.145</text>
+        <text class="p6bM" x="480" y="254" text-anchor="middle">catastrophic</text>
+        <rect x="562" y="206" width="136" height="62" rx="8" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p6bG" x="630" y="236" text-anchor="middle">0.030</text>
+        <text class="p6bM" x="630" y="254" text-anchor="middle">best</text>
+        <rect x="712" y="206" width="154" height="62" rx="8" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <text class="p6bK" x="789" y="236" text-anchor="middle">3.6</text>
+        <text class="p6bM" x="789" y="254" text-anchor="middle">barely pool</text>
+
+        <rect x="14" y="284" width="852" height="30" rx="9" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p6bB" x="28" y="304">Partial pooling wins or ties in all three worlds. Complete pooling is catastrophic when the outlets differ: 0.145.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - read the last column first. The same code learned 116, then the ceiling, then 3.6, and the middle columns follow from that.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Three worlds: the method changes its mind because kappa does<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>In the world where the twelve outlets are truly identical, complete pooling is right by construction and scores 0.0065. The fit sees that the twelve counts are all consistent with one rate, pushes kappa to the ceiling of its grid, pools almost everything, and scores 0.0051. In the world where the outlets are wildly different, complete pooling is wrong by construction and collapses to 0.145, worse than doing nothing by a factor of more than four. The fit learns kappa = 3.6, barely pools, and scores 0.030, a hair better than the 0.033 of no pooling. On the real data it learned 116 and scored 0.025.</p>
+        <p>Read the kappa column as the method's opinion about how alike the units are, formed from their counts and nothing else. At 3.6, Northgate's own month would carry 18 / (18 + 3.6), about 0.83, instead of 0.13: almost all of the trust goes back to the outlet, because the chain has stopped being informative about it. That is the whole case for the approach. Not that partial pooling is the best estimator in every world, since complete pooling is nearly as good in the identical one and no pooling is close in the wild one, but that it is never the wrong estimator, because it measures before it pools.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What the full hierarchical model adds over empirical Bayes<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The twenty-line fit finds the single best (mu, kappa) and then treats it as known. Every shrunk estimate and every weight is conditional on kappa being exactly 116, and the fit has no way to say how sure it is of that. A <strong>hierarchical model</strong> removes the assumption. Put a prior on mu and a prior on kappa, put the same Beta(mu kappa, (1 - mu) kappa) prior on each outlet's rate, and let PyMC sample all fourteen quantities together. What comes back is a posterior over mu and kappa themselves, alongside the twelve rates, so the pooling strength carries its own uncertainty and each outlet's interval is wider by however unsure the model is about how much to pool.</p>
+        <p>That is the one thing the grid cannot give you, and it is why the PyMC block in the build-along has the same structure with two more lines. The bench in session 10 uses the empirical-Bayes fit because it is exact, fast and honest about being the simpler method; the hierarchical model is what you reach for when the question "how sure are we about kappa" is going to be asked, which in a room deciding an outlet's future it will be. Read the diagnostics with particular care here: a model with a level above the units is exactly where session 4's checks earn their keep.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Where the same structure shows up<span class="mini">2 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Outlets in a chain, players in a league, regions under one campaign, cohorts of one product: any time many small units are measured the same way and could reasonably resemble each other, the structure tonight applies unchanged, and the question is always the same one, how much should one unit's own record be trusted. <strong>learn-ai-sports-with-phoebe</strong> b3 names Bayesian hierarchical models that pool player effects with shrinkage as what works for expected goals, and this is the session that page points at: a player with few shots is Northgate, a player with hundreds is Westfield, and the league's kappa is learned from all of them.</p>
+        <p>Two things the structure does not do. It does not explain why the units differ; why Northgate's true rate is 0.192 and Old Quay's is 0.090 is a causal question, and <strong>learn-causal-inference-with-phoebe</strong> owns it. And it does not tell you whether the units should be compared at all. That is a judgement about the family, made before any fitting, and the fit will pool whatever you hand it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>The fit, the ladder, then the same structure in PyMC 6</h2>
+      <span class="tag build">24 min build-along</span>
+    </div>
+    <p class="lede">Laptop out. Two scripts. The first is the empirical-Bayes fit with numpy and scipy only, and it should print mu 0.135, kappa 116 and the ladder 0.054, 0.031, 0.025 before you type anything else. The second is the PyMC 6 hierarchical block with the same structure, whose summary should put its central estimates for mu and kappa near what the grid found and give you an interval on each, which the grid never could.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>Type the twelve outlets in.</strong> Counts, totals and true rates, from the map. The true rates are only used for scoring; the fit never sees them, and in your own work you will not have them.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Write the marginal log-likelihood.</strong> For a candidate (mu, kappa), a = mu kappa and b = (1 - mu) kappa, and each outlet contributes betaln(y + a, n - y + b) minus betaln(a, b). Sum across the twelve.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Search the grid.</strong> mu in steps of 1/200, kappa on 80 log-spaced points from 2 to 5000, the same grid the bench uses. The maximiser is mu = 0.135, kappa = 116. In the identical world it lands at 5000, the ceiling; in the wild world at 3.6.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Shrink and score.</strong> Weight w = n / (n + kappa); estimate = w times observed plus (1 - w) times mu. Print Northgate's weight, 0.13, and Westfield's, 0.89. Then the three RMSEs: 0.054, 0.031, 0.025.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Print the ledger.</strong> Error before and after for every outlet. Count the falls and the rises: six and six. Find Market Row, 0.000 to 0.007, and be able to say why.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Hand the structure to PyMC 6.</strong> A prior on mu, a prior on kappa, twelve rates drawn from Beta(mu kappa, (1 - mu) kappa), twelve Binomials. Sample, read R-hat and ESS, then read the rows for mu and kappa: an 89 percent equal-tailed interval on each, which is the thing the grid could not give you.</p></div>
+      </div>
+    </div>
+
+    <div class="prompt-box good"><span class="label">★ Run it now (Python) - the empirical-Bayes fit and the ladder</span># Halloway Bakeries, twelve outlets, one voucher, one month. True rates known by construction.
+import numpy as np
+from scipy.special import betaln
+
+outlets = ["Northgate", "Riverside", "Old Quay", "Hillcrest", "Market Row", "Station",
+           "Abbey Green", "Parkside", "Docklands", "Kingsway", "The Arcade", "Westfield"]
+n     = np.array([18, 24, 31, 40, 55, 70, 95, 140, 210, 320, 540, 900])
+y     = np.array([1, 4, 1, 9, 8, 9, 7, 22, 19, 67, 71, 127])
+truth = np.array([0.192, 0.124, 0.090, 0.137, 0.145, 0.109, 0.098, 0.155, 0.098, 0.163, 0.128, 0.150])
+
+def log_marginal(mu, kappa):
+    # Beta-Binomial marginal likelihood of the twelve months, each outlet's rate integrated out
+    a, b = mu * kappa, (1 - mu) * kappa
+    return np.sum(betaln(y + a, n - y + b) - betaln(a, b))
+
+mus    = np.arange(1, 200) / 200                          # 0.005 to 0.995
+kappas = np.exp(np.linspace(np.log(2), np.log(5000), 80)) # 2 to 5000; 5000 is the grid ceiling
+grid   = np.array([[log_marginal(m, k) for k in kappas] for m in mus])
+i, j   = np.unravel_index(grid.argmax(), grid.shape)
+mu_hat, kappa_hat = mus[i], kappas[j]
+print(f"mu {mu_hat:.3f}  kappa {kappa_hat:.0f}")             # mu 0.135  kappa 116
+
+w        = n / (n + kappa_hat)                            # 0.13 at Northgate, 0.89 at Westfield
+observed = y / n                                          # no pooling
+complete = np.full(12, y.sum() / n.sum())                 # complete pooling: the grand rate, 0.141
+partial  = w * observed + (1 - w) * mu_hat                # partial pooling: Northgate 0.056 to 0.124
+
+rmse = lambda est: np.sqrt(np.mean((est - truth) ** 2))
+print(f"{rmse(observed):.3f} {rmse(complete):.3f} {rmse(partial):.3f}")   # 0.054 0.031 0.025
+
+# the ledger: six errors fall, six rise
+before, after = np.abs(observed - truth), np.abs(partial - truth)
+for name, b_, a_ in zip(outlets, before, after):
+    print(f"{name:12s} {b_:.3f} to {a_:.3f}")             # Northgate 0.136 to 0.068; Market Row 0.000 to 0.007</div>
+
+    <div class="prompt-box good"><span class="label">★ Then the same structure in PyMC 6 - a posterior over mu and kappa themselves</span># PyMC 6.3.2, ArviZ 1.3.0. n and y are the arrays above.
+import pymc as pm
+import arviz as az
+
+with pm.Model() as halloway:
+    mu    = pm.Beta("mu", 1.0, 1.0)                       # chain centre; the grid fixed it at 0.135
+    kappa = pm.HalfNormal("kappa", 200.0)                 # pooling strength; the grid fixed it at 116
+    rate  = pm.Beta("rate", mu * kappa, (1 - mu) * kappa, shape=12)
+    pm.Binomial("redeemed", n=n, p=rate, observed=y)
+    dt = pm.sample()                                      # nutpie when installed, 400 tuning steps
+
+print(az.rhat(dt))                                        # session 4's checks first
+print(az.ess(dt, sample_dims=["chain", "draw"]))
+
+# rows for mu, kappa and the twelve rates; intervals 89 percent equal-tailed by default
+print(az.summary(dt))
+pc = az.plot_forest(dt)                                   # plot_forest stays in ArviZ 1.x</div>
+
+    <div class="callout tip">
+      <p><strong>The grid and the sampler should agree on the centre and disagree on the confidence.</strong> If the PyMC summary puts mu and kappa somewhere the grid did not, one of the two is wrong and the grid is the easier one to check. What the sampler adds is the width: an interval on kappa is the sentence "the data are this sure about how much to pool", and no single number, 116 or otherwise, can say that.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">The fit learns kappa = 116 on the Halloway data. What is kappa, and where did 116 come from?</p>
+      <button class="qopt" type="button">A · A tuning constant the analyst sets to control how much to pool; 116 is a conventional choice</button>
+      <button class="qopt" type="button">B · The number of outlets multiplied by the grand rate, a fixed property of the chain</button>
+      <button class="qopt" type="button">C · The pooling strength as a pseudo-count: the value of (mu, kappa) that makes the twelve observed counts most plausible under a Beta-Binomial, found by grid search, so each outlet's month carries weight n / (n + 116)</button>
+      <p class="qwhy">Kappa is the pseudo-count of the learned Beta(mu kappa, (1 - mu) kappa) prior, in session 2's currency. It is the maximiser of the marginal Beta-Binomial likelihood across the twelve outlets, and it would be different on different data: the grid ceiling when the outlets are identical, 3.6 when they are wildly different.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">In the world where the outlets are wildly different, the ladder reads 0.033, 0.145, 0.030. What happened?</p>
+      <button class="qopt" type="button">A · Complete pooling collapsed because it assumed one rate for units that differ; partial pooling learned kappa = 3.6, barely pooled, and stayed level with no pooling</button>
+      <button class="qopt" type="button">B · Partial pooling failed, since 0.030 is barely better than no pooling and the method should always win by a wide margin</button>
+      <button class="qopt" type="button">C · No pooling won, so partial pooling should be avoided when units are known to differ</button>
+      <p class="qwhy">The method's value is that kappa is read off the data. When the outlets differ wildly the fit learns a tiny kappa and gives almost all the weight back to each outlet's own month, so it cannot be dragged into the 0.145 that complete pooling suffers. Level with no pooling is the right answer in that world, and partial pooling found it without being told.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">The empirical-Bayes grid and the PyMC hierarchical block have the same structure. What does the PyMC version add?</p>
+      <button class="qopt" type="button">A · Faster computation, since nutpie samples the grid in parallel</button>
+      <button class="qopt" type="button">B · A posterior over mu and kappa themselves, so the pooling strength carries its own uncertainty and each outlet's interval reflects how unsure the model is about how much to pool</button>
+      <button class="qopt" type="button">C · Nothing; it is the same fit written in a different library and produces identical output</button>
+      <p class="qwhy">Empirical Bayes fixes mu and kappa at the grid maximum and treats them as known. The hierarchical model puts priors on them and samples all fourteen quantities together, returning an interval on kappa that no single number can express. The bench uses the grid because it is exact and fast; the hierarchical model is for the room that will ask how sure you are about 116.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 7</h2>
+      <span class="tag time">45 min</span>
+    </div>
+    <div class="callout">
+      <p>Take the many-unit rate you brought from session 5, stores, regions, cohorts, segments, and run the first script on it with the truth line removed, because you will not have one. Report three things: the kappa the fit learned and each unit's weight n / (n + kappa); how far each unit's estimate moved; and whether the units that moved most are the ones with the least data. If they are, the method is doing what it should. If a large unit moved a long way, look at it before you trust anything. Then bring one comparison your area is about to make between two versions of something, because session 7 moves from estimating rates to deciding between two of them, and the probability that B beats A turns out not to be enough on its own.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Statistical Rethinking, lectures 12 and 13</span>
+        <span class="note">"Multilevel Models" and "Multilevel Adventures", from the 2024 course: partial pooling, shrinkage, and the pooling strength as a quantity to be estimated. Run here against a known truth in three worlds.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The pooling ladder, scored against the truth</span>
+        <span class="note">No pooling 0.054, complete pooling 0.031, partial pooling 0.025 on the real data; 0.034, 0.0065, 0.0051 with identical outlets; 0.033, 0.145, 0.030 with wildly different ones. Partial pooling wins or ties everywhere.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Kappa as learned pooling strength</span>
+        <span class="note">The empirical-Bayes fit by grid over (mu, kappa) maximising the marginal Beta-Binomial likelihood: mu = 0.135, kappa = 116 on the real data, the grid ceiling in the identical world, 3.6 in the wild one. Weights n / (n + 116): 0.13 at Northgate, 0.89 at Westfield.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The honest half: six helped, six hurt</span>
+        <span class="note">Falls by tenths on thin outlets (Northgate 0.136 to 0.068, Hillcrest 0.088 to 0.021, Old Quay 0.058 to 0.023, Kingsway 0.046 to 0.027, Riverside 0.043 to 0.017, Abbey Green 0.024 to 0.010); rises by thousandths on thick ones (Market Row 0.000 to 0.007, Parkside 0.002 to 0.008, Station 0.020 to 0.024, Docklands 0.007 to 0.009; The Arcade and Westfield unchanged). Northgate still 0.124 against 0.192.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The full hierarchical model in PyMC 6</span>
+        <span class="note">Built here as a minimal block and named for what it adds: a posterior over mu and kappa. Session 10's bench uses the empirical-Bayes fit because it is exact and fast; session 8 checks whether a model like this could have produced the data.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Pooling player effects for expected goals</span>
+        <span class="note"><strong>learn-ai-sports-with-phoebe</strong> b3 names Bayesian hierarchical models that pool player effects with shrinkage as what works for xG. Named there, taught here; this is the session that page points at.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Why the outlets differ</span>
+        <span class="note">Not covered by design. Nothing tonight is causal; why Northgate's true rate is 0.192 and Old Quay's is 0.090 is <strong>learn-causal-inference-with-phoebe</strong>'s territory. Tonight estimates the rates; it does not explain them.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Frequentist estimation of the same twelve rates</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns estimation and its intervals from the frequentist side; tonight's estimates are posterior means and the ladder is scored on them alone.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="section cheat" id="cheatsheet">
+    <h3>Session 6 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The ladder: 0.054, 0.031, 0.025</b><span>No pooling, complete pooling, partial pooling. RMSE against the true rates. Lower is better.</span></div>
+      <div class="cheat-item"><b>mu = 0.135, kappa = 116</b><span>The grid maximiser of the marginal Beta-Binomial likelihood across the twelve. Learned, not asserted.</span></div>
+      <div class="cheat-item"><b>Weight n / (n + kappa)</b><span>0.13 at Northgate, 0.89 at Westfield. The prior is worth kappa pseudo-observations, session 2's currency.</span></div>
+      <div class="cheat-item"><b>Three worlds, three kappas</b><span>116 on the real data; the grid ceiling when outlets are identical; 3.6 when they are wildly different. Complete pooling: 0.145 there.</span></div>
+      <div class="cheat-item"><b>Six helped, six hurt</b><span>Tenths on the thin outlets, thousandths on the thick ones. Market Row 0.000 to 0.007. Say both halves.</span></div>
+      <div class="cheat-item"><b>Northgate: 0.124 vs 0.192</b><span>Error 0.136 to 0.068. Halved, not removed. Pooling cannot rescue the unit that truly stands apart.</span></div>
+      <div class="cheat-item"><b>betaln(y + a, n - y + b) - betaln(a, b)</b><span>One outlet's marginal log-likelihood with a = mu kappa, b = (1 - mu) kappa. Sum twelve, search the grid.</span></div>
+      <div class="cheat-item"><b>What PyMC adds</b><span>A posterior over mu and kappa themselves. An interval on kappa is "this sure about how much to pool"; no single number says that.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 6 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p5-pymc-the-first-model.html">← Practitioner session 5 · PyMC, the first model</a>
+      <a href="p7-bayesian-ab-decisions.html">Practitioner session 7 · Bayesian A/B decisions →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

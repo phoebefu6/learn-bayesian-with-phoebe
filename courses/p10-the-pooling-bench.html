@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 10 of 10. Three live benches on twelve outlets whose true rates are written down: what a prior costs, the pooling ladder scored by RMSE, and the A/B decision by expected loss. Partial pooling reaches 0.025 against 0.054 unpooled; the rule stops at n = 100 and is wrong 2 times in 200.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="The pooling bench - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 10 of 10. Every prior, every pooling choice, every stopping rule, scored against a truth known by construction.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p10-the-pooling-bench.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The pooling bench - learn bayesian with phoebe">
+<meta name="twitter:description" content="RMSE 0.054 unpooled, 0.031 pooled, 0.025 partially pooled. Helped six outlets, hurt six. Both halves on the page.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 10 · The pooling bench - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 10 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 10 of 10</div>
+    <h1>The pooling <span class="accent">bench</span></h1>
+    <p class="sub">Nine sessions of method, and every one of them has been missing the same thing: a case where you know the answer. Tonight you have one. Halloway's twelve outlets redeem a voucher at rates the generator states outright, so a prior can be scored against the truth rather than defended, a pooling method can be given a root-mean-square error rather than an argument, and a stopping rule can be run two hundred times to find out how often it stops on the wrong arm. Three benches, one world, nothing looked up.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Hardest</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who has to defend a small-data number</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:3">3-14 · A world with a known answer</span>
+      <span class="a3" style="flex:6">14-40 · Build-along: the three benches</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>What the bench measures</h2>
+    </div>
+    <p class="lede">Error against the truth, and nothing else. Not how reasonable a prior sounds, not how elegant a model is, but the distance between the estimate a method produced and the rate that is actually there. Real analyses never get this number. Here every outlet's true rate is a line in the source file, and every bench reports how close each method came.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> The measured cost of a prior, at the outlet where a sensible one was confidently wrong and at the flagship where a wrong one still moved the answer at n = 900. A pooling ladder with a number on every rung: 0.054, 0.031, 0.025. And a stopping rule whose wrong-stop rate is a count rather than a promise: two in two hundred.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Where a known answer comes from<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Twelve outlets, one voucher, one month. The generator draws each outlet's true redemption rate around 0.12 with genuine spread, then draws each customer's redemption from that rate. Footfall is deliberately unequal, from 18 vouchers at Northgate to 900 at Westfield, because that is what a real chain looks like and because the whole argument for pooling lives in the gap between those two numbers. The grand rate across all 2,443 vouchers is 0.141; the mean of the twelve true rates is 0.132.</p>
+        <p>Northgate is the recurring character. Its true rate is 0.192, the highest in the chain, and it redeemed one voucher in eighteen, an observed 0.056. Neither number is a mistake. One in eighteen is simply what a true 0.192 looks like at that volume about a fifth of the time, and the whole discipline exists for cases like it.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's regional manager had Northgate flagged for closure on the strength of the 0.056. The analyst's first instinct was to blend it with the chain-wide belief, which gave 0.110 and did not save it. The estimate that did save it, 0.124, came from letting the other eleven outlets say how much any one outlet's month should be trusted, which is what bench B does.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What is real here, and what is not<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>The world.</strong> Twelve outlets from a fixed seed, identical for every learner, generated by the model written out in <code class="mono">bayes-live.js</code> where every rate is visible.</li>
+          <li><strong>Bench A.</strong> Exact conjugate Beta-Binomial posteriors. The interval is the 5.5 and 94.5 percent quantiles of 20,000 draws, an 89 percent equal-tailed interval, which is what ArviZ 1.x reports by default.</li>
+          <li><strong>Bench B.</strong> No pooling is each outlet's observed rate. Complete pooling is the grand rate for everybody. Partial pooling is an empirical-Bayes fit: the mu and kappa that maximise the marginal Beta-Binomial likelihood across the twelve outlets, searched on a grid, then each outlet shrunk toward mu with weight n over n plus kappa. It is a real fit, and it is the simpler of the two standard approaches; session 6 names the fully Bayesian version that puts a prior on kappa too.</li>
+          <li><strong>Bench C.</strong> One cumulative experiment: the first 50 customers per arm are the first 50 of the same 3,000. P(B &gt; A) and both expected losses are Monte Carlo over 20,000 paired draws from the two posteriors.</li>
+          <li><strong>Nothing is stored.</strong> Every figure on the bench is computed when you click. A result that disagreed with the course notes would be the notes' problem.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the three benches and what each one scores</span>
+      <h2>Three questions, one world</h2>
+      <span class="tag concept">10 min live</span>
+    </div>
+    <p class="lede">The three benches answer the three questions the track has been circling. How much does a belief cost when it is wrong? How much do eleven other outlets know about the twelfth? And when is a difference big enough to act on? Each one has a number because the truth is known, and the numbers do not all flatter the method.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three panels, one per bench. Bench A, what a prior costs: four priors on Northgate, with the informed prior's interval 0.068 to 0.159 missing the truth of 0.192. Bench B, the pooling ladder: RMSE 0.054 with no pooling, 0.031 with complete pooling, 0.025 with partial pooling, helping six outlets and hurting six. Bench C, the A/B decision: the expected-loss rule stops at n equals 100 per arm with P of B greater than A at 0.975, and across 200 replays stops on the wrong arm twice. Below, a band reads: every number is scored against a truth written into the generator.">
+        <style>
+          .p10aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p10aT { font: 800 11px Inter, sans-serif; fill: #fff; }
+          .p10aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p10aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p10aN { font: 800 12px Inter, sans-serif; fill: #831843; }
+          .p10aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p10aH" x="14" y="22">Three benches. Each one reports a distance from the truth, not an opinion.</text>
+
+        <rect x="14" y="40" width="272" height="216" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="14" y="40" width="272" height="26" rx="9" fill="#831843"></rect>
+        <text class="p10aT" x="28" y="58">A · What a prior costs</text>
+        <text class="p10aB" x="28" y="88">Northgate, n = 18, truth 0.192</text>
+        <text class="p10aM" x="28" y="108">Informed prior, 100 pseudo-obs:</text>
+        <text class="p10aN" x="28" y="128">0.068 to 0.159, misses</text>
+        <text class="p10aM" x="28" y="152">Flat prior, 2 pseudo-obs:</text>
+        <text class="p10aB" x="28" y="172">0.020 to 0.222, contains, wide</text>
+        <text class="p10aM" x="28" y="200">Westfield, n = 900: wrong prior</text>
+        <text class="p10aN" x="28" y="220">still moves the answer by 0.026</text>
+        <text class="p10aM" x="28" y="244">cost = weight x distance</text>
+
+        <rect x="304" y="40" width="272" height="216" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="304" y="40" width="272" height="26" rx="9" fill="#9D174D"></rect>
+        <text class="p10aT" x="318" y="58">B · The pooling ladder</text>
+        <text class="p10aB" x="318" y="88">RMSE against twelve true rates</text>
+        <text class="p10aM" x="318" y="112">No pooling</text>
+        <text class="p10aN" x="500" y="112">0.054</text>
+        <text class="p10aM" x="318" y="136">Complete pooling</text>
+        <text class="p10aN" x="500" y="136">0.031</text>
+        <text class="p10aM" x="318" y="160">Partial pooling</text>
+        <text class="p10aG" x="500" y="160">0.025</text>
+        <text class="p10aM" x="318" y="192">Helped 6 outlets, hurt 6</text>
+        <text class="p10aM" x="318" y="212">Big wins on the small ones,</text>
+        <text class="p10aM" x="318" y="232">thousandths lost on the large</text>
+
+        <rect x="594" y="40" width="272" height="216" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="594" y="40" width="272" height="26" rx="9" fill="#9D174D"></rect>
+        <text class="p10aT" x="608" y="58">C · The A/B decision</text>
+        <text class="p10aB" x="608" y="88">Westfield, true lift 2.5 points</text>
+        <text class="p10aM" x="608" y="112">n = 50: P(B &gt; A) 0.915</text>
+        <text class="p10aB" x="608" y="132">expected loss 0.0029, keep going</text>
+        <text class="p10aM" x="608" y="160">n = 100: P(B &gt; A) 0.975</text>
+        <text class="p10aG" x="608" y="180">expected loss 0.0005, stop, B</text>
+        <text class="p10aM" x="608" y="208">200 replays of the same rule:</text>
+        <text class="p10aN" x="608" y="228">23 stop at 100, 2 on the wrong arm</text>
+
+        <rect x="14" y="272" width="852" height="40" rx="9" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p10aG" x="28" y="290">Every figure above is scored against a truth written into the generator.</text>
+        <text class="p10aB" x="28" y="306">That is the one thing a real analysis never gets, and the reason the bench exists.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three benches, one world. The numbers that flatter the method and the ones that do not are on the same card.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The rung that decides the argument for pooling<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Of the three ladder rungs, partial pooling wins on the Halloway data with a root-mean-square error of 0.025 against 0.031 for treating every outlet as identical and 0.054 for treating each as unrelated. The interesting number is not the winner, it is how the winner was chosen. Partial pooling learned from the twelve outlets that the right pooling strength was kappa = 116: each outlet's month counts for n over n plus 116, which is 0.13 at Northgate and 0.89 at Westfield. Nobody set that. The data did.</p>
+        <p>Change the world and the method changes its mind. In a world where the outlets are truly identical it learns a kappa at the top of the grid and pools completely, matching the grand-rate method to a few ten-thousandths. In a world where they are wildly different it learns kappa = 3.6 and barely pools, landing at 0.030 while complete pooling collapses to 0.145. That adaptiveness is the whole case for the method, and the bench lets you watch it happen rather than take it on faith.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The six outlets partial pooling made worse<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Pooling is not free and the bench says so. On the real data, shrinking toward 0.135 improved six outlets and worsened six. The improvements are large and land where the data are thin: Northgate's error falls from 0.136 to 0.068, Hillcrest's from 0.088 to 0.021, Old Quay's from 0.058 to 0.023. The deteriorations are small and land where the data are thick: Market Row from 0.000 to 0.007, Parkside from 0.002 to 0.008, Docklands from 0.007 to 0.009, with The Arcade and Westfield unchanged to three decimals.</p>
+        <p>That asymmetry is the honest summary of shrinkage. It buys tenths on the outlets that need it and costs thousandths on the ones that do not, and the net is a lower error across the chain. It is also why the method is easy to sell badly: a manager at a large outlet will notice their number moved and will not notice it moved by less than the noise. Northgate, for its part, is still under-estimated at 0.124 against a truth of 0.192. The method halved the error. It did not remove it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 - THE BENCH ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · build-along</span>
+      <h2>Run the three benches</h2>
+      <span class="tag build">26 min build-along</span>
+    </div>
+    <p class="lede">Work through the tabs in order. On bench A, try the informed prior at Northgate and then the same prior at Westfield, and watch what volume does and does not fix. On bench B, run all three worlds and read kappa each time. On bench C, look at the experiment at 50 and then at 100, and notice that the probability was already high before the rule was willing to stop.</p>
+
+    <div data-bayes-bench></div>
+
+    <div class="callout tip">
+      <p><strong>Try the wrong prior at Westfield before you believe anything about volume.</strong> Nine hundred customers, a prior worth a hundred, and the estimate is still 0.026 away from what the data said. The prior's weight fell to a tenth. Its distance from the truth did not fall at all.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers the write-up</span>
+      <h2>Turn three benches into one defensible number</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">The bench produces estimates. A defensible number is an estimate plus the prior it rests on, the interval kind and level, and the decision rule it feeds, all written down where a reader can argue with them. The estimate is the part people fight about; the other three are the parts that decide whether the fight is fair.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><p><strong>State the prior as a pseudo-count and a source.</strong> "Partial pooling across the twelve outlets, learned kappa 116, which weights Northgate's month at 0.13." A prior nobody can express this way was defaulted, not chosen.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Give the interval with its kind and level.</strong> "89 percent equal-tailed." Not "the interval". The level is a tooling default that changed this year and the kind changed with it; a reader who assumes 95 percent HDI will misread every number you give them.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Report the decision rule, not just the probability.</strong> "P(B &gt; A) = 0.975; expected loss of choosing B is 0.0005 against a threshold of 0.001, so the rule stops." At n = 50 the probability was 0.915 and the rule said keep going, because the loss was 0.0029. The probability alone would have stopped too early.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>State the measured error rate of the rule.</strong> "Across 200 replays at this sample size, the rule stopped 23 times and 2 of those were on the wrong arm." That is a count, not a promise, and it is the sentence that stops "Bayesian tests have no peeking problem" from being said in your name.</p></div>
+      </div>
+      <div class="step">
+        <div><p><strong>Name what the method did not fix.</strong> Northgate is still at 0.124 against a truth of 0.192. A report that says the estimate improved is true; a report that says the outlet is now well understood is not.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">On the real Halloway data partial pooling scores 0.025 against 0.031 for complete pooling and 0.054 for none. A colleague concludes partial pooling should always be used. What does the bench actually show?</p>
+      <button class="qopt" type="button">A · That partial pooling is always best, since it won on this data</button>
+      <button class="qopt" type="button">B · That complete pooling is a safe default, since it beat no pooling</button>
+      <button class="qopt" type="button">C · That partial pooling learned how much to pool from the data, kappa = 116 here, and in a world of identical outlets it learns to pool completely while in a wildly different world it learns barely to pool at all</button>
+      <p class="qwhy">The method's value is that the pooling strength is estimated rather than asserted. Complete pooling collapses to 0.145 in the wildly-different world; partial pooling reads the spread off the data and lands at 0.030. The lesson is adaptiveness, not a permanent winner.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">At n = 50 per arm, P(B &gt; A) is 0.915. Why does the rule say keep going?</p>
+      <button class="qopt" type="button">A · Because the expected loss of choosing B is 0.0029, three times the 0.001 threshold; a probability is not a decision until it is multiplied by what you stand to lose</button>
+      <button class="qopt" type="button">B · Because 0.915 is below the conventional 0.95 cut-off for significance</button>
+      <button class="qopt" type="button">C · Because the rule requires at least 100 observations per arm before any decision</button>
+      <p class="qwhy">The rule is on expected loss, not on the probability. At n = 100 the probability is 0.975 and the loss is 0.0005, so it stops. There is no significance cut-off and no minimum sample in the rule; the stake does the work.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">Across 200 replays of the Westfield experiment, the rule stopped at n = 100 in 23 of them and on the wrong arm in 2. What is the right way to report that?</p>
+      <button class="qopt" type="button">A · As proof that Bayesian A/B testing has no peeking problem, since 2 in 200 is small</button>
+      <button class="qopt" type="button">B · As the measured wrong-stop rate at that sample size, about 1 percent, stated alongside the estimate so the cost of the rule is visible</button>
+      <button class="qopt" type="button">C · As a reason to abandon the rule, since any wrong stop is unacceptable</button>
+      <p class="qwhy">The expected-loss rule controls the cost of a wrong decision, not the frequency of one. The frequency is what the 200 replays measure, and reporting it is what makes the rule defensible rather than merely convenient. The peeking argument itself belongs to the experimentation course.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>After the track</h2>
+      <span class="tag time">45 min</span>
+    </div>
+    <div class="callout">
+      <p>Take a rate your team estimates for several small units, regions, stores, cohorts, segments, and build the pooling ladder on it. Observed rate per unit, grand rate for all, and the empirical-Bayes shrinkage from session 6. You will not have the truth to score against, so report the one thing you can: how far each unit's estimate moved, and whether the units that moved most are the ones with the least data. If they are, the method is doing what it should. If a large unit moved a long way, something else is going on and that is worth a look.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The full Halloway canon, live</span>
+        <span class="note">Four priors at Northgate and Westfield; the pooling ladder at 0.054, 0.031 and 0.025 with kappa 116; the A/B rule stopping at n = 100 with 2 wrong stops in 200.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Partial pooling as an estimated quantity</span>
+        <span class="note">Statistical Rethinking's multilevel chapters, run against a known truth in three worlds: real, identical, wildly different.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Expected loss as the decision rule</span>
+        <span class="note">Kruschke's argument that estimation supersedes the test, applied as a stopping rule with a measured wrong-stop rate rather than a promised one.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The fully Bayesian hierarchical model</span>
+        <span class="note">Session 6 names the version that puts a prior on kappa and samples it; the bench uses the empirical-Bayes fit because it is exact, fast and honest about being the simpler method.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Power, randomisation and the peeking argument</span>
+        <span class="note">Not covered by design. <strong>learn-experimentation-with-phoebe</strong> owns experiment mechanics; this bench reports the measured wrong-stop rate and hands the argument over.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and hypothesis tests</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> owns frequentist inference.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 10 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The ladder</b><span>0.054 unpooled, 0.031 pooled, 0.025 partial. The winner learned its own pooling strength.</span></div>
+      <div class="cheat-item"><b>kappa = 116</b><span>Northgate's month weighs 0.13, Westfield's 0.89. Set by the data, not by anyone.</span></div>
+      <div class="cheat-item"><b>Helped six, hurt six</b><span>Tenths gained on thin outlets, thousandths lost on thick ones. Say both.</span></div>
+      <div class="cheat-item"><b>Northgate, still 0.124</b><span>Against a truth of 0.192. Halved the error, did not remove it.</span></div>
+      <div class="cheat-item"><b>0.915 was not enough</b><span>Expected loss 0.0029 at n = 50. The rule stopped at 100, at 0.0005.</span></div>
+      <div class="cheat-item"><b>2 in 200</b><span>The rule's wrong-stop rate at n = 100, counted. Report it beside the estimate.</span></div>
+      <div class="cheat-item"><b>89 percent, equal-tailed</b><span>The tooling default since ArviZ 1.0. Say the kind and the level every time.</span></div>
+      <div class="cheat-item"><b>State the prior as a pseudo-count</b><span>"Learned kappa 116" is a choice. "The default" is not.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 10 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="p9-saying-it-to-executives.html">← Practitioner session 9 · Saying it to executives</a>
+      <a href="../index.html">All sessions →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/bayes-live.js?v=2"></script>
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>

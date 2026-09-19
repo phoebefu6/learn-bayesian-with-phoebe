@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Practitioner session 1 of 10. Conjugacy by hand: a Beta(a, b) prior plus y redemptions in n vouchers gives Beta(a + y, b + n - y). At Northgate the flat prior turns one redemption in eighteen into Beta(2, 18), mean 0.100, 89 percent interval 0.020 to 0.222, with the truth of 0.192 inside.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Beta-Binomial by hand - learn bayesian with phoebe">
+<meta property="og:description" content="Practitioner session 1 of 10. The posterior is the prior with the counts added. Nothing else happens.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/courses/p1-beta-binomial-by-hand.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Beta-Binomial by hand - learn bayesian with phoebe">
+<meta name="twitter:description" content="Beta(1, 1) plus one in eighteen is Beta(2, 18). Mean 0.100, interval 0.020 to 0.222, truth 0.192. By hand, then in six lines of scipy.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-bayesian-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Practitioner session 1 · Beta-Binomial by hand - learn bayesian with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-bayesian-with-phoebe</a> / Practitioner session 1 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn Bayesian with Phoebe · Practitioner session 1 of 10</div>
+    <h1>Beta-Binomial <span class="accent">by hand</span></h1>
+    <p class="sub">Before any sampler, any library, any diagnostic, there is one update you can do on paper. A Beta(a, b) prior sees y redemptions in n vouchers and becomes Beta(a + y, b + n - y). That is the whole of conjugacy: the posterior is the prior with the counts added. Tonight you do it for Northgate, Halloway's smallest outlet, where one redemption in eighteen has to become a defensible estimate, and then you check the arithmetic in six lines of scipy. Every later session is this update, done where paper stops working.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Foundations</span>
+      <span class="chip audience">Data scientists and analysts</span>
+      <span class="chip audience">Anyone who will run a Bayesian model and wants to know what it is doing</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-18 · The update, on paper</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: the same update in scipy</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>How the practitioner track works</h2>
+    </div>
+    <p class="lede">Ten sessions, 45 minutes each, laptop open. Tonight: the conjugate update by hand and the posterior mean as a weighted average. Session 2 puts four priors on the same eighteen customers and scores each against the truth. Session 3 is the posterior as a distribution, by grid and then by sampling. Session 4 is MCMC and its diagnostics, session 5 the first PyMC 6 model, session 6 hierarchical models and partial pooling, session 7 Bayesian A/B as a decision, session 8 checking the model, session 9 saying it to executives, and session 10 a bench where all three of those are scored against a truth written into the data. The example throughout is <strong>Halloway Bakeries</strong>, a twelve-outlet chain and its voucher.</p>
+
+    <div class="legend">
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+      <span class="pill">🔍 Every diagram zooms</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> One update you can do without a computer: Beta(a, b) plus y of n is Beta(a + y, b + n - y). One reading of the prior that makes every later argument concrete: a Beta(a, b) prior is worth a + b pseudo-observations, and the posterior mean is a weighted average of the prior mean and the observed rate with weights a + b and n. And one worked case you will meet in every session that follows: Northgate, one redemption in eighteen, flat prior, posterior Beta(2, 18), mean 0.100, 89 percent interval 0.020 to 0.222, true rate 0.192.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The update is addition<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A redemption rate is a number between 0 and 1, and the natural way to hold a belief about it is a Beta distribution. Beta(a, b) has two parameters and one plain reading: it behaves exactly as if a + b customers had already been watched, a of whom redeemed. Beta(1, 1) is flat across the whole range, two pseudo-observations, one of each. Beta(12, 88) is a hundred pseudo-observations centred near 0.12.</p>
+        <p>Now the month's data arrive: y redemptions out of n vouchers. Because the Beta prior and the Binomial data fit together, the posterior is another Beta, and its parameters are the prior's with the counts added. a becomes a + y. b becomes b + n - y. Redemptions go on the first parameter, non-redemptions on the second, and that is the entire calculation. No integral, no sampler, no software. The word for a prior that does this with its likelihood is conjugate, and Beta-Binomial is the one every practitioner should be able to do in their head.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Halloway's analyst was asked for Northgate's redemption rate in a meeting that had not been scheduled to include one. Eighteen vouchers, one redeemed. Starting from Beta(1, 1), the posterior was Beta(2, 18) before the question had finished being asked, and the analyst could say, out loud, what that meant: a mean of 0.100, and an 89 percent interval running from 0.020 to 0.222. The observed 0.056 was never spoken as if it were the answer.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The words that will keep coming back<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Prior.</strong> What you believed about the rate before this month's data, written as a distribution because you were not certain. Here always a Beta(a, b).</li>
+          <li><strong>Likelihood.</strong> What the data say on their own: y redemptions in n vouchers, a Binomial count. At Northgate, one in eighteen.</li>
+          <li><strong>Posterior.</strong> The blend of the two. For a Beta prior and Binomial data it is Beta(a + y, b + n - y), exactly.</li>
+          <li><strong>Conjugate.</strong> A prior whose posterior is in the same family, so the update is a formula rather than a computation. Beta with Binomial is the standard example.</li>
+          <li><strong>Pseudo-observations.</strong> a + b. The number of imaginary customers the prior is worth. The posterior mean weights the prior by this and the data by n.</li>
+          <li><strong>Posterior mean.</strong> (a + y) / (a + b + n). Equivalently, the weighted average of the prior mean a / (a + b) and the observed rate y / n, with weights a + b and n.</li>
+          <li><strong>89 percent equal-tailed interval.</strong> The 5.5 and 94.5 percent quantiles of the posterior. The level and the kind are the tooling default now; Part 2 says why.</li>
+          <li><strong>Credible interval.</strong> The Bayesian interval. There is an 89 percent probability the rate lies in it, which is the sentence everybody thinks a confidence interval is. The frequentist sentence is different, and <strong>learn-statistics-with-phoebe</strong> b7 owns it.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the conjugate update and the posterior mean</span>
+      <h2>The posterior is the prior with the counts added</h2>
+      <span class="tag concept">8 min live</span>
+    </div>
+    <p class="lede">Two lines of arithmetic, and one of them is more useful than it looks. The first line is the update itself. The second is what the update does to the mean, and it is the line that makes a prior legible: the prior votes with a + b pseudo-observations, the data vote with n, and the posterior mean is the weighted average of what each side said.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The conjugate update as arithmetic. A prior Beta(a, b), worth a plus b pseudo-observations with mean a over a plus b, plus data of y redemptions in n vouchers with rate y over n, gives a posterior Beta(a plus y, b plus n minus y) with mean a plus y over a plus b plus n. Below, the Northgate case: Beta(1, 1) plus 1 of 18 gives Beta(2, 18). The posterior mean 0.100 is the weighted average of the prior mean 0.500 with weight 2 over 20 and the observed rate 0.056 with weight 18 over 20.">
+        <style>
+          .p1aH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p1aT { font: 800 11px Inter, sans-serif; fill: #FFFFFF; }
+          .p1aB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p1aL { font: 700 11px Inter, sans-serif; fill: #1F1420; }
+          .p1aM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p1aN { font: 800 12px Inter, sans-serif; fill: #831843; }
+          .p1aO { font: 800 20px Inter, sans-serif; fill: #6B5460; }
+          .p1aG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p1aH" x="14" y="22">The update is addition. Redemptions go on a, non-redemptions go on b.</text>
+
+        <rect x="14" y="40" width="250" height="104" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="14" y="40" width="250" height="26" rx="9" fill="#831843"></rect>
+        <text class="p1aT" x="28" y="58">Prior · Beta(a, b)</text>
+        <text class="p1aB" x="28" y="88">a + b pseudo-observations</text>
+        <text class="p1aB" x="28" y="108">of which a redeemed</text>
+        <text class="p1aM" x="28" y="130">mean a / (a + b)</text>
+
+        <text class="p1aO" x="278" y="100">+</text>
+
+        <rect x="315" y="40" width="250" height="104" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="315" y="40" width="250" height="26" rx="9" fill="#9D174D"></rect>
+        <text class="p1aT" x="329" y="58">Data · y of n</text>
+        <text class="p1aB" x="329" y="88">n real vouchers</text>
+        <text class="p1aB" x="329" y="108">of which y redeemed</text>
+        <text class="p1aM" x="329" y="130">rate y / n</text>
+
+        <text class="p1aO" x="579" y="100">=</text>
+
+        <rect x="616" y="40" width="250" height="104" rx="9" fill="#FDF2F8" stroke="#E4CBD6"></rect>
+        <rect x="616" y="40" width="250" height="26" rx="9" fill="#831843"></rect>
+        <text class="p1aT" x="630" y="58">Posterior · Beta(a + y, b + n - y)</text>
+        <text class="p1aB" x="630" y="88">a + b + n observations in all</text>
+        <text class="p1aB" x="630" y="108">of which a + y redeemed</text>
+        <text class="p1aM" x="630" y="130">mean (a + y) / (a + b + n)</text>
+
+        <text class="p1aL" x="14" y="180">Northgate, flat prior</text>
+        <text class="p1aN" x="28" y="206">Beta(1, 1)</text>
+        <text class="p1aM" x="28" y="224">mean 0.500 · weight 2 / 20</text>
+        <text class="p1aO" x="278" y="212">+</text>
+        <text class="p1aN" x="329" y="206">1 redeemed of 18</text>
+        <text class="p1aM" x="329" y="224">rate 0.056 · weight 18 / 20</text>
+        <text class="p1aO" x="579" y="212">=</text>
+        <text class="p1aN" x="630" y="206">Beta(2, 18)</text>
+        <text class="p1aM" x="630" y="224">mean 2 / 20 = 0.100</text>
+
+        <rect x="14" y="248" width="852" height="58" rx="9" fill="#F0FDF4" stroke="#15803D"></rect>
+        <text class="p1aG" x="28" y="270">The posterior mean is a weighted average of prior mean and observed rate, weights a + b and n.</text>
+        <text class="p1aB" x="28" y="292">At Northgate: (2 / 20) x 0.500 + (18 / 20) x 0.056 = 0.050 + 0.050 = 0.100. The prior cast two votes, the data eighteen.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the whole of conjugacy on one card. Two counts added to two parameters, and a mean that says who voted.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Northgate, on paper<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Northgate had 18 vouchers out and 1 came back, an observed rate of 0.056. Start from the flat prior Beta(1, 1). Add the one redemption to a: 1 + 1 = 2. Add the seventeen non-redemptions to b: 1 + 17 = 18. The posterior is Beta(2, 18). Its mean is 2 / 20 = 0.100, which is the first thing to notice: the posterior mean is not the observed rate. It sits between 0.056 and the prior's 0.500, and the weighted-average line says exactly where. The prior is worth 2 pseudo-observations, the data are worth 18, so the mean is (2 / 20) x 0.500 + (18 / 20) x 0.056, which is 0.050 + 0.050, which is 0.100.</p>
+        <p>Northgate's true rate, written into the data, is 0.192. The observed 0.056 is a long way under it, and the posterior mean of 0.100 is still under it, and neither is a mistake: one redemption in eighteen is what a true 0.192 produces at that volume reasonably often. What the posterior offers that the observed rate cannot is Part 2's object, the interval, which runs from 0.020 to 0.222 and holds the truth. Session 2 will show what happens to the same eighteen customers under three other priors, and the answer is not flattering to two of them.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why the pseudo-observation reading is exact, not a metaphor<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The posterior mean is (a + y) / (a + b + n). Split the numerator into its two parts and multiply each by one: a / (a + b + n) is (a + b) / (a + b + n) times a / (a + b), and y / (a + b + n) is n / (a + b + n) times y / n. So the posterior mean is the prior mean a / (a + b) with weight (a + b) / (a + b + n), plus the observed rate y / n with weight n / (a + b + n). The two weights sum to one. The prior is worth precisely a + b observations, in the same units the data are counted in, and the word pseudo-observations is bookkeeping rather than analogy.</p>
+        <p>Two consequences follow immediately and both come back in session 2. First, a flat prior is not nothing: Beta(1, 1) is two pseudo-observations, and at Northgate they moved the mean from 0.056 to 0.100. Second, the data's weight is n / (n + a + b), which is a fraction that rises with n but never reaches one. A prior with a + b = 100 still holds one vote in ten at n = 900. Session 2 measures what that tenth costs at Westfield, Halloway's flagship, and the number is larger than most people guess.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the interval and why it is the honest object</span>
+      <h2>The interval is the answer. The mean is a summary of it.</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">Beta(2, 18) is a curve, not a number. The mean 0.100 is one way to summarise that curve and the observed 0.056 is another, and both of them hide how much the curve spreads. The 89 percent equal-tailed interval, 0.020 to 0.222, is the summary that keeps the spread, and it is the object every later session reports first.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Northgate posterior Beta(2, 18) drawn as a density curve over redemption rates from 0 to 0.45. The curve peaks near 0.056 and has a long right tail. A shaded band marks the 89 percent equal-tailed interval from 0.020 to 0.222. A dashed line at the posterior mean 0.100 and a green dashed line at the true rate 0.192 both fall inside the band; the truth sits near the band's upper edge. The observed rate 0.056 is marked on the axis.">
+        <style>
+          .p1bH { font: 800 12px Inter, sans-serif; fill: #1F1420; }
+          .p1bB { font: 400 11px Inter, sans-serif; fill: #1F1420; }
+          .p1bL { font: 700 11px Inter, sans-serif; fill: #831843; }
+          .p1bM { font: 400 11px Inter, sans-serif; fill: #6B5460; }
+          .p1bG { font: 800 11px Inter, sans-serif; fill: #15803D; }
+        </style>
+        <text class="p1bH" x="14" y="22">Northgate posterior, Beta(2, 18). One redemption in eighteen, flat prior, and the whole curve it produces.</text>
+
+        <!-- rate 0 to 0.45 maps to x 60..840; baseline y = 300 -->
+        <rect x="95" y="60" width="350" height="240" fill="#FBCFE8"></rect>
+        <text class="p1bL" x="270" y="46" text-anchor="middle">89 percent equal-tailed interval, 0.020 to 0.222</text>
+        <line x1="95" y1="52" x2="445" y2="52" stroke="#831843" stroke-width="1.5"></line>
+        <line x1="95" y1="48" x2="95" y2="56" stroke="#831843" stroke-width="1.5"></line>
+        <line x1="445" y1="48" x2="445" y2="56" stroke="#831843" stroke-width="1.5"></line>
+
+        <polyline points="60,300 69,252 77,212 86,179 95,152 103,130 112,113 121,100 129,91 138,85 147,81 155,80 164,81 173,83 181,87 190,91 199,97 207,104 216,110 225,118 233,125 242,133 251,141 259,149 268,157 277,165 285,173 294,180 303,187 311,194 320,201 329,207 337,214 346,219 355,225 363,230 372,235 381,240 389,245 398,249 407,253 415,257 424,260 433,263 441,266 450,269 459,272 467,274 476,276 485,278 493,280 502,282 511,284 519,285 528,287 537,288 545,289 554,290 563,291 571,292 580,293 589,293 597,294 606,295 615,295 623,296 632,296 641,297 649,297 658,297 667,298 675,298 684,298 693,298 701,298 710,299 719,299 727,299 736,299 745,299 753,299 762,299 771,299 779,300 788,300 797,300 805,300 814,300 823,300 831,300 840,300" fill="none" stroke="#9D174D" stroke-width="2.5" stroke-linejoin="round"></polyline>
+
+        <!-- mean 0.100 -> x 233 -->
+        <line x1="233" y1="66" x2="233" y2="300" stroke="#831843" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <text class="p1bL" x="239" y="96">mean 0.100</text>
+
+        <!-- truth 0.192 -> x 393 -->
+        <line x1="393" y1="66" x2="393" y2="300" stroke="#15803D" stroke-width="2" stroke-dasharray="5 4"></line>
+        <text class="p1bG" x="399" y="76">truth 0.192</text>
+        <text class="p1bB" x="399" y="96">inside the band, near its upper edge</text>
+
+        <text class="p1bM" x="500" y="200">Beta(2, 18) is the flat prior Beta(1, 1)</text>
+        <text class="p1bM" x="500" y="218">plus 1 redemption and 17 non-redemptions.</text>
+        <text class="p1bM" x="500" y="244">The curve is the answer. 0.100 summarises it.</text>
+        <text class="p1bM" x="500" y="262">0.056 is one point on its rising edge.</text>
+
+        <line x1="60" y1="300" x2="840" y2="300" stroke="#E4CBD6" stroke-width="1.5"></line>
+        <circle cx="157" cy="300" r="5" fill="#1F1420"></circle>
+        <text class="p1bM" x="60" y="320" text-anchor="middle">0.00</text>
+        <text class="p1bM" x="233" y="320" text-anchor="middle">0.10</text>
+        <text class="p1bM" x="407" y="320" text-anchor="middle">0.20</text>
+        <text class="p1bM" x="580" y="320" text-anchor="middle">0.30</text>
+        <text class="p1bM" x="753" y="320" text-anchor="middle">0.40</text>
+        <text class="p1bB" x="157" y="340" text-anchor="middle">observed 0.056</text>
+        <text class="p1bM" x="600" y="340" text-anchor="middle">redemption rate</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the curve is what eighteen customers actually told you. Every number on the page is a summary of it.</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Reading Beta(2, 18), and why it is 89 percent<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The posterior puts most of its weight below 0.15 and a long tail above it, which is what one redemption in eighteen looks like when you refuse to pretend it was more. The 89 percent equal-tailed interval cuts 5.5 percent off each tail and keeps the middle: from 0.020 to 0.222. Northgate's true rate of 0.192 sits inside it, near the top. The observed 0.056 sits on the curve's rising edge, and the mean of 0.100 sits to the right of the peak because the tail pulls it there. None of those three numbers is the answer. The curve is the answer, and the interval is the shortest honest description of it.</p>
+        <p>Every interval on every page is an 89 percent equal-tailed interval, the 5.5 and 94.5 percent quantiles, and the reason is a tooling decision rather than a theorem. ArviZ 1 changed two defaults: <code class="mono">stats.ci_prob</code> is now 0.89 where it was 0.94, and <code class="mono">stats.ci_kind</code> is now <code class="mono">"eti"</code>, equal-tailed, where it was the highest-density interval. The maintainers' stated reason is that 0.89 gives intervals with lower variability and therefore more stable summaries. The consequence for you is that any summary a colleague ran on the new tooling is 89 percent equal-tailed unless they changed it, and any prose that still says 94 percent HDI is describing a number that is no longer being computed. Say the kind and the level every time, and match what the tool does.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The point estimate is a summary, and the other interval is a different sentence<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A point estimate is a choice of which single number to report from a curve. The mean is one choice; the observed rate is another; the peak of the curve, 0.056 here, is a third. They disagree at Northgate because the curve is skewed, and the disagreement is information: it says the data are thin. Reporting the interval first and the mean second keeps that information in the room. Reporting the mean alone throws it away, and reporting the observed rate alone throws away the prior too.</p>
+        <p>The credible interval says there is an 89 percent probability the rate lies between 0.020 and 0.222, given the prior and the data; a confidence interval makes a claim about the long-run behaviour of the procedure that produced it, not about this interval, and that sentence, along with the whole machinery behind it, belongs to <strong>learn-statistics-with-phoebe</strong> b7. Nothing here re-derives it. What matters tonight is that the Bayesian sentence is the one people mean when they say "the rate is probably in here", and Beta(2, 18) earns the right to say it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · build-along</span>
+      <h2>The same update in scipy, and nothing else yet</h2>
+      <span class="tag build">22 min build-along</span>
+    </div>
+    <p class="lede">No PyMC tonight, no sampler, no ArviZ. The point of a conjugate update is that a closed-form Beta answers everything, so <code class="mono">scipy.stats.beta</code> is the whole toolkit. Type each step, run it, and compare the printed number to the one in the comment. Session 5 will produce these same figures from a sampler, and you will want to have seen them come out of arithmetic first.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <p><strong>Import the one thing you need.</strong> Python 3.12 or later, scipy installed. Set the interval level once, as two quantiles, and name where the default comes from so the next reader does not have to guess.</p>
+          <div class="prompt-box good">
+            <span class="label">setup.py</span>
+<pre>from scipy.stats import beta
+
+CI_PROB = 0.89                     # ArviZ 1 default: stats.ci_prob = 0.89
+LO = (1 - CI_PROB) / 2             # 0.055
+HI = 1 - LO                        # 0.945
+# equal-tailed, which is ArviZ 1's stats.ci_kind = "eti"</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Northgate, flat prior.</strong> Add the counts to the prior's parameters, then ask the resulting Beta for its mean and its two quantiles. The three printed numbers are the three you did on paper.</p>
+          <div class="prompt-box good">
+            <span class="label">northgate.py</span>
+<pre>a, b = 1, 1                        # flat prior, 2 pseudo-observations
+n, y = 18, 1                       # Northgate: 18 vouchers, 1 redeemed
+
+post = beta(a + y, b + n - y)      # Beta(2, 18)
+print(f"posterior mean {post.mean():.3f}")                  # 0.100
+print(f"89% interval   {post.ppf(LO):.3f} to {post.ppf(HI):.3f}")   # 0.020 to 0.222</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Check the weighted-average line.</strong> Compute the posterior mean the second way, as prior mean times prior weight plus observed rate times data weight. It must agree to every decimal, because it is the same number.</p>
+          <div class="prompt-box good">
+            <span class="label">weights.py</span>
+<pre>prior_mean = a / (a + b)           # 0.500
+w_data     = n / (a + b + n)       # 18 / 20 = 0.9
+w_prior    = 1 - w_data            # 2 / 20 = 0.1
+
+blend = w_prior * prior_mean + w_data * (y / n)
+print(f"weighted average {blend:.3f}")                       # 0.100
+print(f"data weight      {w_data:.2f}")                      # 0.90</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Westfield, same prior.</strong> Halloway's flagship: 900 vouchers, 127 redeemed, observed 0.141. Fifty times Northgate's volume, so the two pseudo-observations barely move the mean. That is the shape session 2 will stress.</p>
+          <div class="prompt-box good">
+            <span class="label">westfield.py</span>
+<pre>n, y = 900, 127                    # Westfield: 900 vouchers, 127 redeemed
+
+post = beta(a + y, b + n - y)      # Beta(128, 774)
+print(f"posterior mean {post.mean():.3f}")                  # 0.142
+print(f"observed       {y / n:.3f}")                        # 0.141
+print(f"data weight    {n / (a + b + n):.3f}")              # 0.998</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <p><strong>Write the sentence.</strong> Say Northgate's result the way it will be said in every later session: the interval first, its kind and level, then the mean as a summary. "An 89 percent equal-tailed interval of 0.020 to 0.222, posterior mean 0.100, from a flat prior and one redemption in eighteen." If someone asks for the rate, that is the rate.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>Keep the quantile code.</strong> <code class="mono">post.ppf(0.055)</code> and <code class="mono">post.ppf(0.945)</code> is what every ArviZ summary is doing under the hood from now on. When session 5 hands you a DataTree of draws, the interval will be the same two quantiles of a column of numbers, and you will know it because you typed it tonight.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">A Beta(2, 14) prior sees 9 redemptions in 40 vouchers at Hillcrest. What is the posterior?</p>
+      <button class="qopt" type="button">A · Beta(9, 31), because the data replace the prior once there are enough of them</button>
+      <button class="qopt" type="button">B · Beta(11, 54), because both counts are added to both parameters</button>
+      <button class="qopt" type="button">C · Beta(11, 45), because the 9 redemptions go on a and the 31 non-redemptions go on b</button>
+      <p class="qwhy">a + y = 2 + 9 = 11 and b + n - y = 14 + 40 - 9 = 45. Redemptions on the first parameter, non-redemptions on the second, and the prior stays in the sum; it is never replaced, only outvoted.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">Northgate's posterior mean under the flat prior is 0.100, but the observed rate is 0.056. Why do they differ?</p>
+      <button class="qopt" type="button">A · Because the flat prior is worth 2 pseudo-observations with mean 0.500, and the posterior mean weights it at 2 / 20 against the data's 18 / 20</button>
+      <button class="qopt" type="button">B · Because the posterior mean is always the midpoint of the 89 percent interval</button>
+      <button class="qopt" type="button">C · Because scipy rounds small samples toward 0.1</button>
+      <p class="qwhy">(2 / 20) x 0.500 + (18 / 20) x 0.056 = 0.050 + 0.050 = 0.100. A flat prior is not nothing; it is two imaginary customers, one of whom redeemed. The interval 0.020 to 0.222 is not symmetric about 0.100, so B is wrong on its own terms.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">A colleague's summary reports Northgate's interval as 0.020 to 0.222 and their notebook prose calls it a 94 percent HDI. What has most likely happened?</p>
+      <button class="qopt" type="button">A · Nothing; 94 percent HDI and 89 percent equal-tailed produce the same numbers for a Beta posterior</button>
+      <button class="qopt" type="button">B · The notebook was upgraded to ArviZ 1, whose defaults are stats.ci_prob 0.89 and stats.ci_kind "eti", and the prose was not updated to match the number being computed</button>
+      <button class="qopt" type="button">C · The colleague used a confidence interval by mistake</button>
+      <p class="qwhy">0.020 to 0.222 is the 5.5 and 94.5 percent quantiles of Beta(2, 18), an 89 percent equal-tailed interval. ArviZ 1 made that the default, and the failure mode is exactly this: the number changed on upgrade and the sentence around it did not. Say the kind and level every time.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="homework">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 2</h2>
+      <span class="tag time">30 min</span>
+    </div>
+    <div class="callout">
+      <p>Run tonight's Northgate code with three more priors in place of Beta(1, 1): Beta(2, 14), Beta(12, 88) and Beta(40, 60). For each, write down a + b, the posterior mean, the 89 percent interval, and whether 0.192 is inside it. Do not look anything up and do not change the data. Bring the four rows. Session 2 puts them on one figure and the result is the reason the track spends a whole session on priors before touching a sampler.</p>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What tonight maps to</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">Conjugate Beta-Binomial updating</span>
+        <span class="note">Beta(a, b) plus y of n is Beta(a + y, b + n - y). Statistical Rethinking's lecture 2, "Garden of Forking Data", reads the posterior as counting; the conjugate formula is that count written in closed form.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The prior as pseudo-observations and the posterior mean as a weighted average</span>
+        <span class="note">Weights a + b and n. At Northgate the flat prior's two votes moved the mean from 0.056 to 0.100.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill solid">✓</span>
+        <span class="name">The 89 percent equal-tailed interval as the tooling default</span>
+        <span class="note">ArviZ 1 migration guide: stats.ci_prob 0.89, stats.ci_kind "eti", chosen for lower variability of the summary. Every interval in the track is computed this way and says so.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">Four priors on the same data</span>
+        <span class="note">Session 2. Tonight's homework produces the rows; session 2 scores them against Northgate's truth of 0.192 and then repeats the exercise at Westfield.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill light">◐</span>
+        <span class="name">The posterior by grid and by sampling</span>
+        <span class="note">Session 3. Conjugacy gives the curve in closed form; session 3 shows how to get the same curve when there is no closed form, which is the case for everything after Beta-Binomial.</span>
+      </div>
+      <div class="covered-row">
+        <span class="status pill inkpill">·</span>
+        <span class="name">Confidence intervals and the frequentist sentence</span>
+        <span class="note">Not covered by design. <strong>learn-statistics-with-phoebe</strong> b7 owns confidence intervals; here the credible interval is contrasted with them in one sentence and never re-derived.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 1 cheat sheet</h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The update</b><span>Beta(a, b) plus y of n is Beta(a + y, b + n - y). Redemptions on a, the rest on b.</span></div>
+      <div class="cheat-item"><b>Pseudo-observations</b><span>A Beta(a, b) prior is worth a + b of them, exactly, in the units the data are counted in.</span></div>
+      <div class="cheat-item"><b>Posterior mean</b><span>(a + y) / (a + b + n). Equivalently a weighted average of prior mean and observed rate, weights a + b and n.</span></div>
+      <div class="cheat-item"><b>Northgate, flat prior</b><span>Beta(1, 1) plus 1 of 18 is Beta(2, 18). Mean 0.100. Interval 0.020 to 0.222. Truth 0.192, inside.</span></div>
+      <div class="cheat-item"><b>Flat is not nothing</b><span>Two votes at 0.500 moved Northgate's mean from 0.056 to 0.100.</span></div>
+      <div class="cheat-item"><b>89 percent, equal-tailed</b><span>The 5.5 and 94.5 percent quantiles. ArviZ 1's default since stats.ci_prob went to 0.89 and stats.ci_kind to "eti".</span></div>
+      <div class="cheat-item"><b>Interval first, mean second</b><span>The curve is the answer. The mean, the peak and the observed rate are each one number cut from it.</span></div>
+      <div class="cheat-item"><b>Westfield, flat prior</b><span>Beta(128, 774), mean 0.142 against observed 0.141. Two votes in 902 barely register. Session 2 asks what a hundred do.</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <p>Practitioner session 1 of 10 · learn-bayesian-with-phoebe · by Phoebe Fu</p>
+    <nav class="pagenav">
+      <a href="../index.html">← All sessions</a>
+      <a href="p2-four-priors.html">Practitioner session 2 · Four priors →</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=2"></script>
+</body>
+</html>
